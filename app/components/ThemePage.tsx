@@ -142,7 +142,7 @@ export default function ThemePage({ theme }: { theme: string }) {
             Compte
           </NavButton>
           <span className="ekko-serif text-xs hidden md:block" style={{ color: `${config.accent}70`, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {user.isAdmin ? "⚙ Admin" : user.name}
+            {user.name}
           </span>
           <NavButton onClick={logout} accent={config.accent}>
             Déconnexion
