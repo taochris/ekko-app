@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import BlobBackground from "./BlobBackground";
@@ -79,7 +79,25 @@ export default function ThemePage({ theme }: { theme: string }) {
   const router = useRouter();
   const { user, isLoading, logout } = useAuth();
   const config = themeConfig[theme] ?? themeConfig.deuil;
-  const [step, setStep] = useState<Step>("home");
+  const [step, setStep] = useState<Step>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("payment") === "success") return "import";
+    }
+    return "home";
+  });
+  const [hasPaid, setHasPaid] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("payment") === "success") {
+        sessionStorage.setItem("ekko_paid", "1");
+        return true;
+      }
+      return sessionStorage.getItem("ekko_paid") === "1";
+    }
+    return false;
+  });
+
   const [importedAudios, setImportedAudios] = useState<File[]>([]);
   const [selectedAudios, setSelectedAudios] = useState<File[]>([]);
 
@@ -163,6 +181,8 @@ export default function ThemePage({ theme }: { theme: string }) {
             theme={theme}
             config={config}
             onAudiosImported={handleAudiosImported}
+            hasPaid={hasPaid}
+            onPaid={() => { sessionStorage.setItem("ekko_paid", "1"); setHasPaid(true); }}
           />
         )}
         {step === "select" && (
@@ -434,6 +454,8 @@ function VocapsuleProcessor({
   const [payStep, setPayStep] = useState<"select" | "form" | "processing" | "done">("select");
   const [permanentLink, setPermanentLink] = useState<string | null>(null);
   const [vocapsuleId, setVocapsuleId] = useState<string | null>(null);
+  const [vocapsuleName, setVocapsuleName] = useState("");
+  const [showOffer, setShowOffer] = useState(false);
 
   const merge = async () => {
     if (audios.length === 0) return;
@@ -562,13 +584,14 @@ function VocapsuleProcessor({
         Vocapsule audio
       </p>
       <h2 className="ekko-serif font-light text-3xl mb-2" style={{ color: "#f0e8d8" }}>
-        Fusion sonore
+        {vocapsuleName.trim() || "Réunion de voix"}
       </h2>
       <p className="ekko-serif text-sm mb-8" style={{ color: "rgba(240,232,216,0.4)" }}>
         {audios.length} audio{audios.length > 1 ? "s" : ""} sélectionné{audios.length > 1 ? "s" : ""}
       </p>
 
       {/* Audio list preview */}
+      {status !== "done" && (
       <div className="mb-8 space-y-2">
         {audios.slice(0, 5).map((f, i) => (
           <div
@@ -591,6 +614,7 @@ function VocapsuleProcessor({
           </p>
         )}
       </div>
+      )}
 
       {/* Progress */}
       {status !== "idle" && (
@@ -608,6 +632,24 @@ function VocapsuleProcessor({
               transition={{ duration: 0.3 }}
             />
           </div>
+        </div>
+      )}
+
+      {/* Nom de la vocapsule */}
+      {status === "idle" && (
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Nommez votre vocapsule…"
+            value={vocapsuleName}
+            onChange={(e) => setVocapsuleName(e.target.value)}
+            style={{
+              width: "100%", padding: "12px 16px", borderRadius: 12, boxSizing: "border-box" as const,
+              background: "rgba(255,255,255,0.04)", border: `1px solid ${config.accent}30`,
+              color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 14,
+              outline: "none",
+            }}
+          />
         </div>
       )}
 
@@ -649,7 +691,8 @@ function VocapsuleProcessor({
           <div style={{ display: "flex", gap: 10 }}>
             <a
               href={outputUrl}
-              download="vocapsule-ekko.webm"
+              download={`${vocapsuleName.trim() || "vocapsule-ekko"}.wav`}
+              onMouseEnter={() => setShowOffer(true)}
               style={{
                 flex: 1, padding: "12px 0", borderRadius: 14, textAlign: "center",
                 fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8",
@@ -657,10 +700,11 @@ function VocapsuleProcessor({
                 textDecoration: "none",
               }}
             >
-              ↓ Télécharger (gratuit)
+              Télécharger
             </a>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onMouseEnter={() => setShowOffer(true)}
               onClick={generateQR}
               style={{
                 flex: 1, padding: "12px 0", borderRadius: 14,
@@ -688,14 +732,27 @@ function VocapsuleProcessor({
           )}
 
           {/* ─── Offre de stockage ─────────────────────────── */}
-          {!permanentLink && (
-            <div style={{ borderRadius: 18, overflow: "hidden", border: `1px solid ${config.accent}25`, background: "rgba(255,255,255,0.025)" }}>
-              <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: `${config.accent}90`, margin: 0 }}>
-                  Conserver en ligne
+          {!permanentLink && (showOffer || payStep === "form") && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              style={{ borderRadius: 18, overflow: "hidden", border: `1px solid ${config.accent}25`, background: "rgba(255,255,255,0.025)" }}
+            >
+              <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 16, color: "#f0e8d8", margin: "0 0 10px", fontWeight: 400 }}>
+                  Votre vocapsule est prête 🎧
                 </p>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.5)", margin: "4px 0 0", fontStyle: "italic" }}>
-                  Réécoutez votre vocapsule à tout moment, depuis n'importe quel appareil.
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.55)", margin: "0 0 14px", fontStyle: "italic", lineHeight: 1.7 }}>
+                  Scannez votre QR code et revivez vos souvenirs instantanément, pendant 7 jours.
+                </p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.45)", margin: "0 0 8px", lineHeight: 1.7 }}>
+                  Et si vous voulez garder ces moments à portée de main plus longtemps :
+                </p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: `${config.accent}cc`, margin: "0 0 4px", letterSpacing: "0.02em" }}>• 1 an pour 0,99 €</p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: `${config.accent}cc`, margin: "0 0 14px", letterSpacing: "0.02em" }}>• 2 ans pour 1,90 €</p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.3)", margin: 0, fontStyle: "italic" }}>
+                  Parce que certains souvenirs méritent de ne jamais disparaître.
                 </p>
               </div>
 
@@ -742,7 +799,7 @@ function VocapsuleProcessor({
                   onSuccess={(link: string) => { setPermanentLink(link); setPayStep("done"); }}
                 />
               )}
-            </div>
+            </motion.div>
           )}
 
           {/* Lien permanent activé */}

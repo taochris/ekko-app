@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import JSZip from "jszip";
@@ -12,6 +12,8 @@ interface ImportGuideProps {
     label: string;
   };
   onAudiosImported: (files: File[]) => void;
+  hasPaid: boolean;
+  onPaid: () => void;
 }
 
 const platforms = [
@@ -42,12 +44,13 @@ const platforms = [
       </svg>
     ),
     steps: [
-      { label: "Aller dans les paramètres", desc: "Profil → ☰ → Paramètres → Votre activité" },
-      { label: "Télécharger vos informations", desc: "Choisissez 'Télécharger ou transférer vos informations'" },
-      { label: "Sélectionner Messages + qualité élevée", desc: "Cochez 'Messages' et choisissez qualité haute pour avoir les audios" },
-      { label: "Importer le ZIP reçu", desc: "Instagram vous envoie un email avec le ZIP. Déposez-le ici." },
+      { label: "Profil → ☰ → Paramètres → Comptes", desc: "Ouvrez votre profil, appuyez sur le menu ☰ en haut à droite, puis 'Paramètres et confidentialité' → 'Comptes'" },
+      { label: "Vos informations et autorisations → Exporter vos informations", desc: "Dans 'Comptes', appuyez sur 'Vos informations et autorisations' puis 'Exporter vos informations'" },
+      { label: "Créer une exportation → Votre appareil (ou Drive / iCloud)", desc: "Appuyez sur 'Créer une exportation', choisissez la destination : votre appareil, Google Drive ou iCloud" },
+      { label: "Personnaliser → cocher Messages uniquement", desc: "Appuyez sur 'Personnaliser les informations', décochez tout et cochez uniquement 'Messages'. Choisissez la période souhaitée." },
+      { label: "Format JSON · Qualité élevée · Lancer", desc: "Format : JSON (obligatoire pour extraire les audios) — Qualité : Élevée — puis lancez l'exportation. Déposez le ZIP reçu ici." },
     ],
-    tip: "La qualité élevée est indispensable pour obtenir les fichiers audio dans l'archive.",
+    tip: "Choisissez bien le format JSON (pas HTML) — seul ce format permet d'extraire les messages vocaux. Qualité élevée obligatoire.",
   },
   {
     id: "telegram",
@@ -79,14 +82,16 @@ const platforms = [
       { label: "Votre nom → Paramètres & confidentialité", desc: "Selon votre config : 'Paramètres de confidentialité courants' → 'Gestion de compte' — ou directement 'Paramètres'" },
       { label: "Vos informations et autorisations → Exporter vos informations", desc: "Dans 'Gestion de compte', cliquez sur 'Vos informations et autorisations' puis 'Exporter vos informations'" },
       { label: "Créer une exportation · Messages uniquement", desc: "Cliquez 'Créer une exportation' → 'Personnaliser les informations' → décochez tout, cochez uniquement 'Messages' → choisissez la période" },
-      { label: "Format HTML · Qualité élevée · Lancer", desc: "Format : HTML — Qualité : Élevée — puis 'Commencer l'exportation'. Déposez le ZIP reçu ici." },
+      { label: "Format JSON · Qualité élevée · Lancer", desc: "Format : JSON (permet d'extraire les audios) — Qualité : Élevée — puis 'Commencer l'exportation'. Déposez le ZIP reçu ici." },
       { label: "Messages chiffrés E2E ? Messenger Desktop requis", desc: "Pour les conversations chiffrées : ouvrez Messenger sur PC/Mac → icône profil → Confidentialité et sécurité → Discussions chiffrées → Stockage des messages → Télécharger les données de stockage sécurisé" },
     ],
     tip: "Les messages chiffrés E2E nécessitent Messenger Desktop (PC/Mac) — ils ne sont pas inclus dans l'export Facebook standard.",
   },
 ];
 
-export default function ImportGuide({ theme, config, onAudiosImported }: ImportGuideProps) {
+export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, onPaid }: ImportGuideProps) {
+  const [payLoading, setPayLoading] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [importedFiles, setImportedFiles] = useState<File[]>([]);
@@ -96,6 +101,31 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
   const [conversations, setConversations] = useState<{ name: string; count: number; prefix: string }[]>([]);
   const [pendingZip, setPendingZip] = useState<File | null>(null);
   const [selectedConvs, setSelectedConvs] = useState<Set<string>>(new Set());
+
+  const handlePayment = async () => {
+    setPayLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Stripe:", data.error);
+        setPayLoading(false);
+      }
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
+      setPayLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (hasPaid) setShowPaywall(false);
+  }, [hasPaid]);
 
   const applyConversationSelection = useCallback(async (zip: File, prefixes: Set<string>) => {
     const extracted = await extractAudiosFromZip(zip, prefixes);
@@ -127,7 +157,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
     } else if (zipFiles.length > 0) {
       const zip = zipFiles[0];
       const convs = await detectConversations(zip);
-      if (convs.length > 1) {
+      if (convs.length >= 1) {
         setConversations(convs);
         setSelectedConvs(new Set(convs.map((c: { name: string; count: number; prefix: string }) => c.prefix)));
         setPendingZip(zip);
@@ -144,13 +174,14 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
   }, []);
 
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".opus", ".flac"],
       "application/zip": [".zip"],
     },
     multiple: true,
+    noClick: true,
   });
 
   const loadDemoFiles = () => {
@@ -327,7 +358,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
 
       {/* Sélecteur de conversation (ZIP multi-dossiers) */}
       <AnimatePresence>
-        {conversations.length > 1 && pendingZip && (
+        {conversations.length >= 1 && pendingZip && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -337,10 +368,10 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
           >
             <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <p className="ekko-serif" style={{ fontSize: 12, letterSpacing: "0.25em", textTransform: "uppercase", color: `${config.accent}80`, margin: "0 0 4px" }}>
-                Plusieurs conversations détectées
+                {conversations.length > 1 ? `${conversations.length} conversations détectées` : "1 conversation détectée"}
               </p>
               <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.6)", margin: 0 }}>
-                Choisissez les conversations à importer
+                {conversations.length > 1 ? "Sélectionnez les conversations à importer" : "Confirmez pour importer les audios"}
               </p>
             </div>
 
@@ -410,7 +441,79 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
         )}
       </AnimatePresence>
 
-      {/* Drop zone */}
+      {/* Modale paywall */}
+      <AnimatePresence>
+        {showPaywall && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 50,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "rgba(0,0,0,0.7)", padding: 24,
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowPaywall(false); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.25 }}
+              className="rounded-2xl overflow-hidden w-full"
+              style={{ maxWidth: 480, border: `1px solid ${config.accent}30`, background: "#110d14" }}
+            >
+              <div style={{ padding: "22px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: `${config.accent}90`, margin: "0 0 12px" }}>
+                  Accès complet
+                </p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "#f0e8d8", margin: "0 0 6px", fontWeight: 400 }}>
+                  9,99 <span style={{ fontSize: 16 }}>€</span>
+                </p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.5)", margin: 0, fontStyle: "italic", lineHeight: 1.7 }}>
+                  Import, tri, assemblage des voix, téléchargement et QR code.
+                </p>
+              </div>
+              <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+                {[
+                  "Import illimité (MP3, WAV, ZIP WhatsApp, Instagram…)",
+                  "Tri et sélection des audios par date",
+                  "Assemblage en une seule vocapsule",
+                  "Téléchargement du fichier audio",
+                  "QR code pour écouter sur n’importe quel appareil",
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="2" style={{ width: 14, height: 14, flexShrink: 0 }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.6)" }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: "0 24px 22px" }}>
+                <motion.button
+                  whileHover={{ scale: payLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: payLoading ? 1 : 0.97 }}
+                  onClick={handlePayment}
+                  disabled={payLoading}
+                  style={{
+                    width: "100%", padding: "14px 0", borderRadius: 14,
+                    fontFamily: "Georgia, serif", fontSize: 15, cursor: payLoading ? "not-allowed" : "pointer",
+                    background: payLoading ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${config.accent}50, ${config.accent}85)`,
+                    border: `1px solid ${config.accent}40`,
+                    color: payLoading ? "rgba(240,232,216,0.3)" : "#f0e8d8",
+                  } as React.CSSProperties}
+                >
+                  {payLoading ? "Redirection vers le paiement…" : "Payer 9,99 € et commencer"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Drop zone + démo + fichiers importés */}
+      <>
       <div className="mb-6">
         <p className="text-xs tracking-[0.3em] uppercase mb-4 ekko-serif" style={{ color: "rgba(240,232,216,0.3)" }}>
           Déposez vos fichiers
@@ -420,6 +523,14 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
           {...getRootProps()}
           onMouseEnter={() => setIsDropHovered(true)}
           onMouseLeave={() => setIsDropHovered(false)}
+          onClick={(e) => {
+            if (!hasPaid) {
+              e.stopPropagation();
+              setShowPaywall(true);
+            } else {
+              open();
+            }
+          }}
           className="relative rounded-2xl p-10 text-center cursor-pointer transition-all duration-300"
           style={{
             background: isDragActive
@@ -570,6 +681,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
           </motion.div>
         )}
       </AnimatePresence>
+      </>
     </motion.div>
   );
 }
@@ -748,33 +860,70 @@ function AudioCardList({ files, config, isDemoMode, playingIndex, setPlayingInde
 
 // ─── ZIP extraction ───────────────────────────────────────────────
 
+function detectZipPlatform(filenames: string[]): "instagram" | "messenger" | "whatsapp" | "generic" {
+  for (const f of filenames) {
+    if (f.includes("your_instagram_activity/messages") || f.includes("inbox/") && f.includes("_instagram")) return "instagram";
+    if (f.startsWith("messages/inbox/") || f.includes("/messages/inbox/")) return "messenger";
+    if (f.includes("WhatsApp")) return "whatsapp";
+  }
+  // secondary pass for Instagram without explicit path
+  for (const f of filenames) {
+    if (f.includes("/inbox/")) return "messenger"; // covers both Messenger & Instagram
+  }
+  return "generic";
+}
+
 async function detectConversations(zipFile: File): Promise<{ name: string; count: number; prefix: string }[]> {
   const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|3gp|amr|mp4|mpeg)$/i;
   const EXCLUDE_PATHS = /(__MACOSX|\.DS_Store|Thumbs\.db)/i;
   const zip = new JSZip();
   const contents = await zip.loadAsync(zipFile);
+  const allNames = Object.keys(contents.files);
+  const platform = detectZipPlatform(allNames);
   const convMap = new Map<string, number>();
 
   Object.values(contents.files).forEach((entry) => {
     if (entry.dir || EXCLUDE_PATHS.test(entry.name) || !AUDIO_EXTENSIONS.test(entry.name)) return;
     const parts = entry.name.split("/");
-    // Messenger: messages/inbox/Alice_123/audio/file.mp4 → group by Alice_123 (depth-2 from root)
-    // WhatsApp:  WhatsApp Audio/file.opus → group by WhatsApp Audio (depth-1)
-    // Fallback:  file.mp3 → single group
     let prefix: string;
-    if (parts.length >= 4) {
-      // Try to detect "inbox/Name" pattern — group at depth index 2
-      prefix = parts.slice(0, 3).join("/");
-    } else if (parts.length >= 2) {
-      prefix = parts.slice(0, parts.length - 1).join("/");
+
+    if (platform === "instagram") {
+      // your_instagram_activity/messages/inbox/NomPersonne_ABC/audio/file.m4a
+      // or messages/inbox/NomPersonne_ABC/audio/file.m4a
+      const inboxIdx = parts.findIndex((p) => p === "inbox");
+      if (inboxIdx !== -1 && parts.length > inboxIdx + 1) {
+        prefix = parts.slice(0, inboxIdx + 2).join("/");
+      } else {
+        prefix = parts.slice(0, Math.max(1, parts.length - 1)).join("/");
+      }
+    } else if (platform === "messenger") {
+      // messages/inbox/NomPersonne_ABC123/audio/file.mp4
+      const inboxIdx = parts.findIndex((p) => p === "inbox");
+      if (inboxIdx !== -1 && parts.length > inboxIdx + 1) {
+        prefix = parts.slice(0, inboxIdx + 2).join("/");
+      } else {
+        prefix = parts.slice(0, Math.max(1, parts.length - 1)).join("/");
+      }
+    } else if (platform === "whatsapp") {
+      prefix = parts.length >= 2 ? parts.slice(0, parts.length - 1).join("/") : "__root__";
     } else {
-      prefix = "__root__";
+      if (parts.length >= 4) {
+        prefix = parts.slice(0, 3).join("/");
+      } else if (parts.length >= 2) {
+        prefix = parts.slice(0, parts.length - 1).join("/");
+      } else {
+        prefix = "__root__";
+      }
     }
     convMap.set(prefix, (convMap.get(prefix) ?? 0) + 1);
   });
 
   return Array.from(convMap.entries())
-    .map(([prefix, count]) => ({ prefix, count, name: prefix.split("/").pop() ?? prefix }))
+    .map(([prefix, count]) => ({
+      prefix,
+      count,
+      name: prefix.split("/").pop()?.replace(/_[a-z0-9]{6,}$/i, "").replace(/_/g, " ") ?? prefix,
+    }))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -802,12 +951,22 @@ async function extractAudiosFromZip(zipFile: File, filterPrefixes?: Set<string>)
   const contents = await zip.loadAsync(zipFile);
   const audioFiles: File[] = [];
 
+  const allNames = Object.keys(contents.files);
+  const platform = detectZipPlatform(allNames);
+
   const entries = Object.values(contents.files).filter((entry) => {
     if (entry.dir || EXCLUDE_PATHS.test(entry.name) || !AUDIO_EXTENSIONS.test(entry.name)) return false;
     if (filterPrefixes && filterPrefixes.size > 0) {
       const parts = entry.name.split("/");
       let prefix: string;
-      if (parts.length >= 4) {
+      if (platform === "instagram" || platform === "messenger") {
+        const inboxIdx = parts.findIndex((p) => p === "inbox");
+        if (inboxIdx !== -1 && parts.length > inboxIdx + 1) {
+          prefix = parts.slice(0, inboxIdx + 2).join("/");
+        } else {
+          prefix = parts.slice(0, Math.max(1, parts.length - 1)).join("/");
+        }
+      } else if (parts.length >= 4) {
         prefix = parts.slice(0, 3).join("/");
       } else if (parts.length >= 2) {
         prefix = parts.slice(0, parts.length - 1).join("/");
