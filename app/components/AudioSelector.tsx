@@ -10,6 +10,7 @@ interface AudioSelectorProps {
   onLivre: () => void;
   ctaVocapsule: string;
   ctaLivre: string;
+  showLivre?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -52,7 +53,7 @@ const sourceColors: Record<string, string> = {
 };
 
 export default function AudioSelector({
-  audios, config, onSelect, onVocapsule, onLivre, ctaVocapsule, ctaLivre,
+  audios, config, onSelect, onVocapsule, onLivre, ctaVocapsule, ctaLivre, showLivre = true,
 }: AudioSelectorProps) {
   const [selected, setSelected] = useState<Set<number>>(
     new Set(Array.from({ length: audios.length }, (_, i) => i))
@@ -309,7 +310,7 @@ export default function AudioSelector({
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: showLivre ? "1fr 1fr" : "1fr", gap: 12 }}>
         <motion.button
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.97 }}
@@ -330,24 +331,26 @@ export default function AudioSelector({
           <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.4)", margin: 0 }}>Fusion audio · MP3 · QR code</p>
         </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => { onSelect(Array.from(selected).map(i => audios[i])); onLivre(); }}
-          disabled={selected.size === 0}
-          style={{
-            padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: selected.size === 0 ? "not-allowed" : "pointer",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            opacity: selected.size === 0 ? 0.5 : 1,
-          } as React.CSSProperties}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22, color: "rgba(240,232,216,0.6)", display: "block", marginBottom: 8 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
-          <p style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 500, color: "#f0e8d8", margin: "0 0 4px" }}>{ctaLivre}</p>
-          <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.4)", margin: 0 }}>Transcription · texte · téléchargeable</p>
-        </motion.button>
+        {showLivre && (
+          <motion.button
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => { onSelect(Array.from(selected).map(i => audios[i])); onLivre(); }}
+            disabled={selected.size === 0}
+            style={{
+              padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: selected.size === 0 ? "not-allowed" : "pointer",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              opacity: selected.size === 0 ? 0.5 : 1,
+            } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22, color: "rgba(240,232,216,0.6)", display: "block", marginBottom: 8 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 500, color: "#f0e8d8", margin: "0 0 4px" }}>{ctaLivre}</p>
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.4)", margin: 0 }}>Transcription · texte · téléchargeable</p>
+          </motion.button>
+        )}
       </div>
     </motion.div>
   );

@@ -8,6 +8,8 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   User,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
@@ -50,16 +52,36 @@ const firebaseErrorMsg: Record<string, string> = {
   "auth/cancelled-popup-request": "Connexion annulée.",
 };
 
+const SESSION_KEY = "ekko_auth_user";
+
+function readCachedUser(): EkkoUser | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = sessionStorage.getItem(SESSION_KEY);
+    return v ? JSON.parse(v) : null;
+  } catch { return null; }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<EkkoUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    getRedirectResult(auth).catch(() => {});
+
+    let resolved = false;
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser ? toEkkoUser(firebaseUser) : null);
-      setIsLoading(false);
+      const u = firebaseUser ? toEkkoUser(firebaseUser) : null;
+      if (u) {
+        try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); } catch {}
+      }
+      setUser(u);
+      if (!resolved) {
+        resolved = true;
+        setIsLoading(false);
+      }
     });
-    return unsub;
+    return () => { resolved = true; unsub(); };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -87,7 +109,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      // Essayer popup d'abord, fallback redirect si bloqué
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (popupErr: unknown) {
+        const code = (popupErr as { code?: string }).code ?? "";
+        if (code === "auth/popup-blocked" || code === "auth/cancelled-popup-request") {
+          await signInWithRedirect(auth, provider);
+          return { ok: true };
+        }
+        throw popupErr;
+      }
       return { ok: true };
     } catch (e: unknown) {
       const code = (e as { code?: string }).code ?? "";
@@ -96,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch {}
     signOut(auth);
   }, []);
 

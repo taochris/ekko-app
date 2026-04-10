@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     apiVersion: "2026-03-25.dahlia",
   });
   try {
-    const { theme } = await req.json();
+    const { theme, uploadId, storage, storageLabel, uid } = await req.json();
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
@@ -18,16 +18,16 @@ export async function POST(req: NextRequest) {
         {
           price_data: {
             currency: "eur",
-            unit_amount: 999,
+            unit_amount: 999 + (storage ?? 0),
             product_data: {
-              name: "Vocapsule EKKO — Accès complet",
-              description: "Import, tri, assemblage des voix, téléchargement et QR code.",
+              name: "Écho EKKO — Accès complet" + (storageLabel ? ` + ${storageLabel}` : ""),
+              description: "Assemblage de vos voix · Téléchargement MP3 · QR code" + (storageLabel ? ` · Conservation ${storageLabel}` : ""),
             },
           },
           quantity: 1,
         },
       ],
-      success_url: `${origin}/theme/${theme ?? "deuil"}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/theme/${theme ?? "deuil"}?payment=success&session_id={CHECKOUT_SESSION_ID}&upload_id=${uploadId ?? ""}&storage=${storage ?? 0}&uid=${uid ?? ""}`,
       cancel_url: `${origin}/theme/${theme ?? "deuil"}?payment=cancel`,
       locale: "fr",
     });

@@ -12,8 +12,6 @@ interface ImportGuideProps {
     label: string;
   };
   onAudiosImported: (files: File[]) => void;
-  hasPaid: boolean;
-  onPaid: () => void;
 }
 
 const platforms = [
@@ -89,9 +87,7 @@ const platforms = [
   },
 ];
 
-export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, onPaid }: ImportGuideProps) {
-  const [payLoading, setPayLoading] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
+export default function ImportGuide({ theme, config, onAudiosImported }: ImportGuideProps) {
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [importedFiles, setImportedFiles] = useState<File[]>([]);
@@ -102,30 +98,6 @@ export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, 
   const [pendingZip, setPendingZip] = useState<File | null>(null);
   const [selectedConvs, setSelectedConvs] = useState<Set<string>>(new Set());
 
-  const handlePayment = async () => {
-    setPayLoading(true);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("Stripe:", data.error);
-        setPayLoading(false);
-      }
-    } catch (err) {
-      console.error("Stripe checkout error:", err);
-      setPayLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (hasPaid) setShowPaywall(false);
-  }, [hasPaid]);
 
   const applyConversationSelection = useCallback(async (zip: File, prefixes: Set<string>) => {
     const extracted = await extractAudiosFromZip(zip, prefixes);
@@ -157,13 +129,14 @@ export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, 
     } else if (zipFiles.length > 0) {
       const zip = zipFiles[0];
       const convs = await detectConversations(zip);
-      if (convs.length >= 1) {
+      if (convs.length > 1) {
+        // Plusieurs conversations → afficher la modal de sélection
         setConversations(convs);
         setSelectedConvs(new Set(convs.map((c: { name: string; count: number; prefix: string }) => c.prefix)));
         setPendingZip(zip);
       } else {
-        setImportedFiles([]);
-        const extracted = await extractAudiosFromZip(zip);
+        // 0 ou 1 conversation (WhatsApp simple, fichiers à la racine, etc.) → importer directement
+        const extracted = await extractAudiosFromZip(zip, convs.length === 1 ? new Set([convs[0].prefix]) : undefined);
         setImportedFiles(extracted);
         if (extracted.length > 0) {
           setShowSuccess(true);
@@ -181,7 +154,7 @@ export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, 
       "application/zip": [".zip"],
     },
     multiple: true,
-    noClick: true,
+    noClick: false,
   });
 
   const loadDemoFiles = () => {
@@ -441,76 +414,6 @@ export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, 
         )}
       </AnimatePresence>
 
-      {/* Modale paywall */}
-      <AnimatePresence>
-        {showPaywall && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: "fixed", inset: 0, zIndex: 50,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: "rgba(0,0,0,0.7)", padding: 24,
-            }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowPaywall(false); }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.25 }}
-              className="rounded-2xl overflow-hidden w-full"
-              style={{ maxWidth: 480, border: `1px solid ${config.accent}30`, background: "#110d14" }}
-            >
-              <div style={{ padding: "22px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: `${config.accent}90`, margin: "0 0 12px" }}>
-                  Accès complet
-                </p>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "#f0e8d8", margin: "0 0 6px", fontWeight: 400 }}>
-                  9,99 <span style={{ fontSize: 16 }}>€</span>
-                </p>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.5)", margin: 0, fontStyle: "italic", lineHeight: 1.7 }}>
-                  Import, tri, assemblage des voix, téléchargement et QR code.
-                </p>
-              </div>
-              <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
-                {[
-                  "Import illimité (MP3, WAV, ZIP WhatsApp, Instagram…)",
-                  "Tri et sélection des audios par date",
-                  "Assemblage en une seule vocapsule",
-                  "Téléchargement du fichier audio",
-                  "QR code pour écouter sur n’importe quel appareil",
-                ].map((item, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="2" style={{ width: 14, height: 14, flexShrink: 0 }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.6)" }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ padding: "0 24px 22px" }}>
-                <motion.button
-                  whileHover={{ scale: payLoading ? 1 : 1.02 }}
-                  whileTap={{ scale: payLoading ? 1 : 0.97 }}
-                  onClick={handlePayment}
-                  disabled={payLoading}
-                  style={{
-                    width: "100%", padding: "14px 0", borderRadius: 14,
-                    fontFamily: "Georgia, serif", fontSize: 15, cursor: payLoading ? "not-allowed" : "pointer",
-                    background: payLoading ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${config.accent}50, ${config.accent}85)`,
-                    border: `1px solid ${config.accent}40`,
-                    color: payLoading ? "rgba(240,232,216,0.3)" : "#f0e8d8",
-                  } as React.CSSProperties}
-                >
-                  {payLoading ? "Redirection vers le paiement…" : "Payer 9,99 € et commencer"}
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Drop zone + démo + fichiers importés */}
       <>
@@ -523,14 +426,6 @@ export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, 
           {...getRootProps()}
           onMouseEnter={() => setIsDropHovered(true)}
           onMouseLeave={() => setIsDropHovered(false)}
-          onClick={(e) => {
-            if (!hasPaid) {
-              e.stopPropagation();
-              setShowPaywall(true);
-            } else {
-              open();
-            }
-          }}
           className="relative rounded-2xl p-10 text-center cursor-pointer transition-all duration-300"
           style={{
             background: isDragActive
@@ -664,20 +559,25 @@ export default function ImportGuide({ theme, config, onAudiosImported, hasPaid, 
               ))}
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleContinue}
-              className="w-full mt-5 py-4 rounded-2xl text-base font-medium ekko-serif tracking-wide"
-              style={{
-                background: `linear-gradient(135deg, ${config.accent}40, ${config.accent}70)`,
-                border: `1px solid ${config.accent}40`,
-                color: "#f0e8d8",
-                boxShadow: `0 8px 30px ${config.accent}15`,
-              }}
-            >
-              Créer ma Vocapsule →
-            </motion.button>
+            <div className="w-full mt-5 flex flex-col items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleContinue}
+                className="w-full py-4 rounded-2xl text-base font-medium ekko-serif tracking-wide"
+                style={{
+                  background: `linear-gradient(135deg, ${config.accent}40, ${config.accent}70)`,
+                  border: `1px solid ${config.accent}40`,
+                  color: "#f0e8d8",
+                  boxShadow: `0 8px 30px ${config.accent}15`,
+                }}
+              >
+                Choisir mes moments →
+              </motion.button>
+              <p className="ekko-serif text-xs italic" style={{ color: "rgba(240,232,216,0.3)" }}>
+                Vous pourrez les trier et les écouter avant de créer votre ekko
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

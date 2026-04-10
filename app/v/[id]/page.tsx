@@ -16,19 +16,18 @@ export default function VocapsulePage() {
 
   useEffect(() => {
     if (!id) return;
-    try {
-      const raw = localStorage.getItem(`ekko_v_${id}`);
-      if (!raw) { setNotFound(true); return; }
-      const { b64, theme } = JSON.parse(raw);
-      if (theme) setAccent(theme);
-      const binary = atob(b64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const blob = new Blob([bytes], { type: "audio/wav" });
-      setAudioSrc(URL.createObjectURL(blob));
-    } catch {
-      setNotFound(true);
-    }
+    // Chercher l'URL audio depuis l'API (Firebase Storage)
+    fetch(`/api/storage/echo?echo_id=${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.audioUrl) {
+          setAudioSrc(data.audioUrl);
+          if (data.accentColor) setAccent(data.accentColor);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => setNotFound(true));
   }, [id]);
 
   const togglePlay = () => {
