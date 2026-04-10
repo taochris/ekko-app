@@ -54,7 +54,7 @@ interface Invoice {
   status: "payee" | "en_attente";
 }
 
-const STORAGE_PRICES: Record<number, string> = { 100: "9,99 €", 200: "14,99 €", 7: "0,00 €" };
+const STORAGE_PRICES: Record<number, string> = { 100: "10,99 €", 200: "11,99 €", 7: "9,99 €" };
 const STORAGE_LABELS_INV: Record<number, string> = { 100: "1 an", 200: "2 ans", 7: "7 jours" };
 
 function SectionLabel({ children, accent }: { children: string; accent: string }) {
@@ -280,15 +280,21 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
                           Expire dans {days} jour{days > 1 ? "s" : ""} — {formatDate(echo.expiresAt)}
                         </p>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0, alignItems: "center" }}>
                         <button onClick={() => router.push("/v/" + echo.echoId)}
-                          style={{ padding: "8px 16px", borderRadius: 10, cursor: "pointer", fontSize: 13, background: a + "20", border: "1px solid " + a + "35", color: a, fontFamily: "Georgia, serif" }}>
+                          style={{ padding: "8px 16px", borderRadius: 10, cursor: "pointer", fontSize: 13, background: a + "20", border: "1px solid " + a + "35", color: a, fontFamily: "Georgia, serif", width: "100%" }}>
                           Ecouter
                         </button>
-                        <button onClick={() => navigator.clipboard?.writeText(window.location.origin + "/v/" + echo.echoId)}
-                          style={{ padding: "8px 16px", borderRadius: 10, cursor: "pointer", fontSize: 13, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(240,232,216,0.5)", fontFamily: "Georgia, serif" }}>
-                          Copier lien
-                        </button>
+                        <a href={typeof window !== "undefined" ? window.location.origin + "/v/" + echo.echoId : "/v/" + echo.echoId} target="_blank" rel="noreferrer"
+                          style={{ display: "block", padding: 6, borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=${encodeURIComponent((typeof window !== "undefined" ? window.location.origin : "") + "/v/" + echo.echoId)}&bgcolor=1a1520&color=${a.replace("#", "")}&margin=4`}
+                            alt="QR Code"
+                            width={64} height={64}
+                            style={{ borderRadius: 6, display: "block" }}
+                          />
+                        </a>
                       </div>
                     </div>
                     <div style={{ marginTop: 14, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.06)" }}>
