@@ -167,8 +167,8 @@ export default function VocapsulePage() {
 
           {/* Download */}
           <a
-            href={audioSrc}
-            download="vocapsule-ekko.wav"
+            href={`/api/storage/proxy?echoId=${id}&download=1`}
+            download={`echo-ekko-${id.slice(0, 8)}.mp4`}
             style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               padding: "10px 0", borderRadius: 12, textDecoration: "none",
