@@ -86,6 +86,7 @@ export default function ThemePage({ theme }: { theme: string }) {
   const [recovering, setRecovering] = useState(false);
   const [echoId, setEchoId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [showEchos, setShowEchos] = useState(false);
 
   // Retour Stripe après paiement : fusionner les audios et afficher l'écran de dévoilement
   useEffect(() => {
@@ -202,24 +203,36 @@ export default function ThemePage({ theme }: { theme: string }) {
           </NavButton>
           {user ? (
             <>
-              <button
-                onClick={() => router.push("/account")}
-                className="ekko-serif text-xs hidden md:block"
-                style={{ color: `${config.accent}90`, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: 8, transition: "color 0.2s" }}
-              >
-                ✦ {user.name}
-              </button>
-              <NavButton onClick={logout} accent={config.accent}>
-                Déconnexion
+              <NavButton onClick={() => setShowEchos(true)} accent={config.accent}>
+                ✦ Mes échos
+              </NavButton>
+              <NavButton onClick={() => router.push("/account")} accent={config.accent}>
+                <span className="flex items-center gap-2">
+                  Mon compte
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: config.accent, display: "inline-block", opacity: 0.85 }} />
+                </span>
+              </NavButton>
+              <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
+                FAQ
               </NavButton>
             </>
           ) : (
-            <NavButton onClick={() => router.push("/compte")} accent={config.accent}>
-              Connexion
-            </NavButton>
+            <>
+              <NavButton onClick={() => router.push("/compte")} accent={config.accent}>
+                Connexion
+              </NavButton>
+              <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
+                FAQ
+              </NavButton>
+            </>
           )}
         </motion.div>
       </nav>
+
+      {/* Modal Mes échos express */}
+      {showEchos && user && (
+        <EchosQuickModal uid={user.uid} accent={config.accent} onClose={() => setShowEchos(false)} />
+      )}
 
       {/* Content */}
       <div className="relative z-10 px-6 md:px-14 pb-24">
@@ -1450,7 +1463,7 @@ function EchoRevealScreen({
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const pageUrl = typeof window !== "undefined" ? `${window.location.origin}/v/${echoId}` : `/v/${echoId}`;
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(pageUrl)}&bgcolor=0d0a0f&color=${config.accent.replace("#", "")}&margin=8`;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pageUrl)}&bgcolor=0d0a0f&color=${config.accent.replace("#", "")}&margin=8`;
 
   useEffect(() => {
     // Lancer l'animation d'ouverture après 600ms
@@ -1623,12 +1636,12 @@ function EchoRevealScreen({
             background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
             display: "flex", gap: 18, alignItems: "center",
           }}>
-            <img src={qrSrc} alt="QR Code" style={{ width: 90, height: 90, borderRadius: 10, flexShrink: 0 }} />
+            <img src={qrSrc} alt="QR Code" style={{ width: 140, height: 140, borderRadius: 10, flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p className="ekko-serif" style={{ fontSize: 12, color: `${config.accent}90`, margin: "0 0 6px", letterSpacing: "0.1em" }}>
+              <p className="ekko-serif" style={{ fontSize: 14, color: config.accent, margin: "0 0 8px", letterSpacing: "0.1em" }}>
                 Lien de partage
               </p>
-              <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.35)", margin: "0 0 10px", wordBreak: "break-all" }}>
+              <p className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.7)", margin: "0 0 12px", wordBreak: "break-all" }}>
                 {pageUrl}
               </p>
               <button
@@ -1636,7 +1649,7 @@ function EchoRevealScreen({
                 style={{
                   padding: "6px 14px", borderRadius: 8, cursor: "pointer",
                   background: `${config.accent}15`, border: `1px solid ${config.accent}30`,
-                  color: config.accent, fontFamily: "Georgia, serif", fontSize: 11,
+                  color: config.accent, fontFamily: "Georgia, serif", fontSize: 13,
                 }}
               >
                 Copier le lien
@@ -1681,6 +1694,182 @@ function EchoRevealScreen({
           onEnded={() => setIsPlaying(false)}
         />
       )}
+    </motion.div>
+  );
+}
+
+// ─── ECHOS QUICK MODAL ────────────────────────────────────────────────────────
+
+interface EchoItem {
+  echoId: string;
+  theme: string;
+  accentColor: string;
+  expiresAt: string | null;
+  storageOption: number;
+  createdApprox: string | null;
+}
+
+function EchosQuickModal({ uid, accent, onClose }: { uid: string; accent: string; onClose: () => void }) {
+  const [echos, setEchos] = useState<EchoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/account/echos?uid=${uid}`)
+      .then(r => r.json())
+      .then(d => { setEchos(d.echos ?? []); setLoading(false); })
+      .catch(() => { setError("Impossible de charger vos échos."); setLoading(false); });
+  }, [uid]);
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+  const copyLink = (echoId: string) => {
+    navigator.clipboard.writeText(`${baseUrl}/v/${echoId}`);
+    setCopiedId(echoId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const formatExpiry = (iso: string | null) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  };
+
+  const storageLabel = (opt: number) =>
+    opt === 200 ? "2 ans" : opt === 100 ? "1 an" : "7 jours";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        background: "rgba(13,10,15,0.75)", backdropFilter: "blur(8px)",
+        display: "flex", alignItems: "flex-start", justifyContent: "center",
+        paddingTop: 80,
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -16, scale: 0.97 }}
+        transition={{ duration: 0.22 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: "100%", maxWidth: 460, maxHeight: "80vh", overflowY: "auto",
+          background: "#0d0a0f", border: `1px solid ${accent}22`,
+          borderRadius: 20, padding: 28,
+          boxShadow: `0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px ${accent}10`,
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+          <div>
+            <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: `${accent}70`, marginBottom: 4 }}>
+              Accès rapide
+            </p>
+            <h2 className="ekko-serif" style={{ fontSize: 20, fontWeight: 300, color: "#f0e8d8", margin: 0 }}>
+              Mes échos
+            </h2>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(240,232,216,0.3)", fontSize: 20, lineHeight: 1, padding: 4 }}>
+            ✕
+          </button>
+        </div>
+
+        {/* Contenu */}
+        {loading && (
+          <p className="ekko-serif" style={{ textAlign: "center", color: "rgba(240,232,216,0.3)", fontSize: 13, padding: "32px 0", fontStyle: "italic" }}>
+            Chargement…
+          </p>
+        )}
+        {error && (
+          <p className="ekko-serif" style={{ textAlign: "center", color: "#e05580", fontSize: 13, padding: "24px 0" }}>{error}</p>
+        )}
+        {!loading && !error && echos.length === 0 && (
+          <p className="ekko-serif" style={{ textAlign: "center", color: "rgba(240,232,216,0.3)", fontSize: 13, padding: "32px 0", fontStyle: "italic" }}>
+            Aucun écho actif pour le moment.
+          </p>
+        )}
+        {!loading && echos.map((echo) => {
+          const pageUrl = `${baseUrl}/v/${echo.echoId}`;
+          const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pageUrl)}&bgcolor=0d0a0f&color=${echo.accentColor.replace("#", "")}&margin=6`;
+          const expiry = formatExpiry(echo.expiresAt);
+
+          return (
+            <div key={echo.echoId} style={{
+              borderRadius: 14, border: `1px solid ${echo.accentColor}20`,
+              background: "rgba(255,255,255,0.02)", padding: "16px 18px",
+              marginBottom: 12, display: "flex", gap: 18, alignItems: "flex-start",
+            }}>
+              {/* QR code */}
+              <div style={{ flexShrink: 0, borderRadius: 10, overflow: "hidden", border: `1px solid ${echo.accentColor}25`, background: "#0d0a0f" }}>
+                <img src={qrSrc} alt="QR" width={80} height={80} style={{ display: "block" }} />
+              </div>
+
+              {/* Infos */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="ekko-serif" style={{ fontSize: 11, color: `${echo.accentColor}90`, letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 4px" }}>
+                  {echo.theme} · {storageLabel(echo.storageOption)}
+                </p>
+                {expiry && (
+                  <p className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.35)", margin: "0 0 10px" }}>
+                    Expire le {expiry}
+                  </p>
+                )}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {/* Lien direct */}
+                  <a
+                    href={pageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ekko-serif"
+                    style={{
+                      fontSize: 12, padding: "5px 12px", borderRadius: 8,
+                      border: `1px solid ${echo.accentColor}35`,
+                      color: echo.accentColor, background: "none",
+                      textDecoration: "none", display: "inline-block",
+                      transition: "background 0.15s",
+                    }}
+                  >
+                    ▶ Écouter
+                  </a>
+                  {/* Copier lien */}
+                  <button
+                    onClick={() => copyLink(echo.echoId)}
+                    className="ekko-serif"
+                    style={{
+                      fontSize: 12, padding: "5px 12px", borderRadius: 8,
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      color: copiedId === echo.echoId ? echo.accentColor : "rgba(240,232,216,0.4)",
+                      background: "none", cursor: "pointer", transition: "color 0.2s",
+                    }}
+                  >
+                    {copiedId === echo.echoId ? "✓ Copié !" : "⎘ Lien"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Footer */}
+        <div style={{ marginTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", fontStyle: "italic", margin: 0 }}>
+            {echos.length} écho{echos.length > 1 ? "s" : ""} actif{echos.length > 1 ? "s" : ""}
+          </p>
+          <button
+            onClick={onClose}
+            className="ekko-serif"
+            style={{ fontSize: 12, background: "none", border: "none", color: `${accent}60`, cursor: "pointer" }}
+          >
+            Fermer
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

@@ -124,7 +124,27 @@ export default function AudioSelector({
 
   const deselectAll = () => { setSelected(new Set()); onSelect([]); };
 
+  const MAX_DURATION = 3600; // 1h
+  const WARN_DURATION = 3000; // 50 min
+
   const totalDuration = Array.from(selected).reduce((s, i) => s + (durations[i] ?? 0), 0);
+  const durationPercent = Math.min((totalDuration / MAX_DURATION) * 100, 100);
+  const isOverLimit = totalDuration > MAX_DURATION;
+  const isNearLimit = !isOverLimit && totalDuration >= WARN_DURATION;
+
+  const durationBarColor = isOverLimit
+    ? "#e05580"
+    : isNearLimit
+    ? "#f0a855"
+    : config.accent;
+
+  function formatDurationLong(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}h${m.toString().padStart(2, "0")}m${s.toString().padStart(2, "0")}s`;
+    return `${m}m${s.toString().padStart(2, "0")}s`;
+  }
 
   return (
     <motion.div
@@ -295,18 +315,47 @@ export default function AudioSelector({
         ))}
       </div>
 
-      {/* Summary bar */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 16px", borderRadius: 12, marginBottom: 24,
-        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-      }}>
-        <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.4)" }}>
-          {selected.size} audio{selected.size > 1 ? "s" : ""} sélectionné{selected.size > 1 ? "s" : ""}
-        </span>
-        <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: config.accent }}>
-          {totalDuration > 0 ? `durée totale : ${formatDuration(totalDuration)}` : "calcul en cours…"}
-        </span>
+      {/* Duration bar */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: 8,
+        }}>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.4)" }}>
+            {selected.size} audio{selected.size > 1 ? "s" : ""} sélectionné{selected.size > 1 ? "s" : ""}
+          </span>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: durationBarColor, transition: "color 0.3s" }}>
+            {totalDuration > 0 ? formatDurationLong(totalDuration) : "calcul en cours…"}
+            <span style={{ color: "rgba(240,232,216,0.2)", marginLeft: 6 }}>/ 1h max</span>
+          </span>
+        </div>
+
+        {/* Barre de progression */}
+        <div style={{
+          height: 4, borderRadius: 4, background: "rgba(255,255,255,0.06)", overflow: "hidden",
+        }}>
+          <motion.div
+            animate={{ width: `${durationPercent}%` }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{
+              height: "100%", borderRadius: 4,
+              background: durationBarColor,
+              boxShadow: isOverLimit ? `0 0 8px ${durationBarColor}80` : "none",
+            }}
+          />
+        </div>
+
+        {/* Messages d'alerte */}
+        {isNearLimit && (
+          <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "#f0a855", margin: "8px 0 0", fontStyle: "italic" }}>
+            ⚠️ Vous approchez de la limite — moins de 10 minutes restantes.
+          </p>
+        )}
+        {isOverLimit && (
+          <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "#e05580", margin: "8px 0 0", fontStyle: "italic" }}>
+            La sélection dépasse 1h. Retirez des audios ou créez plusieurs vocapsules.
+          </p>
+        )}
       </div>
 
       {/* Action buttons */}
@@ -315,12 +364,12 @@ export default function AudioSelector({
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => { onSelect(Array.from(selected).map(i => audios[i])); onVocapsule(); }}
-          disabled={selected.size === 0}
+          disabled={selected.size === 0 || isOverLimit}
           style={{
-            padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: selected.size === 0 ? "not-allowed" : "pointer",
+            padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: selected.size === 0 || isOverLimit ? "not-allowed" : "pointer",
             background: `linear-gradient(135deg, ${config.accent}20, ${config.accent}40)`,
             border: `1px solid ${config.accent}40`,
-            opacity: selected.size === 0 ? 0.5 : 1,
+            opacity: selected.size === 0 || isOverLimit ? 0.5 : 1,
             boxShadow: `0 8px 30px ${config.accent}15`,
           } as React.CSSProperties}
         >
