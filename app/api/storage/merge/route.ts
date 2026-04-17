@@ -5,8 +5,9 @@ import { promises as fs } from "fs";
 import { spawn } from "child_process";
 import os from "os";
 import path from "path";
+import ffmpegStatic from "ffmpeg-static";
 
-const ffmpegPath: string = process.env.FFMPEG_PATH ?? "ffmpeg";
+const ffmpegPath: string = process.env.FFMPEG_PATH ?? (ffmpegStatic as string) ?? "ffmpeg";
 
 export const runtime = "nodejs";
 
