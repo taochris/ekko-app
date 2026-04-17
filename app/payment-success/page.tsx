@@ -1,8 +1,8 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function PaymentSuccess() {
+function PaymentSuccessInner() {
   const params = useSearchParams();
 
   useEffect(() => {
@@ -32,5 +32,13 @@ export default function PaymentSuccess() {
       <p style={{ fontSize: 22, marginBottom: 12 }}>Paiement confirmé ✓</p>
       <p style={{ fontSize: 14, opacity: 0.5 }}>Fermeture en cours…</p>
     </div>
+  );
+}
+
+export default function PaymentSuccess() {
+  return (
+    <Suspense>
+      <PaymentSuccessInner />
+    </Suspense>
   );
 }
