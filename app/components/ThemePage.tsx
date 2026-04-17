@@ -88,25 +88,40 @@ export default function ThemePage({ theme }: { theme: string }) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [showEchos, setShowEchos] = useState(false);
 
-  // Retour Stripe après paiement : fusionner les audios et afficher l'écran de dévoilement
+  // Capturer les params URL immédiatement au montage (avant que history.replaceState les efface)
+  const stripeParamsRef = useRef<{
+    sessionId: string; uploadId: string; storageOption: number; uid: string;
+  } | null>(null);
   useEffect(() => {
-    if (isLoading) return;
-
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
     const sessionId = params.get("session_id");
     const uploadId = params.get("upload_id");
-    const storageOption = parseInt(params.get("storage") ?? "0", 10);
-    const uid = params.get("uid") ?? user?.uid ?? "anonymous";
-    if (payment !== "success" || !sessionId || !uploadId) return;
+    if (payment === "success" && sessionId && uploadId) {
+      stripeParamsRef.current = {
+        sessionId,
+        uploadId,
+        storageOption: parseInt(params.get("storage") ?? "0", 10),
+        uid: params.get("uid") ?? "anonymous",
+      };
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
-    window.history.replaceState({}, "", window.location.pathname);
+  // Retour Stripe après paiement : fusionner les audios et afficher l'écran de dévoilement
+  useEffect(() => {
+    if (isLoading) return;
+    const p = stripeParamsRef.current;
+    if (!p) return;
+    stripeParamsRef.current = null;
+
+    const uid = p.uid !== "anonymous" ? p.uid : (user?.uid ?? "anonymous");
 
     setRecovering(true);
     (async () => {
       try {
         // Vérifier le paiement Stripe
-        const verifyRes = await fetch(`/api/stripe/verify?session_id=${sessionId}`);
+        const verifyRes = await fetch(`/api/stripe/verify?session_id=${p.sessionId}`);
         const verifyData = await verifyRes.json();
         if (!verifyData.paid) { setRecovering(false); return; }
 
@@ -115,9 +130,9 @@ export default function ThemePage({ theme }: { theme: string }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            uploadId,
+            uploadId: p.uploadId,
             theme,
-            storageOption,
+            storageOption: p.storageOption,
             accentColor: config.accent,
             uid,
           }),
@@ -1511,24 +1526,22 @@ function EchoRevealScreen({
               style={{ position: "absolute", inset: -20, borderRadius: "50%", background: `radial-gradient(circle, ${config.accent}30, transparent)` }}
             />
             {/* Cadenas SVG animé */}
-            <motion.div
-              animate={{ scale: [1, 1.04, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
-              style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.2" style={{ width: 100, height: 100, overflow: "visible" }}>
-                {/* Corps cadenas */}
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                {/* Arceau ouvert (statique, déjà ouvert) */}
-                <path
-                  strokeLinecap="round"
-                  d="M7 11V7a5 5 0 0 1 9.9-1"
-                  style={{ transformOrigin: "12px 11px", transform: "rotate(-30deg) translateY(-3px)" }}
-                />
-                {/* Trou de serrure */}
-                <circle cx="12" cy="16" r="1.5" fill={config.accent} />
-              </svg>
-            </motion.div>
+            <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.2"
+              style={{ width: 100, height: 100, overflow: "visible", display: "block" }}>
+              {/* Corps cadenas */}
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              {/* Arceau : fermé → ouvert via Framer Motion */}
+              <motion.path
+                strokeLinecap="round"
+                d="M7 11V7a5 5 0 0 1 10 0v4"
+                initial={{ rotate: 0, y: 0 }}
+                animate={{ rotate: -35, y: -4 }}
+                transition={{ duration: 0.7, delay: 1.0, ease: "easeOut" }}
+                style={{ originX: "12px", originY: "11px" }}
+              />
+              {/* Trou de serrure */}
+              <circle cx="12" cy="16" r="1.5" fill={config.accent} stroke="none" />
+            </svg>
           </motion.div>
           <motion.p
             className="ekko-serif"
