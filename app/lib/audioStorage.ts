@@ -8,8 +8,9 @@ import { ref, uploadBytes, getBlob, listAll, deleteObject } from "firebase/stora
 export async function uploadAudiosToStorage(files: File[]): Promise<string> {
   const uploadId = crypto.randomUUID();
   await Promise.all(
-    files.map((file) => {
-      const fileRef = ref(storage, `temp/${uploadId}/${file.name}`);
+    files.map((file, i) => {
+      const idx = String(i).padStart(4, "0");
+      const fileRef = ref(storage, `temp/${uploadId}/${idx}_${file.name}`);
       return uploadBytes(fileRef, file);
     })
   );

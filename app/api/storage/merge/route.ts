@@ -77,16 +77,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Aucun fichier trouvé" }, { status: 404 });
     }
 
-    // 2. Télécharger chaque fichier dans un fichier tmp
+    // 2. Trier les fichiers par nom (préfixe 0000_, 0001_, ...) pour respecter l'ordre de sélection
+    tempFiles.sort((a, b) => a.name.localeCompare(b.name));
     const ext = tempFiles[0].name.split(".").pop() ?? "mp4";
+    const orderedPaths: string[] = new Array(tempFiles.length);
     await Promise.all(
       tempFiles.map(async (f, i) => {
         const [buf] = await f.download();
         const p = path.join(tmpDir, `input_${i}.${ext}`);
         await fs.writeFile(p, buf);
-        inputPaths.push(p);
+        orderedPaths[i] = p;
       })
     );
+    orderedPaths.forEach(p => inputPaths.push(p));
 
     // 3. Fusionner avec ffmpeg (concat propre)
     const outputPath = path.join(tmpDir, `output.mp4`);

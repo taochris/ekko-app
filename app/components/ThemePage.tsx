@@ -180,13 +180,13 @@ export default function ThemePage({ theme }: { theme: string }) {
       <BlobBackground variant={config.blobVariant} />
 
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
+      <nav className="relative z-10 flex items-center justify-between px-4 py-5 md:px-14 md:py-7">
         <EkkoLogo size="md" glow={true} />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-1 md:gap-3"
         >
           {step !== "home" && step !== "loading" && (
             <NavButton onClick={() => {
@@ -206,24 +206,30 @@ export default function ThemePage({ theme }: { theme: string }) {
               <NavButton onClick={() => setShowEchos(true)} accent={config.accent}>
                 ✦ Mes échos
               </NavButton>
-              <NavButton onClick={() => router.push("/account")} accent={config.accent}>
-                <span className="flex items-center gap-2">
-                  Mon compte
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: config.accent, display: "inline-block", opacity: 0.85 }} />
-                </span>
-              </NavButton>
-              <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
-                FAQ
-              </NavButton>
+              <span className="hidden md:inline-flex">
+                <NavButton onClick={() => router.push("/account")} accent={config.accent}>
+                  <span className="flex items-center gap-2">
+                    Mon compte
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: config.accent, display: "inline-block", opacity: 0.85 }} />
+                  </span>
+                </NavButton>
+              </span>
+              <span className="hidden md:inline-flex">
+                <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
+                  FAQ
+                </NavButton>
+              </span>
             </>
           ) : (
             <>
               <NavButton onClick={() => router.push("/compte")} accent={config.accent}>
                 Connexion
               </NavButton>
-              <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
-                FAQ
-              </NavButton>
+              <span className="hidden md:inline-flex">
+                <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
+                  FAQ
+                </NavButton>
+              </span>
             </>
           )}
         </motion.div>
@@ -1501,38 +1507,28 @@ function EchoRevealScreen({
             {/* Halo */}
             <motion.div
               animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.5, 0.2] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
               style={{ position: "absolute", inset: -20, borderRadius: "50%", background: `radial-gradient(circle, ${config.accent}30, transparent)` }}
             />
             {/* Cadenas SVG animé */}
-            <motion.svg
-              viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.2"
-              style={{ width: 100, height: 100 }}
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+            <motion.div
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
+              style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center" }}
             >
-              {/* Corps cadenas */}
-              <motion.rect
-                x="3" y="11" width="18" height="11" rx="2"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              />
-              {/* Arceau qui s'ouvre */}
-              <motion.path
-                strokeLinecap="round"
-                d="M7 11V7a5 5 0 0 1 9.9-1"
-                initial={{ pathLength: 1, rotate: 0, originX: "12px", originY: "11px" }}
-                animate={{ rotate: -40, y: -4 }}
-                transition={{ delay: 0.8, duration: 0.6, ease: "easeOut" }}
-              />
-              {/* Trou de serrure */}
-              <motion.circle
-                cx="12" cy="16" r="1.5" fill={config.accent}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-              />
-            </motion.svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.2" style={{ width: 100, height: 100, overflow: "visible" }}>
+                {/* Corps cadenas */}
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                {/* Arceau ouvert (statique, déjà ouvert) */}
+                <path
+                  strokeLinecap="round"
+                  d="M7 11V7a5 5 0 0 1 9.9-1"
+                  style={{ transformOrigin: "12px 11px", transform: "rotate(-30deg) translateY(-3px)" }}
+                />
+                {/* Trou de serrure */}
+                <circle cx="12" cy="16" r="1.5" fill={config.accent} />
+              </svg>
+            </motion.div>
           </motion.div>
           <motion.p
             className="ekko-serif"

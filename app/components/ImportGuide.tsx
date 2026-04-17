@@ -14,6 +14,71 @@ interface ImportGuideProps {
   onAudiosImported: (files: File[]) => void;
 }
 
+const whatsappSteps = {
+  android: [
+    { label: "Ouvrir la conversation", desc: "Allez dans la conversation WhatsApp souhaitée" },
+    { label: "Appuyer sur les 3 points", desc: "En haut à droite → 'Plus' → 'Exporter la discussion'" },
+    { label: "Choisir avec médias", desc: "Sélectionnez 'Joindre les médias'. ⚠️ Si la conversation est très longue ou lourde, l'export peut être incomplet sur Android — passez alors par un iPhone. Détails en FAQ." },
+    { label: "Importer le ZIP", desc: "Déposez le fichier ZIP reçu ci-dessous." },
+  ],
+  iphone: [
+    { label: "Ouvrir la conversation", desc: "Allez dans la conversation WhatsApp souhaitée" },
+    { label: "Appuyer sur la photo de la personne", desc: "En haut de la conversation, appuyez sur la photo ou le nom du contact" },
+    { label: "Descendre jusqu'à 'Exporter la discussion'", desc: "Faites défiler vers le bas dans les informations du contact" },
+    { label: "Choisir 'Avec média'", desc: "Sélectionnez 'Avec média' pour inclure les messages vocaux et photos" },
+    { label: "Récupérer le ZIP", desc: "Sur smartphone : appuyez sur 'Enregistrer dans Fichiers' et importez directement. Sur PC : choisissez iCloud, Google Drive ou Dropbox, puis récupérez le fichier sur votre ordinateur. Détails en FAQ." },
+  ],
+};
+
+const instagramSteps = {
+  android: [
+    { label: "Profil → ☰ → Paramètres → Comptes", desc: "Ouvrez votre profil, appuyez sur le menu ☰ en haut à droite, puis 'Paramètres et confidentialité' → 'Comptes'" },
+    { label: "Vos informations et autorisations → Exporter vos informations", desc: "Dans 'Comptes', appuyez sur 'Vos informations et autorisations' puis 'Exporter vos informations'" },
+    { label: "Créer une exportation → Votre appareil (ou Drive)", desc: "Appuyez sur 'Créer une exportation', choisissez la destination : votre appareil ou Google Drive" },
+    { label: "Personnaliser → cocher Messages uniquement", desc: "Appuyez sur 'Personnaliser les informations', décochez tout et cochez uniquement 'Messages'. Choisissez la période souhaitée." },
+    { label: "Format JSON · Qualité élevée · Lancer", desc: "Format : JSON (obligatoire pour extraire les audios) — Qualité : Élevée — puis lancez l'exportation. Déposez le ZIP reçu ici." },
+  ],
+  iphone: [
+    { label: "Profil → ☰ → Paramètres → Comptes", desc: "Ouvrez votre profil, appuyez sur le menu ☰ en haut à droite, puis 'Paramètres et confidentialité' → 'Comptes'" },
+    { label: "Vos informations et autorisations → Exporter vos informations", desc: "Dans 'Comptes', appuyez sur 'Vos informations et autorisations' puis 'Exporter vos informations'" },
+    { label: "Créer une exportation → iCloud ou autre", desc: "Appuyez sur 'Créer une exportation', choisissez la destination : iCloud, Google Drive ou Dropbox" },
+    { label: "Personnaliser → cocher Messages uniquement", desc: "Appuyez sur 'Personnaliser les informations', décochez tout et cochez uniquement 'Messages'. Choisissez la période souhaitée." },
+    { label: "Format JSON · Qualité élevée · Lancer", desc: "Format : JSON (obligatoire pour extraire les audios) — Qualité : Élevée — puis lancez l'exportation. Déposez le ZIP reçu ici." },
+  ],
+};
+
+const telegramSteps = {
+  android: [
+    { label: "Utiliser Telegram Desktop", desc: "L'export n'est disponible que sur la version ordinateur. Téléchargez-le sur : desktop.telegram.org" },
+    { label: "Ouvrir la conversation", desc: "Cliquez sur les 3 points en haut à droite de la conversation" },
+    { label: "Exporter l'historique", desc: "Choisissez 'Export chat history' → cochez 'Voice messages' uniquement" },
+    { label: "Importer le dossier", desc: "Telegram exporte un dossier JSON + fichiers audio. Déposez le dossier ci-dessous. Détails en FAQ." },
+  ],
+  iphone: [
+    { label: "Utiliser Telegram Desktop", desc: "L'export n'est disponible que sur la version ordinateur. Téléchargez-le sur : desktop.telegram.org" },
+    { label: "Ouvrir la conversation", desc: "Cliquez sur les 3 points en haut à droite de la conversation" },
+    { label: "Exporter l'historique", desc: "Choisissez 'Export chat history' → cochez 'Voice messages' uniquement" },
+    { label: "Importer le dossier", desc: "Telegram exporte un dossier JSON + fichiers audio. Déposez le dossier ci-dessous. Détails en FAQ." },
+  ],
+};
+
+const messengerSteps = {
+  android: [
+    { label: "Ouvrir Facebook → Paramètres", desc: "Dans Facebook : menu ☰ → 'Paramètres et confidentialité' → 'Paramètres'" },
+    { label: "Espace compte", desc: "Faites défiler jusqu'à 'Espace compte' et appuyez dessus" },
+    { label: "Vos informations → Exporter", desc: "'Vos informations et autorisations' → 'Exporter vos informations' → 'Créer une exportation'" },
+    { label: "Messages uniquement · JSON · Supérieure", desc: "Personnaliser → décochez TOUT, cochez uniquement 'Messages' → période → Format JSON → Qualité supérieure. Déposez le ZIP ici." },
+    { label: "💡 Conversation chiffrée (E2E) ?", desc: "Si audios absents : il s'agit d'une conversation chiffrée. Utilisez Messenger Desktop pour l'export sécurisé. Détails en FAQ." },
+  ],
+  iphone: [
+    { label: "Ouvrir Facebook → photo de profil", desc: "Ouvrez l'app Facebook et appuyez sur votre photo de profil en haut à gauche" },
+    { label: "Flèche déroulante → Espace compte", desc: "Appuyez sur la flèche déroulante à côté de votre nom, puis choisissez 'Espace compte' tout en bas" },
+    { label: "Vos informations → Exporter", desc: "'Vos informations et autorisations' → 'Exporter vos informations' → 'Créer une exportation'" },
+    { label: "Messages uniquement · JSON · Supérieure", desc: "Personnaliser → décochez TOUT, cochez uniquement 'Messages' → période → Format JSON → Qualité supérieure. Déposez le ZIP ici." },
+    { label: "💡 Conversation chiffrée (E2E) ?", desc: "Si audios absents : il s'agit d'une conversation chiffrée. Utilisez Messenger Desktop pour l'export sécurisé. Détails en FAQ." },
+  ],
+};
+
 const platforms = [
   {
     id: "whatsapp",
@@ -24,12 +89,7 @@ const platforms = [
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
       </svg>
     ),
-    steps: [
-      { label: "Ouvrir la conversation", desc: "Allez dans la conversation WhatsApp souhaitée" },
-      { label: "Appuyer sur les 3 points", desc: "En haut à droite → 'Plus' → 'Exporter la discussion'" },
-      { label: "Choisir avec médias", desc: "Sélectionnez 'Joindre les médias' pour inclure les audios et photos" },
-      { label: "Importer le ZIP", desc: "Le fichier ZIP exporté contient tous les audios. Déposez-le ci-dessous." },
-    ],
+    stepsPerOs: whatsappSteps,
     tip: "Sans médias = texte seulement. Avec médias = audios + photos inclus dans le ZIP.",
   },
   {
@@ -41,13 +101,7 @@ const platforms = [
         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
       </svg>
     ),
-    steps: [
-      { label: "Profil → ☰ → Paramètres → Comptes", desc: "Ouvrez votre profil, appuyez sur le menu ☰ en haut à droite, puis 'Paramètres et confidentialité' → 'Comptes'" },
-      { label: "Vos informations et autorisations → Exporter vos informations", desc: "Dans 'Comptes', appuyez sur 'Vos informations et autorisations' puis 'Exporter vos informations'" },
-      { label: "Créer une exportation → Votre appareil (ou Drive / iCloud)", desc: "Appuyez sur 'Créer une exportation', choisissez la destination : votre appareil, Google Drive ou iCloud" },
-      { label: "Personnaliser → cocher Messages uniquement", desc: "Appuyez sur 'Personnaliser les informations', décochez tout et cochez uniquement 'Messages'. Choisissez la période souhaitée." },
-      { label: "Format JSON · Qualité élevée · Lancer", desc: "Format : JSON (obligatoire pour extraire les audios) — Qualité : Élevée — puis lancez l'exportation. Déposez le ZIP reçu ici." },
-    ],
+    stepsPerOs: instagramSteps,
     tip: "Choisissez bien le format JSON (pas HTML) — seul ce format permet d'extraire les messages vocaux. Qualité élevée obligatoire.",
   },
   {
@@ -59,12 +113,7 @@ const platforms = [
         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
       </svg>
     ),
-    steps: [
-      { label: "Utiliser Telegram Desktop", desc: "L'export n'est disponible que sur la version ordinateur (Windows/Mac/Linux)" },
-      { label: "Ouvrir la conversation", desc: "Cliquez sur les 3 points en haut à droite de la conversation" },
-      { label: "Exporter l'historique", desc: "Choisissez 'Export chat history' → cochez 'Voice messages'" },
-      { label: "Importer le dossier", desc: "Telegram exporte un dossier JSON + fichiers audio. Sélectionnez les .ogg/.mp3" },
-    ],
+    stepsPerOs: telegramSteps,
     tip: "Telegram Desktop est obligatoire. L'appli mobile ne permet pas l'export complet.",
   },
   {
@@ -76,18 +125,13 @@ const platforms = [
         <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.654V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8l3.131 3.26L19.752 8l-6.561 6.963z"/>
       </svg>
     ),
-    steps: [
-      { label: "Votre nom → Paramètres & confidentialité", desc: "Selon votre config : 'Paramètres de confidentialité courants' → 'Gestion de compte' — ou directement 'Paramètres'" },
-      { label: "Vos informations et autorisations → Exporter vos informations", desc: "Dans 'Gestion de compte', cliquez sur 'Vos informations et autorisations' puis 'Exporter vos informations'" },
-      { label: "Créer une exportation · Messages uniquement", desc: "Cliquez 'Créer une exportation' → 'Personnaliser les informations' → décochez tout, cochez uniquement 'Messages' → choisissez la période" },
-      { label: "Format JSON · Qualité élevée · Lancer", desc: "Format : JSON (permet d'extraire les audios) — Qualité : Élevée — puis 'Commencer l'exportation'. Déposez le ZIP reçu ici." },
-      { label: "Messages chiffrés E2E ? Messenger Desktop requis", desc: "Pour les conversations chiffrées : ouvrez Messenger sur PC/Mac → icône profil → Confidentialité et sécurité → Discussions chiffrées → Stockage des messages → Télécharger les données de stockage sécurisé" },
-    ],
+    stepsPerOs: messengerSteps,
     tip: "Les messages chiffrés E2E nécessitent Messenger Desktop (PC/Mac) — ils ne sont pas inclus dans l'export Facebook standard.",
   },
 ];
 
 export default function ImportGuide({ theme, config, onAudiosImported }: ImportGuideProps) {
+  const [os, setOs] = useState<"android" | "iphone">("android");
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [importedFiles, setImportedFiles] = useState<File[]>([]);
@@ -184,15 +228,52 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
       transition={{ duration: 0.7 }}
       className="max-w-3xl mx-auto pt-6"
     >
-      <p className="text-xs tracking-[0.4em] uppercase mb-3 ekko-serif" style={{ color: `${config.accent}80` }}>
+      <p className="text-xs tracking-[0.4em] uppercase mb-3 ekko-serif text-center" style={{ color: `${config.accent}80` }}>
         Import de vos souvenirs
       </p>
-      <h2 className="ekko-serif font-light text-3xl mb-2" style={{ color: "#f0e8d8" }}>
+      <h2 className="ekko-serif font-light text-3xl mb-2 text-center" style={{ color: "#f0e8d8" }}>
         Comment importer vos audios ?
       </h2>
-      <p className="ekko-serif text-sm mb-10" style={{ color: "rgba(240,232,216,0.4)" }}>
+      <p className="ekko-serif text-sm text-center" style={{ color: "rgba(240,232,216,0.4)", marginBottom: 100 }}>
         Choisissez votre plateforme et suivez le guide pas à pas.
       </p>
+
+      {/* OS toggle */}
+      <div className="flex flex-col items-center gap-3 mb-7">
+        <p className="ekko-serif text-xs" style={{ color: "rgba(240,232,216,0.35)", letterSpacing: "0.1em" }}>Mon téléphone :</p>
+        <div
+          className="flex rounded-xl overflow-hidden"
+          style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
+        >
+          <button
+            onClick={() => { setOs("android"); setExpandedStep(null); }}
+            className="ekko-serif flex items-center gap-2 px-4 py-2 text-xs transition-all duration-200"
+            style={{
+              background: os === "android" ? `${config.accent}20` : "transparent",
+              color: os === "android" ? config.accent : "rgba(240,232,216,0.35)",
+              borderRight: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 13, height: 13 }}>
+              <path d="M17.523 15.341A5.988 5.988 0 0 0 18 13a6 6 0 0 0-6-6 6 6 0 0 0-6 6 5.988 5.988 0 0 0 .477 2.341L3 20h18l-3.477-4.659zM12 3a1 1 0 0 1 1-1 1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1zm-2 0a1 1 0 0 1 1-1 1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1z"/>
+            </svg>
+            Android
+          </button>
+          <button
+            onClick={() => { setOs("iphone"); setExpandedStep(null); }}
+            className="ekko-serif flex items-center gap-2 px-4 py-2 text-xs transition-all duration-200"
+            style={{
+              background: os === "iphone" ? `${config.accent}20` : "transparent",
+              color: os === "iphone" ? config.accent : "rgba(240,232,216,0.35)",
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 13, height: 13 }}>
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            iPhone
+          </button>
+        </div>
+      </div>
 
       {/* Platform selector */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
@@ -218,7 +299,8 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
       {/* Platform guide accordion */}
       <AnimatePresence>
         {activeGuide && (() => {
-          const platform = platforms.find((p) => p.id === activeGuide)!;
+          const basePlatform = platforms.find((p) => p.id === activeGuide)!;
+          const platform = { ...basePlatform, steps: basePlatform.stepsPerOs[os] };
           return (
             <motion.div
               key={activeGuide}
@@ -242,7 +324,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
                   </h3>
                 </div>
 
-                <div className="space-y-3 mb-5">
+                <div className="space-y-5 mb-5">
                   {platform.steps.map((step, i) => (
                     <motion.div
                       key={i}
@@ -299,6 +381,12 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
                 >
                   💡 {platform.tip}
                 </div>
+                <p className="ekko-serif text-xs mt-3" style={{ color: "rgba(240,232,216,0.25)", fontStyle: "italic", textAlign: "right" }}>
+                  * Pour une explication plus détaillée,{" "}
+                  <a href="/faq" style={{ color: "rgba(240,232,216,0.45)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                    consultez la FAQ
+                  </a>
+                </p>
               </div>
             </motion.div>
           );

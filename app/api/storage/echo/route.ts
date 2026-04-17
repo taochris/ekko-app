@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
     if (meta.expiresAt) {
       const expires = new Date(meta.expiresAt as string);
       if (expires < new Date()) {
+        await file.delete().catch(() => {});
         return NextResponse.json({ error: "Écho expiré" }, { status: 410 });
       }
     }

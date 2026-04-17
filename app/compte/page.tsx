@@ -1,57 +1,141 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import EkkoLogo from "../components/EkkoLogo";
 import BlobBackground from "../components/BlobBackground";
+import { useAuth } from "../context/AuthContext";
+
+const accent = "#c9a96e";
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 15,
+  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,169,110,0.2)",
+  color: "#f0e8d8", outline: "none", fontFamily: "Georgia, serif", boxSizing: "border-box",
+};
 
 export default function ComptePage() {
   const router = useRouter();
-  const [hoverBack, setHoverBack] = useState(false);
-  const accent = "#c9a96e";
+  const { user, isLoading, login, register, loginWithGoogle } = useAuth();
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && user) router.push("/account");
+  }, [user, isLoading, router]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const res = mode === "login"
+      ? await login(email, password)
+      : await register(name, email, password);
+    if (res.ok) {
+      router.push("/account");
+    } else {
+      setError(res.error ?? "Une erreur est survenue.");
+    }
+    setLoading(false);
+  }
+
+  async function handleGoogle() {
+    setError(null);
+    setLoading(true);
+    const res = await loginWithGoogle();
+    if (res.ok) {
+      router.push("/account");
+    } else {
+      setError(res.error ?? "Connexion Google échouée.");
+    }
+    setLoading(false);
+  }
+
+  if (isLoading) return null;
 
   return (
     <div className="relative min-h-screen overflow-hidden" style={{ background: "#0d0a0f" }}>
       <BlobBackground variant="deuil" />
 
-      {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <EkkoLogo size="md" glow={true} />
         <button
           onClick={() => router.back()}
-          onMouseEnter={() => setHoverBack(true)}
-          onMouseLeave={() => setHoverBack(false)}
-          className="text-sm px-4 py-2 rounded-full transition-all duration-200 ekko-serif"
-          style={{
-            background: hoverBack ? `${accent}18` : "rgba(255,255,255,0.05)",
-            border: `1px solid ${hoverBack ? accent + "45" : "rgba(255,255,255,0.08)"}`,
-            color: hoverBack ? accent : "rgba(240,232,216,0.5)",
-            transform: hoverBack ? "scale(1.03)" : "scale(1)",
-          }}
+          className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(240,232,216,0.5)" }}
         >
           ← Retour
         </button>
       </nav>
 
-      {/* Content */}
-      <div className="relative z-10 px-6 md:px-14 pb-24 max-w-2xl mx-auto pt-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+      <div className="relative z-10 px-6 pb-24 max-w-md mx-auto pt-10">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <p style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: `${accent}70`, fontFamily: "Georgia, serif", marginBottom: 12 }}>
-            Mon compte
+            {mode === "login" ? "Connexion" : "Créer un compte"}
           </p>
-          <h1 style={{ fontSize: 32, fontWeight: 300, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: 8 }}>
-            Espace personnel
+          <h1 style={{ fontSize: 30, fontWeight: 300, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: 6 }}>
+            {mode === "login" ? "Bon retour" : "Rejoignez Ekko"}
           </h1>
-          <p style={{ fontSize: 14, color: "rgba(240,232,216,0.4)", fontFamily: "Georgia, serif", fontStyle: "italic", marginBottom: 40 }}>
-            Vos vocapsules sauvegardées et vos accès.
+          <p style={{ fontSize: 14, color: "rgba(240,232,216,0.35)", fontFamily: "Georgia, serif", fontStyle: "italic", marginBottom: 36 }}>
+            {mode === "login" ? "Accédez à vos échos sauvegardés." : "Créez votre espace personnel."}
           </p>
 
-          {/* Vocapsules sauvegardées */}
-          <VocapsuleList accent={accent} />
+          {/* Google */}
+          <button
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 ekko-serif text-sm transition-all duration-200"
+            style={{ padding: "12px 20px", borderRadius: 12, border: "1px solid rgba(201,169,110,0.2)", background: "rgba(255,255,255,0.04)", color: "rgba(240,232,216,0.7)", cursor: "pointer", marginBottom: 20 }}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continuer avec Google
+          </button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+            <span style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", fontFamily: "Georgia, serif" }}>ou</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {mode === "register" && (
+              <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} type="text" placeholder="Votre prénom" required />
+            )}
+            <input value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} type="email" placeholder="Email" required />
+            <input value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} type="password" placeholder="Mot de passe" required />
+
+            {error && (
+              <p style={{ fontSize: 13, color: "#c96e6e", fontFamily: "Georgia, serif", margin: 0 }}>{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="ekko-serif text-sm transition-all duration-200"
+              style={{ padding: "13px 20px", borderRadius: 12, border: "none", background: accent, color: "#0d0a0f", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, marginTop: 4 }}
+            >
+              {loading ? "…" : mode === "login" ? "Se connecter" : "Créer mon compte"}
+            </button>
+          </form>
+
+          <p style={{ textAlign: "center", marginTop: 24, fontSize: 13, fontFamily: "Georgia, serif", color: "rgba(240,232,216,0.35)" }}>
+            {mode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?"}{" "}
+            <button
+              onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}
+              style={{ background: "none", border: "none", color: accent, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 13 }}
+            >
+              {mode === "login" ? "Créer un compte" : "Se connecter"}
+            </button>
+          </p>
         </motion.div>
       </div>
     </div>

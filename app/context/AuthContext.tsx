@@ -67,7 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getRedirectResult(auth).catch(() => {});
+    // Récupérer le résultat du redirect Google si l'utilisateur revient d'une auth Google mobile
+    getRedirectResult(auth).then((result) => {
+      if (result?.user) {
+        const u = toEkkoUser(result.user);
+        try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); } catch {}
+        setUser(u);
+        setIsLoading(false);
+      }
+    }).catch(() => {});
 
     let resolved = false;
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
@@ -109,7 +117,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // Essayer popup d'abord, fallback redirect si bloqué
+      const isMobile = typeof window !== "undefined" &&
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return { ok: true };
+      }
       try {
         await signInWithPopup(auth, provider);
       } catch (popupErr: unknown) {

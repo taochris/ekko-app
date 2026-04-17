@@ -6,6 +6,8 @@ import { useAuth, EkkoUser } from "../context/AuthContext";
 import BlobBackground from "../components/BlobBackground";
 import EkkoLogo from "../components/EkkoLogo";
 import { updateProfile, updateEmail, getAuth } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 const THEME_LABELS: Record<string, string> = {
   deuil: "Memoire - Deuil",
@@ -74,6 +76,23 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
   const [editName, setEditName] = useState(user.name);
   const [editEmail, setEditEmail] = useState(user.email);
   const [editPhone, setEditPhone] = useState("");
+
+  useEffect(() => {
+    const loadPhone = async () => {
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists() && snap.data().phone) {
+          setEditPhone(snap.data().phone);
+        } else {
+          const local = localStorage.getItem("ekko_phone_" + user.uid) ?? "";
+          setEditPhone(local);
+        }
+      } catch {
+        try { setEditPhone(localStorage.getItem("ekko_phone_" + user.uid) ?? ""); } catch { /* */ }
+      }
+    };
+    loadPhone();
+  }, [user.uid]);
   const [editSaving, setEditSaving] = useState(false);
   const [editMsg, setEditMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -121,6 +140,8 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
       if (!fbUser) throw new Error("Non connecte");
       if (editName !== user.name) await updateProfile(fbUser, { displayName: editName });
       if (editEmail !== user.email) await updateEmail(fbUser, editEmail);
+      try { localStorage.setItem("ekko_phone_" + user.uid, editPhone); } catch {}
+      await setDoc(doc(db, "users", user.uid), { phone: editPhone, email: user.email, name: editName }, { merge: true });
       setEditMsg({ ok: true, text: "Informations mises a jour." });
       setEditOpen(false);
     } catch {
@@ -152,7 +173,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           <EkkoLogo size="sm" />
         </button>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => router.back()} className="ekko-serif"
+          <button onClick={() => router.push("/")} className="ekko-serif"
             style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14 }}>
             Retour
           </button>

@@ -32,18 +32,20 @@ const APP_GUIDES: AppGuide[] = [
     steps: {
       iphone: [
         "Ouvrez la conversation WhatsApp",
-        "Appuyez sur le nom du contact en haut",
-        "\"Exporter la discussion\"",
-        "Choisissez \"Avec médias\" (inclut les audios)",
-        "Envoyez le fichier ZIP (email, AirDrop, Drive…)",
-        "Importez le ZIP dans EKKO",
+        "Appuyez sur le nom ou la photo du contact en haut",
+        "Faites défiler vers le bas → \"Exporter la discussion\"",
+        "Choisissez \"Avec médias\" pour inclure les messages vocaux",
+        "WhatsApp affiche une feuille de partage :",
+        "→ Sur iPhone directement : appuyez sur \"Enregistrer dans Fichiers\" sur votre appareil, puis ouvrez EKKO depuis Safari et importez le ZIP via l'appli Fichiers",
+        "→ Pour passer sur PC : choisissez iCloud Drive, Google Drive ou Dropbox comme destination, synchronisez, puis récupérez le ZIP sur votre ordinateur et glissez-le dans EKKO",
       ],
       android: [
         "Ouvrez la conversation WhatsApp",
-        "Appuyez sur ⋮ (en haut à droite) → Plus → Exporter discussion",
-        "Choisissez \"Avec les médias\" (inclut les audios)",
-        "Envoyez le fichier ZIP (email, Google Drive…)",
-        "Importez le ZIP dans EKKO",
+        "Appuyez sur ⋮ (en haut à droite) → Plus → Exporter la discussion",
+        "Choisissez \"Avec les médias\" pour inclure les messages vocaux",
+        "⚠️ Limitation Android : WhatsApp peut tronquer l'export si la conversation est très longue ou si les médias sont trop volumineux. Dans ce cas, l'export sera partiel — les audios les plus anciens risquent d'être absents.",
+        "💡 Solution : si votre export est incomplet, refaites l'export depuis un iPhone — Apple n'impose pas cette limitation",
+        "Envoyez le fichier ZIP par email, Google Drive ou autre, puis importez-le dans EKKO",
       ],
     },
   },
@@ -55,13 +57,28 @@ const APP_GUIDES: AppGuide[] = [
       iphone: [],
       android: [],
       shared: [
-        "⚠️ Les audios Messenger se trouvent uniquement dans les messages chiffrés (E2E) — pas dans l'export Facebook classique",
-        "Ouvrez Messenger → allez dans vos Paramètres",
-        "\"Confidentialité et sécurité\" → \"Messages chiffrés de bout en bout\"",
-        "\"Exporter les messages chiffrés\"",
-        "Choisissez la conversation concernée",
-        "Téléchargez le fichier ZIP généré",
-        "Importez le ZIP dans EKKO — les audios (.mp4) seront détectés automatiquement",
+        "ℹ️ Messenger distingue deux types de conversations — comme pour les messages texte, les audios suivent le même régime : les conversations classiques sont exportables via Facebook, les conversations chiffrées de bout en bout (E2E) nécessitent une procédure séparée.",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "🔓 SOLUTION 1 — Conversation classique (non chiffrée)",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "Sur iPhone : ouvrez l'app Facebook → photo de profil en haut à gauche → flèche déroulante à côté de votre nom → tout en bas \"Espace compte\"",
+        "Sur Android : ouvrez Facebook → menu ☰ → \"Paramètres et confidentialité\" → \"Paramètres\"",
+        "Puis (commun) : \"Vos informations et autorisations\" → \"Exporter vos informations\" → \"Créer une exportation\"",
+        "Sélectionnez votre compte Facebook si demandé",
+        "Choisissez la période souhaitée",
+        "\"Personnaliser les informations\" → décochez ABSOLUMENT TOUT → cochez uniquement \"Messages\"",
+        "Format : JSON (obligatoire pour extraire les audios) — Qualité multimédia : Supérieure",
+        "Lancez l'exportation — vous recevrez une notification quand le ZIP est prêt",
+        "Téléchargez le ZIP et importez-le dans EKKO — les audios des conversations classiques y sont inclus",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "🔒 SOLUTION 2 — Conversation chiffrée de bout en bout (E2E)",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "Si vos audios n'apparaissent pas dans l'export Facebook ci-dessus, c'est que la conversation est chiffrée E2E. Les données chiffrées ne transitent pas par les serveurs Facebook et nécessitent une procédure dédiée.",
+        "Ouvrez Messenger sur PC/Mac (Messenger Desktop) : https://www.messenger.com/",
+        "Cliquez sur votre icône de profil → \"Confidentialité et sécurité\"",
+        "\"Discussions chiffrées de bout en bout\" → \"Stockage des messages\"",
+        "\"Télécharger les données de stockage sécurisé\" (code PIN de sauvegarde requis)",
+        "Importez l'archive reçue dans EKKO",
       ],
     },
   },
@@ -96,9 +113,9 @@ const APP_GUIDES: AppGuide[] = [
       iphone: [],
       android: [],
       shared: [
-        "Installez Telegram Desktop depuis telegram.org (obligatoire — l'export n'est pas disponible sur mobile)",
+        "Installez Telegram Desktop (obligatoire — l'export n'est pas disponible sur mobile) : https://desktop.telegram.org/",
         "Ouvrez la conversation → cliquez sur ⋮ → \"Exporter l'historique des échanges\"",
-        "Cochez ☑ \"Messages vocaux\" (et \"Messages vidéo\" si souhaité)",
+        "Cochez ☑ \"Messages vocaux\" uniquement",
         "Format : JSON — augmentez la limite de taille si besoin (ex : 500 MB)",
         "Cliquez sur \"Exporter\"",
         "⚠️ Telegram peut demander une confirmation sur votre mobile — gardez-le à portée",
@@ -176,6 +193,19 @@ function OSToggle({ os, setOs }: { os: OS; setOs: (v: OS) => void }) {
   );
 }
 
+function renderStepText(text: string) {
+  const urlRegex = /(https?:\/\/[^\s)]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+        style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3 }}>
+        {part}
+      </a>
+    ) : part
+  );
+}
+
 function StepsList({ steps }: { steps: string[] }) {
   if (steps.length === 0) return (
     <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.3)", fontStyle: "italic", marginTop: 10 }}>
@@ -189,7 +219,7 @@ function StepsList({ steps }: { steps: string[] }) {
           <span className="ekko-serif" style={{ fontSize: 11, minWidth: 22, height: 22, borderRadius: "50%", border: `1px solid ${accent}40`, color: accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
             {i + 1}
           </span>
-          <span className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.75)", lineHeight: 1.5 }}>{s}</span>
+          <span className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.75)", lineHeight: 1.5 }}>{renderStepText(s)}</span>
         </li>
       ))}
     </ol>
