@@ -64,7 +64,13 @@ export default function ComptePage() {
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <EkkoLogo size="md" glow={true} />
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              router.back();
+            } else {
+              router.push("/");
+            }
+          }}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(240,232,216,0.5)" }}
         >

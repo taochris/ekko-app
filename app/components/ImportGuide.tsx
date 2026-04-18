@@ -141,6 +141,10 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
   const [conversations, setConversations] = useState<{ name: string; count: number; prefix: string }[]>([]);
   const [pendingZip, setPendingZip] = useState<File | null>(null);
   const [selectedConvs, setSelectedConvs] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(typeof window !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
+  }, []);
 
 
   const applyConversationSelection = useCallback(async (zip: File, prefixes: Set<string>) => {
@@ -553,23 +557,40 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
 
             <div>
               <p className="text-sm ekko-serif" style={{ color: isDropHovered || isDragActive ? "rgba(240,232,216,0.95)" : "rgba(240,232,216,0.7)", transition: "color 0.2s" }}>
-                {isDragActive ? "Déposez maintenant…" : "Glissez vos fichiers audio ou votre ZIP ici"}
+                {isDragActive ? "Déposez maintenant…" : isMobile ? "Appuyez pour sélectionner vos fichiers" : "Glissez vos fichiers audio ou votre ZIP ici"}
               </p>
               <p className="text-xs mt-1 ekko-serif" style={{ color: "rgba(240,232,216,0.3)" }}>
                 MP3, WAV, OGG, M4A, AAC, OPUS, FLAC — ou fichier ZIP
               </p>
             </div>
 
-            <span
-              className="text-xs px-4 py-1.5 rounded-full ekko-serif transition-all duration-200"
-              style={{
-                background: isDropHovered ? config.accentDim : "rgba(255,255,255,0.06)",
-                color: isDropHovered ? config.accent : "rgba(240,232,216,0.5)",
-                border: `1px solid ${isDropHovered ? config.accent + "40" : "rgba(255,255,255,0.08)"}`,
-              }}
-            >
-              ou cliquez pour sélectionner
-            </span>
+            {isMobile ? (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); open(); }}
+                className="ekko-serif text-sm px-6 py-3 rounded-2xl transition-all duration-200"
+                style={{
+                  background: `linear-gradient(135deg, ${config.accent}30, ${config.accent}55)`,
+                  border: `1px solid ${config.accent}50`,
+                  color: config.accent,
+                  cursor: "pointer",
+                  fontWeight: 500,
+                }}
+              >
+                📂 Parcourir mes fichiers
+              </button>
+            ) : (
+              <span
+                className="text-xs px-4 py-1.5 rounded-full ekko-serif transition-all duration-200"
+                style={{
+                  background: isDropHovered ? config.accentDim : "rgba(255,255,255,0.06)",
+                  color: isDropHovered ? config.accent : "rgba(240,232,216,0.5)",
+                  border: `1px solid ${isDropHovered ? config.accent + "40" : "rgba(255,255,255,0.08)"}`,
+                }}
+              >
+                ou cliquez pour sélectionner
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -916,10 +937,9 @@ async function detectConversations(zipFile: File): Promise<{ name: string; count
 }
 
 async function extractAudiosFromZip(zipFile: File, filterPrefixes?: Set<string>): Promise<File[]> {
-  const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|3gp|amr|mp4|mpeg)$/i;
+  const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|3gp|amr|mp4)$/i;
   const AUDIO_MIME: Record<string, string> = {
     mp3: "audio/mpeg",
-    mpeg: "audio/mpeg",
     wav: "audio/wav",
     ogg: "audio/ogg",
     oga: "audio/ogg",
@@ -933,6 +953,11 @@ async function extractAudiosFromZip(zipFile: File, filterPrefixes?: Set<string>)
     amr: "audio/amr",
   };
 
+  // Fichiers vidéo à exclure : VID- (WhatsApp vidéos), .mov, .avi, .mkv, .webm vidéo
+  const VIDEO_EXCLUDE = /^VID-|\.mov$|\.avi$|\.mkv$|\.mp4$/i;
+  // Sauf si c'est un vrai vocal (PTT- ou AUD- = voice notes WhatsApp)
+  const VOICE_NOTE = /^(PTT-|AUD-|voice|audio|ptt|aud)/i;
+
   const EXCLUDE_PATHS = /(__MACOSX|\.DS_Store|Thumbs\.db)/i;
 
   const zip = new JSZip();
@@ -944,6 +969,9 @@ async function extractAudiosFromZip(zipFile: File, filterPrefixes?: Set<string>)
 
   const entries = Object.values(contents.files).filter((entry) => {
     if (entry.dir || EXCLUDE_PATHS.test(entry.name) || !AUDIO_EXTENSIONS.test(entry.name)) return false;
+    // Exclure les vidéos mp4 sauf si c'est un message vocal (PTT- ou AUD-)
+    const filename = entry.name.split("/").pop() ?? entry.name;
+    if (VIDEO_EXCLUDE.test(filename) && !VOICE_NOTE.test(filename)) return false;
     if (filterPrefixes && filterPrefixes.size > 0) {
       const parts = entry.name.split("/");
       let prefix: string;
