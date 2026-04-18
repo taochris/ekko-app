@@ -1513,16 +1513,25 @@ function EchoRevealScreen({
       {phase === "unlock" ? (
         // ── Animation cadenas qui s'ouvre ──
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28, minHeight: "60vh", justifyContent: "center" }}>
+          <style>{`
+            @keyframes ekko-halo { 0%,100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.18); opacity: 0.5; } }
+            @keyframes ekko-shackle { 0% { transform: rotate(0deg) translateY(0px); } 100% { transform: rotate(-38deg) translateY(-5px); } }
+            @keyframes ekko-fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes ekko-spin { to { transform: rotate(360deg); } }
+            .ekko-halo { animation: ekko-halo 2.6s ease-in-out infinite; will-change: transform, opacity; }
+            .ekko-shackle { transform-origin: 12px 11px; transform-box: fill-box; animation: ekko-shackle 0.7s cubic-bezier(0.34,1.56,0.64,1) 1s forwards; will-change: transform; }
+            .ekko-fadein { animation: ekko-fadein 0.6s ease 0.5s both; }
+            .ekko-spin { animation: ekko-spin 1.2s linear infinite; will-change: transform; }
+          `}</style>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             style={{ position: "relative", width: 100, height: 100 }}
           >
             {/* Halo */}
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.5, 0.2] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
+            <div
+              className="ekko-halo"
               style={{ position: "absolute", inset: -20, borderRadius: "50%", background: `radial-gradient(circle, ${config.accent}30, transparent)` }}
             />
             {/* Cadenas SVG animé */}
@@ -1530,32 +1539,25 @@ function EchoRevealScreen({
               style={{ width: 100, height: 100, overflow: "visible", display: "block" }}>
               {/* Corps cadenas */}
               <rect x="3" y="11" width="18" height="11" rx="2" />
-              {/* Arceau : fermé → ouvert via Framer Motion */}
-              <motion.path
+              {/* Arceau : animation CSS pure pour pivot SVG correct */}
+              <path
+                className="ekko-shackle"
                 strokeLinecap="round"
                 d="M7 11V7a5 5 0 0 1 10 0v4"
-                initial={{ rotate: 0, y: 0 }}
-                animate={{ rotate: -35, y: -4 }}
-                transition={{ duration: 0.7, delay: 1.0, ease: "easeOut" }}
-                style={{ originX: "12px", originY: "11px" }}
               />
               {/* Trou de serrure */}
               <circle cx="12" cy="16" r="1.5" fill={config.accent} stroke="none" />
             </svg>
           </motion.div>
-          <motion.p
-            className="ekko-serif"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center" }}
+          <p
+            className="ekko-fadein ekko-serif"
+            style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}
           >
             Votre écho se dévoile…
-          </motion.p>
+          </p>
           {/* Spinner */}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          <div
+            className="ekko-spin"
             style={{ width: 22, height: 22, border: `1.5px solid ${config.accent}30`, borderTop: `1.5px solid ${config.accent}`, borderRadius: "50%" }}
           />
         </div>
