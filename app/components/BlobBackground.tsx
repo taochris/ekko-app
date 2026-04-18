@@ -112,7 +112,7 @@ export default function BlobBackground({ variant = "home" }: BlobBackgroundProps
         style={{
           top: "55%",
           height: "1px",
-          background: "linear-gradient(90deg, transparent 0%, rgba(201, 169, 110, 0.06) 30%, rgba(201, 169, 110, 0.12) 50%, rgba(201, 169, 110, 0.06) 70%, transparent 100%)",
+          background: "linear-gradient(90deg, transparent 0%, rgba(201, 169, 110, 0.015) 30%, rgba(201, 169, 110, 0.03) 50%, rgba(201, 169, 110, 0.015) 70%, transparent 100%)",
         }}
       />
     </div>

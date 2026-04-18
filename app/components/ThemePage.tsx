@@ -599,49 +599,104 @@ function CapsuleScreen({
         margin: "0 auto",
       }}
     >
-      {/* Capsule scellée */}
-      <div style={{ position: "relative", width: 160, height: 160 }}>
-        {/* Halo extérieur */}
-        <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.25, 0.5, 0.25] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      {/* Capsule scellée — animations CSS pures pour fluidité premium */}
+      <style>{`
+        @keyframes capsule-halo-1 {
+          0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.22; }
+          50%      { transform: translate3d(0,0,0) scale(1.12); opacity: 0.42; }
+        }
+        @keyframes capsule-halo-2 {
+          0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.35; }
+          50%      { transform: translate3d(0,0,0) scale(1.06); opacity: 0.6; }
+        }
+        @keyframes capsule-body {
+          0%, 100% { transform: translate3d(0,0,0) scale(1); }
+          50%      { transform: translate3d(0,0,0) scale(1.018); }
+        }
+        @keyframes capsule-shimmer {
+          0%, 100% { opacity: 0.15; }
+          50%      { opacity: 0.35; }
+        }
+        @keyframes wave-bar {
+          0%, 100% { transform: scaleY(0.55); }
+          50%      { transform: scaleY(1); }
+        }
+        .capsule-halo-1 { animation: capsule-halo-1 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
+        .capsule-halo-2 { animation: capsule-halo-2 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
+        .capsule-body   { animation: capsule-body 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform; backface-visibility: hidden; }
+        .capsule-shimmer { animation: capsule-shimmer 3.6s ease-in-out infinite; will-change: opacity; }
+        .wave-bar { animation: wave-bar 1.8s ease-in-out infinite; transform-origin: center; will-change: transform; }
+      `}</style>
+      <div style={{ position: "relative", width: 180, height: 180, isolation: "isolate" }}>
+        {/* Halo extérieur diffus */}
+        <div
+          className="capsule-halo-1"
           style={{
-            position: "absolute", inset: -16, borderRadius: "50%",
-            background: `radial-gradient(circle, ${config.accent}30 0%, transparent 70%)`,
+            position: "absolute", inset: -40, borderRadius: "50%",
+            background: `radial-gradient(circle, ${config.accent}35 0%, ${config.accent}10 40%, transparent 70%)`,
+            filter: "blur(8px)",
+            pointerEvents: "none",
           }}
         />
-        {/* Corps capsule */}
-        <motion.div
-          animate={{ scale: [1, 1.03, 1] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        {/* Halo intermédiaire */}
+        <div
+          className="capsule-halo-2"
           style={{
-            position: "absolute", inset: 0, borderRadius: "50%",
-            background: `radial-gradient(135deg, ${config.accent}25 0%, rgba(10,10,20,0.95) 100%)`,
-            border: `1.5px solid ${config.accent}50`,
-            boxShadow: `0 0 40px ${config.accent}25, inset 0 1px 0 ${config.accent}30`,
+            position: "absolute", inset: -12, borderRadius: "50%",
+            background: `radial-gradient(circle, ${config.accent}40 0%, transparent 65%)`,
+            filter: "blur(4px)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Corps capsule (respiration) */}
+        <div
+          className="capsule-body"
+          style={{
+            position: "absolute", inset: 10, borderRadius: "50%",
+            background: `radial-gradient(circle at 35% 30%, ${config.accent}20 0%, rgba(15,12,22,0.85) 55%, rgba(8,6,12,0.95) 100%)`,
+            border: `1px solid ${config.accent}55`,
+            boxShadow: `0 0 60px ${config.accent}22, 0 0 20px ${config.accent}18, inset 0 1px 0 ${config.accent}35, inset 0 -20px 40px rgba(0,0,0,0.4)`,
             display: "flex", alignItems: "center", justifyContent: "center",
+            backdropFilter: "blur(2px)",
           }}
         >
+          {/* Reflet supérieur */}
+          <div
+            className="capsule-shimmer"
+            style={{
+              position: "absolute", top: "8%", left: "20%", right: "20%", height: "30%",
+              borderRadius: "50%",
+              background: `radial-gradient(ellipse at center, ${config.accent}35 0%, transparent 70%)`,
+              filter: "blur(6px)",
+              pointerEvents: "none",
+            }}
+          />
+          {/* Waveform subtile en fond */}
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 4, filter: "blur(1px)", opacity: 0.18, pointerEvents: "none",
+          }}>
+            {[0.45, 0.7, 0.95, 0.85, 0.6, 0.9, 0.55, 0.75, 0.5].map((h, i) => (
+              <div key={i}
+                className="wave-bar"
+                style={{
+                  width: 3, borderRadius: 2,
+                  height: 60 * h,
+                  background: config.accent,
+                  animationDelay: `${i * 0.13}s`,
+                }}
+              />
+            ))}
+          </div>
           {/* Icône cadenas */}
-          <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.5"
-            style={{ width: 40, height: 40, opacity: 0.9 }}>
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.4"
+            style={{ width: 44, height: 44, opacity: 0.95, position: "relative", zIndex: 2,
+              filter: `drop-shadow(0 0 8px ${config.accent}55)` }}>
+            <rect x="3" y="11" width="18" height="11" rx="2.5" ry="2.5"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round"/>
+            <circle cx="12" cy="16.5" r="1.2" fill={config.accent} stroke="none" opacity="0.7"/>
           </svg>
-        </motion.div>
-        {/* Waveform floue derrière */}
-        <div style={{
-          position: "absolute", inset: 0, borderRadius: "50%",
-          overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 3, filter: "blur(1.5px)", opacity: 0.25,
-        }}>
-          {[0.4,0.7,1,0.8,0.6,0.9,0.5,0.7,0.4].map((h, i) => (
-            <div key={i} style={{
-              width: 3, borderRadius: 2,
-              height: 50 * h,
-              background: config.accent,
-            }} />
-          ))}
         </div>
       </div>
 
@@ -1511,53 +1566,95 @@ function EchoRevealScreen({
       style={{ maxWidth: 480, margin: "0 auto", paddingTop: 24, paddingBottom: 48 }}
     >
       {phase === "unlock" ? (
-        // ── Animation cadenas qui s'ouvre ──
+        // ── Animation cadenas premium qui s'ouvre ──
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28, minHeight: "60vh", justifyContent: "center" }}>
           <style>{`
-            @keyframes ekko-halo { 0%,100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.18); opacity: 0.5; } }
-            @keyframes ekko-shackle { 0% { transform: rotate(0deg) translateY(0px); } 100% { transform: rotate(-38deg) translateY(-5px); } }
-            @keyframes ekko-fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-            @keyframes ekko-spin { to { transform: rotate(360deg); } }
-            .ekko-halo { animation: ekko-halo 2.6s ease-in-out infinite; will-change: transform, opacity; }
-            .ekko-shackle { transform-origin: 12px 11px; transform-box: fill-box; animation: ekko-shackle 0.7s cubic-bezier(0.34,1.56,0.64,1) 1s forwards; will-change: transform; }
-            .ekko-fadein { animation: ekko-fadein 0.6s ease 0.5s both; }
-            .ekko-spin { animation: ekko-spin 1.2s linear infinite; will-change: transform; }
+            @keyframes reveal-halo-1 {
+              0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.22; }
+              50%      { transform: translate3d(0,0,0) scale(1.14); opacity: 0.45; }
+            }
+            @keyframes reveal-halo-2 {
+              0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.35; }
+              50%      { transform: translate3d(0,0,0) scale(1.07); opacity: 0.6; }
+            }
+            @keyframes reveal-body {
+              0%, 100% { transform: translate3d(0,0,0) scale(1); }
+              50%      { transform: translate3d(0,0,0) scale(1.02); }
+            }
+            @keyframes reveal-shackle {
+              0% { transform: rotate(0deg) translateY(0px); }
+              100% { transform: rotate(-38deg) translateY(-5px); }
+            }
+            @keyframes reveal-fadein {
+              from { opacity: 0; transform: translateY(8px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes reveal-spin { to { transform: rotate(360deg); } }
+            .reveal-halo-1 { animation: reveal-halo-1 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
+            .reveal-halo-2 { animation: reveal-halo-2 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
+            .reveal-body   { animation: reveal-body 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform; backface-visibility: hidden; }
+            .reveal-shackle { transform-origin: 12px 11px; transform-box: fill-box; animation: reveal-shackle 0.8s cubic-bezier(0.34,1.56,0.64,1) 1.2s forwards; will-change: transform; }
+            .reveal-fadein { animation: reveal-fadein 0.6s ease 0.5s both; }
+            .reveal-spin { animation: reveal-spin 1.2s linear infinite; will-change: transform; }
           `}</style>
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            style={{ position: "relative", width: 100, height: 100 }}
-          >
-            {/* Halo */}
+
+          <div style={{ position: "relative", width: 140, height: 140, isolation: "isolate" }}>
+            {/* Halo extérieur diffus */}
             <div
-              className="ekko-halo"
-              style={{ position: "absolute", inset: -20, borderRadius: "50%", background: `radial-gradient(circle, ${config.accent}30, transparent)` }}
+              className="reveal-halo-1"
+              style={{
+                position: "absolute", inset: -32, borderRadius: "50%",
+                background: `radial-gradient(circle, ${config.accent}35 0%, ${config.accent}10 40%, transparent 70%)`,
+                filter: "blur(8px)",
+                pointerEvents: "none",
+              }}
             />
-            {/* Cadenas SVG animé */}
-            <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.2"
-              style={{ width: 100, height: 100, overflow: "visible", display: "block" }}>
-              {/* Corps cadenas */}
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              {/* Arceau : animation CSS pure pour pivot SVG correct */}
-              <path
-                className="ekko-shackle"
-                strokeLinecap="round"
-                d="M7 11V7a5 5 0 0 1 10 0v4"
-              />
-              {/* Trou de serrure */}
-              <circle cx="12" cy="16" r="1.5" fill={config.accent} stroke="none" />
-            </svg>
-          </motion.div>
+            {/* Halo intermédiaire */}
+            <div
+              className="reveal-halo-2"
+              style={{
+                position: "absolute", inset: -8, borderRadius: "50%",
+                background: `radial-gradient(circle, ${config.accent}40 0%, transparent 65%)`,
+                filter: "blur(4px)",
+                pointerEvents: "none",
+              }}
+            />
+            {/* Corps (respiration) */}
+            <div
+              className="reveal-body"
+              style={{
+                position: "absolute", inset: 8, borderRadius: "50%",
+                background: `radial-gradient(circle at 35% 30%, ${config.accent}20 0%, rgba(15,12,22,0.85) 55%, rgba(8,6,12,0.95) 100%)`,
+                border: `1px solid ${config.accent}55`,
+                boxShadow: `0 0 60px ${config.accent}22, 0 0 20px ${config.accent}18, inset 0 1px 0 ${config.accent}35, inset 0 -16px 32px rgba(0,0,0,0.4)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                backdropFilter: "blur(2px)",
+              }}
+            >
+              {/* Cadenas SVG animé */}
+              <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.3"
+                style={{ width: 50, height: 50, overflow: "visible", display: "block",
+                  filter: `drop-shadow(0 0 8px ${config.accent}55)`, position: "relative", zIndex: 2 }}>
+                <rect x="3" y="11" width="18" height="11" rx="2.5" ry="2.5" />
+                <path
+                  className="reveal-shackle"
+                  strokeLinecap="round"
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+                <circle cx="12" cy="16.5" r="1.2" fill={config.accent} stroke="none" opacity="0.7"/>
+              </svg>
+            </div>
+          </div>
+
           <p
-            className="ekko-fadein ekko-serif"
+            className="reveal-fadein ekko-serif"
             style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}
           >
             Votre écho se dévoile…
           </p>
           {/* Spinner */}
           <div
-            className="ekko-spin"
+            className="reveal-spin"
             style={{ width: 22, height: 22, border: `1.5px solid ${config.accent}30`, borderTop: `1.5px solid ${config.accent}`, borderRadius: "50%" }}
           />
         </div>
