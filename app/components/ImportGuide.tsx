@@ -165,7 +165,13 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
     for (const file of acceptedFiles) {
       if (file.type.startsWith("audio/") || file.name.match(/\.(mp3|wav|ogg|m4a|aac|opus|flac)$/i)) {
         audioFiles.push(file);
-      } else if (file.name.endsWith(".zip")) {
+      } else if (
+        file.name.toLowerCase().endsWith(".zip") ||
+        file.type === "application/zip" ||
+        file.type === "application/x-zip-compressed" ||
+        file.type === "application/x-zip" ||
+        file.type === "application/octet-stream"
+      ) {
         zipFiles.push(file);
       }
     }
@@ -200,6 +206,9 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
     accept: {
       "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".opus", ".flac"],
       "application/zip": [".zip"],
+      "application/x-zip-compressed": [".zip"],
+      "application/x-zip": [".zip"],
+      "application/octet-stream": [".zip"],
     },
     multiple: true,
     noClick: false,
@@ -953,10 +962,8 @@ async function extractAudiosFromZip(zipFile: File, filterPrefixes?: Set<string>)
     amr: "audio/amr",
   };
 
-  // Fichiers vidéo à exclure : VID- (WhatsApp vidéos), .mov, .avi, .mkv, .webm vidéo
-  const VIDEO_EXCLUDE = /^VID-|\.mov$|\.avi$|\.mkv$|\.mp4$/i;
-  // Sauf si c'est un vrai vocal (PTT- ou AUD- = voice notes WhatsApp)
-  const VOICE_NOTE = /^(PTT-|AUD-|voice|audio|ptt|aud)/i;
+  // Exclure uniquement les fichiers clairement vidéo par leur nom
+  const VIDEO_EXCLUDE = /^VID-|^video-|\.mov$|\.avi$|\.mkv$/i;
 
   const EXCLUDE_PATHS = /(__MACOSX|\.DS_Store|Thumbs\.db)/i;
 
@@ -971,7 +978,7 @@ async function extractAudiosFromZip(zipFile: File, filterPrefixes?: Set<string>)
     if (entry.dir || EXCLUDE_PATHS.test(entry.name) || !AUDIO_EXTENSIONS.test(entry.name)) return false;
     // Exclure les vidéos mp4 sauf si c'est un message vocal (PTT- ou AUD-)
     const filename = entry.name.split("/").pop() ?? entry.name;
-    if (VIDEO_EXCLUDE.test(filename) && !VOICE_NOTE.test(filename)) return false;
+    if (VIDEO_EXCLUDE.test(filename)) return false;
     if (filterPrefixes && filterPrefixes.size > 0) {
       const parts = entry.name.split("/");
       let prefix: string;
