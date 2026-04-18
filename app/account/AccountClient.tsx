@@ -173,9 +173,9 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           <EkkoLogo size="sm" />
         </button>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => router.push("/")} className="ekko-serif"
+          <button onClick={() => router.back()} className="ekko-serif"
             style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14 }}>
-            Retour
+            ← Retour
           </button>
           <button onClick={logout} className="ekko-serif"
             style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14 }}>
@@ -377,7 +377,7 @@ export default function AccountClient() {
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (mounted && !isLoading && !user) router.push("/compte");
+    if (mounted && !isLoading && !user) router.push("/");
   }, [mounted, isLoading, user, router]);
 
   if (!mounted || isLoading || !user) {
