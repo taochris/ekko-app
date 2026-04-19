@@ -30,15 +30,16 @@ export async function GET(req: NextRequest) {
 
     // Chercher le fichier — supporte les deux formats de path
     const [files] = await bucket.getFiles({ prefix: "echos/" });
-    const match = files.find(f => f.name.includes(echoId) && f.name.endsWith("audio.mp4"));
+    const match = files.find(f => f.name.includes(echoId) && /\/audio\.[a-z0-9]+$/.test(f.name));
 
     if (!match) {
       return NextResponse.json({ error: "Echo introuvable" }, { status: 404 });
     }
 
     const [buffer] = await match.download();
-    const contentType = (match.metadata.contentType as string) ?? "audio/mp4";
-    const filename = `echo-ekko-${echoId.slice(0, 8)}.mp4`;
+    const ext = match.name.split(".").pop() ?? "opus";
+    const contentType = (match.metadata.contentType as string) ?? "audio/ogg; codecs=opus";
+    const filename = `echo-ekko-${echoId.slice(0, 8)}.${ext}`;
 
     const uint8 = new Uint8Array(buffer);
 

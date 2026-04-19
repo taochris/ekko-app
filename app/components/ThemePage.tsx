@@ -1645,7 +1645,7 @@ export function EchoRevealScreen({
           {/* Téléchargement */}
           <a
             href={`/api/storage/proxy?echoId=${echoId}&download=1`}
-            download={`echo-ekko-${echoId.slice(0, 8)}.mp4`}
+            download={`echo-ekko-${echoId.slice(0, 8)}`}
             style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
               padding: "14px 0", borderRadius: 16, textDecoration: "none",
