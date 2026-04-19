@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
+import { promises as fs, existsSync } from "fs";
 import { spawn } from "child_process";
 import os from "os";
 import path from "path";
@@ -15,7 +15,37 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60; // Vercel : autoriser jusqu'à 60s pour la fusion
 
-const ffmpegPath: string = process.env.FFMPEG_PATH ?? (ffmpegStatic as string) ?? "ffmpeg";
+/**
+ * Résout le chemin ffmpeg de façon robuste :
+ * 1. Si FFMPEG_PATH est défini ET que le fichier existe → l'utiliser (dev local)
+ * 2. Sinon ffmpeg-static (Vercel et autres) → vérifier qu'il existe
+ * 3. Sinon "ffmpeg" (PATH système, dernier recours)
+ *
+ * On IGNORE explicitement FFMPEG_PATH si le fichier n'existe pas : cela évite
+ * qu'une valeur locale (ex: C:\... de Windows) fuite sur Vercel Linux.
+ */
+function resolveFfmpegPath(): string {
+  const envPath = process.env.FFMPEG_PATH;
+  if (envPath && existsSync(envPath)) {
+    console.log("[ffmpeg] FFMPEG_PATH OK:", envPath);
+    return envPath;
+  }
+  if (envPath) {
+    console.warn("[ffmpeg] FFMPEG_PATH defini mais fichier inexistant (ignoré):", envPath);
+  }
+  const staticPath = ffmpegStatic as string | null;
+  if (staticPath && existsSync(staticPath)) {
+    console.log("[ffmpeg] ffmpeg-static OK:", staticPath);
+    return staticPath;
+  }
+  if (staticPath) {
+    console.warn("[ffmpeg] ffmpeg-static pointe sur un fichier inexistant:", staticPath);
+  } else {
+    console.warn("[ffmpeg] ffmpeg-static renvoie null (binaire pas installé?)");
+  }
+  console.warn("[ffmpeg] fallback sur 'ffmpeg' du PATH système");
+  return "ffmpeg";
+}
 
 function expiresAt(storageOption: number): Date {
   const now = Date.now();
@@ -31,7 +61,8 @@ function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: strin
     await fs.writeFile(listPath, listContent, "utf8");
 
     const args = ["-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", outputPath];
-    const proc = spawn(ffmpegPath, args);
+    const bin = resolveFfmpegPath();
+    const proc = spawn(bin, args);
     let stderr = "";
     proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
     proc.on("close", (code) => {
