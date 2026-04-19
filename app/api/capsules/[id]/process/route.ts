@@ -3,7 +3,6 @@ import { promises as fs, existsSync } from "fs";
 import { spawn } from "child_process";
 import os from "os";
 import path from "path";
-import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import { getAdminBucket } from "../../../../lib/firebaseAdmin";
 import {
   getCapsule,
@@ -11,6 +10,9 @@ import {
   markCapsuleReady,
   markCapsuleFailed,
 } from "../../../../lib/capsules";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg") as { path: string; version: string; url: string };
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // Vercel : autoriser jusqu'à 60s pour la fusion
