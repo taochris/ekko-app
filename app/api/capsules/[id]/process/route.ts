@@ -3,7 +3,7 @@ import { promises as fs, existsSync } from "fs";
 import { spawn } from "child_process";
 import os from "os";
 import path from "path";
-import ffmpegStatic from "ffmpeg-static";
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import { getAdminBucket } from "../../../../lib/firebaseAdmin";
 import {
   getCapsule,
@@ -33,15 +33,15 @@ function resolveFfmpegPath(): string {
   if (envPath) {
     console.warn("[ffmpeg] FFMPEG_PATH defini mais fichier inexistant (ignoré):", envPath);
   }
-  const staticPath = ffmpegStatic as string | null;
-  if (staticPath && existsSync(staticPath)) {
-    console.log("[ffmpeg] ffmpeg-static OK:", staticPath);
-    return staticPath;
+  const installerPath = ffmpegInstaller?.path as string | undefined;
+  if (installerPath && existsSync(installerPath)) {
+    console.log("[ffmpeg] @ffmpeg-installer OK:", installerPath);
+    return installerPath;
   }
-  if (staticPath) {
-    console.warn("[ffmpeg] ffmpeg-static pointe sur un fichier inexistant:", staticPath);
+  if (installerPath) {
+    console.warn("[ffmpeg] @ffmpeg-installer pointe sur un fichier inexistant:", installerPath);
   } else {
-    console.warn("[ffmpeg] ffmpeg-static renvoie null (binaire pas installé?)");
+    console.warn("[ffmpeg] @ffmpeg-installer.path indisponible");
   }
   console.warn("[ffmpeg] fallback sur 'ffmpeg' du PATH système");
   return "ffmpeg";

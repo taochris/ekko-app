@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   // Forcer l'inclusion du binaire ffmpeg-static dans le bundle serverless Vercel
   // (sans ça, Next.js peut l'exclure via le tracing des dépendances et le spawn échoue avec ENOENT)
   outputFileTracingIncludes: {
-    "/api/capsules/[id]/process": ["./node_modules/ffmpeg-static/**"],
+    "/api/capsules/[id]/process": ["./node_modules/@ffmpeg-installer/**"],
   },
 };
 
