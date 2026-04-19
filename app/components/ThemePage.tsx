@@ -8,7 +8,7 @@ import ImportGuide from "./ImportGuide";
 import AudioSelector from "./AudioSelector";
 import AuthModal from "./AuthModal";
 import { useAuth } from "../context/AuthContext";
-import { uploadAudiosToStorage, downloadAudiosFromStorage, deleteAudiosFromStorage } from "../lib/audioStorage";
+import { uploadAudiosToStorage } from "../lib/audioStorage";
 
 type ThemeType = "deuil" | "amitie" | "amour";
 
@@ -54,7 +54,7 @@ const themeConfig: Record<string, {
   },
 };
 
-type Step = "home" | "import" | "select" | "loading" | "capsule" | "vocapsule" | "livre";
+type Step = "home" | "import" | "select" | "loading" | "capsule" | "livre";
 
 function NavButton({ onClick, accent, children }: { onClick: () => void; accent: string; children: React.ReactNode }) {
   const [hovered, setHovered] = useState(false);
@@ -83,78 +83,10 @@ export default function ThemePage({ theme }: { theme: string }) {
   const [step, setStep] = useState<Step>("home");
   const [importedAudios, setImportedAudios] = useState<File[]>([]);
   const [selectedAudios, setSelectedAudios] = useState<File[]>([]);
-  const [recovering, setRecovering] = useState(false);
-  const [echoId, setEchoId] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [showEchos, setShowEchos] = useState(false);
 
-  // Capturer les params URL immédiatement au montage (avant que history.replaceState les efface)
-  const stripeParamsRef = useRef<{
-    sessionId: string; uploadId: string; storageOption: number; uid: string;
-  } | null>(null);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const payment = params.get("payment");
-    const sessionId = params.get("session_id");
-    const uploadId = params.get("upload_id");
-    if (payment === "success" && sessionId && uploadId) {
-      stripeParamsRef.current = {
-        sessionId,
-        uploadId,
-        storageOption: parseInt(params.get("storage") ?? "0", 10),
-        uid: params.get("uid") ?? "anonymous",
-      };
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
-
-  // Retour Stripe après paiement : fusionner les audios et afficher l'écran de dévoilement
-  useEffect(() => {
-    if (isLoading) return;
-    const p = stripeParamsRef.current;
-    if (!p) return;
-    stripeParamsRef.current = null;
-
-    const uid = p.uid !== "anonymous" ? p.uid : (user?.uid ?? "anonymous");
-
-    setRecovering(true);
-    (async () => {
-      try {
-        // Vérifier le paiement Stripe
-        const verifyRes = await fetch(`/api/stripe/verify?session_id=${p.sessionId}`);
-        const verifyData = await verifyRes.json();
-        if (!verifyData.paid) { setRecovering(false); return; }
-
-        // Fusionner les audios côté serveur et stocker sur Firebase
-        const mergeRes = await fetch("/api/storage/merge", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            uploadId: p.uploadId,
-            theme,
-            storageOption: p.storageOption,
-            accentColor: config.accent,
-            uid,
-          }),
-        });
-        const mergeData = await mergeRes.json();
-        if (!mergeRes.ok || !mergeData.echoId) {
-          console.error("Fusion échouée:", mergeData.error);
-          setRecovering(false);
-          return;
-        }
-
-        setEchoId(mergeData.echoId);
-        setAudioUrl(mergeData.audioUrl);
-        setStep("vocapsule");
-      } catch (err) {
-        console.error("Récupération post-paiement:", err);
-        setRecovering(false);
-      } finally {
-        setRecovering(false);
-      }
-    })();
-  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Flow post-paiement géré par la page /capsule/[id] (async + polling Firestore)
+  // ThemePage ne gère plus que le parcours : import → select → capsule (pay)
 
   const handleAudiosImported = (files: File[]) => {
     setImportedAudios(files);
@@ -168,24 +100,6 @@ export default function ThemePage({ theme }: { theme: string }) {
         <p className="ekko-serif text-sm" style={{ color: "rgba(240,232,216,0.3)", position: "relative", zIndex: 10 }}>
           …
         </p>
-      </div>
-    );
-  }
-
-  if (recovering) {
-    return (
-      <div className="relative min-h-screen overflow-hidden flex items-center justify-center">
-        <BlobBackground variant={config.blobVariant} />
-        <div style={{ position: "relative", zIndex: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-          <motion.div
-            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            style={{ width: 60, height: 60, borderRadius: "50%", background: `radial-gradient(circle, ${config.accent}60, transparent)`, border: `1px solid ${config.accent}50` }}
-          />
-          <p className="ekko-serif" style={{ fontStyle: "italic", fontSize: 16, color: "rgba(240,232,216,0.7)" }}>
-            Votre écho se révèle…
-          </p>
-        </div>
       </div>
     );
   }
@@ -208,7 +122,7 @@ export default function ThemePage({ theme }: { theme: string }) {
               if (step === "select") setStep("import");
               else if (step === "import") setStep("home");
               else if (step === "capsule") setStep("select");
-              else if (step === "vocapsule" || step === "livre") setStep("select");
+              else if (step === "livre") setStep("select");
             }} accent={config.accent}>
               ← Retour
             </NavButton>
@@ -299,15 +213,7 @@ export default function ThemePage({ theme }: { theme: string }) {
             config={config}
             audios={selectedAudios}
             theme={theme}
-            onUnlock={() => setStep("vocapsule")}
-          />
-        )}
-        {step === "vocapsule" && (
-          <EchoRevealScreen
-            config={config}
-            echoId={echoId ?? ""}
-            audioUrl={audioUrl ?? ""}
-            theme={theme}
+            onUnlock={() => { /* paiement redirige directement vers /capsule/[id] */ }}
           />
         )}
         {step === "livre" && (
@@ -548,12 +454,20 @@ function CapsuleScreen({
     }
     setStatus("uploading");
     try {
+      // Upload direct des audios dans temp/ — fusion gérée côté serveur après paiement
       const uploadId = await uploadAudiosToStorage(audios);
       setStatus("redirecting");
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme, uploadId, storage: storageOption, storageLabel, uid: user?.uid ?? "" }),
+        body: JSON.stringify({
+          theme,
+          uploadId,
+          storage: storageOption,
+          storageLabel,
+          uid: user?.uid ?? "",
+          accentColor: config.accent,
+        }),
       });
       const data = await res.json();
       if (data.url) {
@@ -599,106 +513,87 @@ function CapsuleScreen({
         margin: "0 auto",
       }}
     >
-      {/* Capsule scellée — animations CSS pures pour fluidité premium */}
+      {/* Capsule scellée — SVG pur, zéro filter CSS dynamique */}
       <style>{`
-        @keyframes capsule-halo-1 {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.22; }
-          50%      { transform: translate3d(0,0,0) scale(1.12); opacity: 0.42; }
-        }
-        @keyframes capsule-halo-2 {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.35; }
-          50%      { transform: translate3d(0,0,0) scale(1.06); opacity: 0.6; }
-        }
-        @keyframes capsule-body {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); }
-          50%      { transform: translate3d(0,0,0) scale(1.018); }
-        }
-        @keyframes capsule-shimmer {
-          0%, 100% { opacity: 0.15; }
-          50%      { opacity: 0.35; }
-        }
-        @keyframes wave-bar {
-          0%, 100% { transform: scaleY(0.55); }
-          50%      { transform: scaleY(1); }
-        }
-        .capsule-halo-1 { animation: capsule-halo-1 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
-        .capsule-halo-2 { animation: capsule-halo-2 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
-        .capsule-body   { animation: capsule-body 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform; backface-visibility: hidden; }
-        .capsule-shimmer { animation: capsule-shimmer 3.6s ease-in-out infinite; will-change: opacity; }
-        .wave-bar { animation: wave-bar 1.8s ease-in-out infinite; transform-origin: center; will-change: transform; }
+        @keyframes cp-halo { 0%,100%{opacity:.18} 50%{opacity:.45} }
+        @keyframes cp-ring { 0%,100%{opacity:.5} 50%{opacity:1} }
+        @keyframes cp-body { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(0,0,0) scale(1.022)} }
+        @keyframes cp-wave { 0%,100%{transform:scaleY(.45)} 50%{transform:scaleY(1)} }
+        .cp-halo { animation: cp-halo 4.8s ease-in-out infinite; will-change:opacity; }
+        .cp-ring { animation: cp-ring 3.4s ease-in-out infinite; will-change:opacity; }
+        .cp-body { animation: cp-body 5.2s ease-in-out infinite; will-change:transform; backface-visibility:hidden; transform-origin:90px 90px; }
+        .cp-wave { animation: cp-wave 1.9s ease-in-out infinite; transform-origin:50% 50%; will-change:transform; }
       `}</style>
-      <div style={{ position: "relative", width: 180, height: 180, isolation: "isolate" }}>
-        {/* Halo extérieur diffus */}
-        <div
-          className="capsule-halo-1"
-          style={{
-            position: "absolute", inset: -40, borderRadius: "50%",
-            background: `radial-gradient(circle, ${config.accent}35 0%, ${config.accent}10 40%, transparent 70%)`,
-            filter: "blur(8px)",
-            pointerEvents: "none",
-          }}
-        />
-        {/* Halo intermédiaire */}
-        <div
-          className="capsule-halo-2"
-          style={{
-            position: "absolute", inset: -12, borderRadius: "50%",
-            background: `radial-gradient(circle, ${config.accent}40 0%, transparent 65%)`,
-            filter: "blur(4px)",
-            pointerEvents: "none",
-          }}
-        />
-        {/* Corps capsule (respiration) */}
-        <div
-          className="capsule-body"
-          style={{
-            position: "absolute", inset: 10, borderRadius: "50%",
-            background: `radial-gradient(circle at 35% 30%, ${config.accent}20 0%, rgba(15,12,22,0.85) 55%, rgba(8,6,12,0.95) 100%)`,
-            border: `1px solid ${config.accent}55`,
-            boxShadow: `0 0 60px ${config.accent}22, 0 0 20px ${config.accent}18, inset 0 1px 0 ${config.accent}35, inset 0 -20px 40px rgba(0,0,0,0.4)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            backdropFilter: "blur(2px)",
-          }}
-        >
+      <svg width="180" height="180" viewBox="0 0 180 180" style={{ overflow: "visible", display: "block" }}>
+        <defs>
+          {/* Halo flou via filtre SVG déclaratif — rendu GPU, pas recalculé chaque frame */}
+          <radialGradient id="cp-grad-halo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={config.accent} stopOpacity="0.4"/>
+            <stop offset="60%" stopColor={config.accent} stopOpacity="0.08"/>
+            <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
+          </radialGradient>
+          <radialGradient id="cp-grad-body" cx="38%" cy="30%" r="65%">
+            <stop offset="0%" stopColor={config.accent} stopOpacity="0.22"/>
+            <stop offset="55%" stopColor="#0f0c16" stopOpacity="0.9"/>
+            <stop offset="100%" stopColor="#080610" stopOpacity="1"/>
+          </radialGradient>
+          <radialGradient id="cp-grad-shine" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={config.accent} stopOpacity="0.45"/>
+            <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
+          </radialGradient>
+          <filter id="cp-blur-halo" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="10"/>
+          </filter>
+          <filter id="cp-blur-ring" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3"/>
+          </filter>
+          <clipPath id="cp-circle-clip">
+            <circle cx="90" cy="90" r="72"/>
+          </clipPath>
+        </defs>
+
+        {/* Halo extérieur — opacity animée, blur statique SVG */}
+        <circle className="cp-halo" cx="90" cy="90" r="88" fill="url(#cp-grad-halo)" filter="url(#cp-blur-halo)"/>
+
+        {/* Anneau lumineux */}
+        <circle className="cp-ring" cx="90" cy="90" r="72" fill="none"
+          stroke={config.accent} strokeWidth="1" strokeOpacity="0.5" filter="url(#cp-blur-ring)"/>
+
+        {/* Corps capsule avec respiration scale */}
+        <g className="cp-body">
+          <circle cx="90" cy="90" r="70" fill="url(#cp-grad-body)"/>
+          <circle cx="90" cy="90" r="70" fill="none" stroke={config.accent} strokeWidth="0.8" strokeOpacity="0.45"/>
+
+          {/* Waveform clippée dans le cercle */}
+          <g clipPath="url(#cp-circle-clip)" opacity="0.2">
+            {[0.45,0.7,0.95,0.85,0.6,0.9,0.55,0.75,0.5].map((h, i) => {
+              const barH = 54 * h;
+              const x = 54 + i * 9;
+              return (
+                <rect
+                  key={i}
+                  className="cp-wave"
+                  x={x} y={90 - barH / 2} width="4" height={barH}
+                  rx="2" fill={config.accent}
+                  style={{ animationDelay: `${i * 0.13}s` }}
+                />
+              );
+            })}
+          </g>
+
           {/* Reflet supérieur */}
-          <div
-            className="capsule-shimmer"
-            style={{
-              position: "absolute", top: "8%", left: "20%", right: "20%", height: "30%",
-              borderRadius: "50%",
-              background: `radial-gradient(ellipse at center, ${config.accent}35 0%, transparent 70%)`,
-              filter: "blur(6px)",
-              pointerEvents: "none",
-            }}
-          />
-          {/* Waveform subtile en fond */}
-          <div style={{
-            position: "absolute", inset: 0, borderRadius: "50%",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            gap: 4, filter: "blur(1px)", opacity: 0.18, pointerEvents: "none",
-          }}>
-            {[0.45, 0.7, 0.95, 0.85, 0.6, 0.9, 0.55, 0.75, 0.5].map((h, i) => (
-              <div key={i}
-                className="wave-bar"
-                style={{
-                  width: 3, borderRadius: 2,
-                  height: 60 * h,
-                  background: config.accent,
-                  animationDelay: `${i * 0.13}s`,
-                }}
-              />
-            ))}
-          </div>
-          {/* Icône cadenas */}
-          <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.4"
-            style={{ width: 44, height: 44, opacity: 0.95, position: "relative", zIndex: 2,
-              filter: `drop-shadow(0 0 8px ${config.accent}55)` }}>
-            <rect x="3" y="11" width="18" height="11" rx="2.5" ry="2.5"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round"/>
-            <circle cx="12" cy="16.5" r="1.2" fill={config.accent} stroke="none" opacity="0.7"/>
-          </svg>
-        </div>
-      </div>
+          <ellipse cx="90" cy="62" rx="28" ry="14" fill="url(#cp-grad-shine)" opacity="0.25"/>
+
+          {/* Cadenas */}
+          <g transform="translate(68, 68)">
+            <rect x="0" y="10.5" width="22" height="13" rx="2.5"
+              fill="none" stroke={config.accent} strokeWidth="1.4" strokeOpacity="0.95"/>
+            <path d="M4 10.5V7a7 7 0 0 1 14 0v3.5"
+              fill="none" stroke={config.accent} strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.95"/>
+            <circle cx="11" cy="17" r="1.5" fill={config.accent} fillOpacity="0.75"/>
+          </g>
+        </g>
+      </svg>
 
       {/* Texte */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1522,16 +1417,15 @@ function TranscriptionProcessor({
 
 // ─── ECHO REVEAL SCREEN ───────────────────────────────────────────────────────
 
-function EchoRevealScreen({
+export function EchoRevealScreen({
   config,
   echoId,
   audioUrl,
-  theme,
 }: {
-  config: typeof themeConfig["deuil"];
+  config: { accent: string; accentDim: string };
   echoId: string;
   audioUrl: string;
-  theme: string;
+  theme?: string;
 }) {
   const [phase, setPhase] = useState<"unlock" | "reveal">("unlock");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -1566,95 +1460,78 @@ function EchoRevealScreen({
       style={{ maxWidth: 480, margin: "0 auto", paddingTop: 24, paddingBottom: 48 }}
     >
       {phase === "unlock" ? (
-        // ── Animation cadenas premium qui s'ouvre ──
+        // ── Animation cadenas SVG pur qui s'ouvre ──
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28, minHeight: "60vh", justifyContent: "center" }}>
           <style>{`
-            @keyframes reveal-halo-1 {
-              0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.22; }
-              50%      { transform: translate3d(0,0,0) scale(1.14); opacity: 0.45; }
-            }
-            @keyframes reveal-halo-2 {
-              0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.35; }
-              50%      { transform: translate3d(0,0,0) scale(1.07); opacity: 0.6; }
-            }
-            @keyframes reveal-body {
-              0%, 100% { transform: translate3d(0,0,0) scale(1); }
-              50%      { transform: translate3d(0,0,0) scale(1.02); }
-            }
-            @keyframes reveal-shackle {
-              0% { transform: rotate(0deg) translateY(0px); }
-              100% { transform: rotate(-38deg) translateY(-5px); }
-            }
-            @keyframes reveal-fadein {
-              from { opacity: 0; transform: translateY(8px); }
-              to   { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes reveal-spin { to { transform: rotate(360deg); } }
-            .reveal-halo-1 { animation: reveal-halo-1 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
-            .reveal-halo-2 { animation: reveal-halo-2 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform, opacity; backface-visibility: hidden; }
-            .reveal-body   { animation: reveal-body 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; will-change: transform; backface-visibility: hidden; }
-            .reveal-shackle { transform-origin: 12px 11px; transform-box: fill-box; animation: reveal-shackle 0.8s cubic-bezier(0.34,1.56,0.64,1) 1.2s forwards; will-change: transform; }
-            .reveal-fadein { animation: reveal-fadein 0.6s ease 0.5s both; }
-            .reveal-spin { animation: reveal-spin 1.2s linear infinite; will-change: transform; }
+            @keyframes rv-halo  { 0%,100%{opacity:.18} 50%{opacity:.44} }
+            @keyframes rv-ring  { 0%,100%{opacity:.45} 50%{opacity:.95} }
+            @keyframes rv-body  { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(0,0,0) scale(1.022)} }
+            @keyframes rv-shackle { 0%{transform:rotate(0deg) translateY(0px)} 100%{transform:rotate(-38deg) translateY(-6px)} }
+            @keyframes rv-fadein { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+            @keyframes rv-spin   { to{transform:rotate(360deg)} }
+            .rv-halo    { animation: rv-halo  4.8s ease-in-out infinite; will-change:opacity; }
+            .rv-ring    { animation: rv-ring  3.4s ease-in-out infinite; will-change:opacity; }
+            .rv-body    { animation: rv-body  5.2s ease-in-out infinite; will-change:transform; backface-visibility:hidden; transform-origin:70px 70px; }
+            .rv-shackle { transform-origin: 17px 15px; transform-box: fill-box; animation: rv-shackle 0.8s cubic-bezier(0.34,1.56,0.64,1) 1.2s forwards; will-change:transform; }
+            .rv-fadein  { animation: rv-fadein 0.6s ease 0.5s both; }
+            .rv-spin    { animation: rv-spin 1.2s linear infinite; will-change:transform; }
           `}</style>
 
-          <div style={{ position: "relative", width: 140, height: 140, isolation: "isolate" }}>
-            {/* Halo extérieur diffus */}
-            <div
-              className="reveal-halo-1"
-              style={{
-                position: "absolute", inset: -32, borderRadius: "50%",
-                background: `radial-gradient(circle, ${config.accent}35 0%, ${config.accent}10 40%, transparent 70%)`,
-                filter: "blur(8px)",
-                pointerEvents: "none",
-              }}
-            />
-            {/* Halo intermédiaire */}
-            <div
-              className="reveal-halo-2"
-              style={{
-                position: "absolute", inset: -8, borderRadius: "50%",
-                background: `radial-gradient(circle, ${config.accent}40 0%, transparent 65%)`,
-                filter: "blur(4px)",
-                pointerEvents: "none",
-              }}
-            />
-            {/* Corps (respiration) */}
-            <div
-              className="reveal-body"
-              style={{
-                position: "absolute", inset: 8, borderRadius: "50%",
-                background: `radial-gradient(circle at 35% 30%, ${config.accent}20 0%, rgba(15,12,22,0.85) 55%, rgba(8,6,12,0.95) 100%)`,
-                border: `1px solid ${config.accent}55`,
-                boxShadow: `0 0 60px ${config.accent}22, 0 0 20px ${config.accent}18, inset 0 1px 0 ${config.accent}35, inset 0 -16px 32px rgba(0,0,0,0.4)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                backdropFilter: "blur(2px)",
-              }}
-            >
-              {/* Cadenas SVG animé */}
-              <svg viewBox="0 0 24 24" fill="none" stroke={config.accent} strokeWidth="1.3"
-                style={{ width: 50, height: 50, overflow: "visible", display: "block",
-                  filter: `drop-shadow(0 0 8px ${config.accent}55)`, position: "relative", zIndex: 2 }}>
-                <rect x="3" y="11" width="18" height="11" rx="2.5" ry="2.5" />
-                <path
-                  className="reveal-shackle"
-                  strokeLinecap="round"
-                  d="M7 11V7a5 5 0 0 1 10 0v4"
-                />
-                <circle cx="12" cy="16.5" r="1.2" fill={config.accent} stroke="none" opacity="0.7"/>
-              </svg>
-            </div>
-          </div>
+          <svg width="140" height="140" viewBox="0 0 140 140" style={{ overflow: "visible", display: "block" }}>
+            <defs>
+              <radialGradient id="rv-grad-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={config.accent} stopOpacity="0.38"/>
+                <stop offset="55%" stopColor={config.accent} stopOpacity="0.08"/>
+                <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
+              </radialGradient>
+              <radialGradient id="rv-grad-body" cx="38%" cy="30%" r="65%">
+                <stop offset="0%" stopColor={config.accent} stopOpacity="0.22"/>
+                <stop offset="55%" stopColor="#0f0c16" stopOpacity="0.9"/>
+                <stop offset="100%" stopColor="#080610" stopOpacity="1"/>
+              </radialGradient>
+              <radialGradient id="rv-grad-shine" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={config.accent} stopOpacity="0.4"/>
+                <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
+              </radialGradient>
+              <filter id="rv-blur-halo" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="9"/>
+              </filter>
+              <filter id="rv-blur-ring" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2.5"/>
+              </filter>
+            </defs>
 
-          <p
-            className="reveal-fadein ekko-serif"
-            style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}
-          >
+            {/* Halo extérieur */}
+            <circle className="rv-halo" cx="70" cy="70" r="68" fill="url(#rv-grad-halo)" filter="url(#rv-blur-halo)"/>
+            {/* Anneau lumineux */}
+            <circle className="rv-ring" cx="70" cy="70" r="56" fill="none"
+              stroke={config.accent} strokeWidth="0.8" strokeOpacity="0.6" filter="url(#rv-blur-ring)"/>
+
+            {/* Corps + cadenas avec respiration */}
+            <g className="rv-body">
+              <circle cx="70" cy="70" r="54" fill="url(#rv-grad-body)"/>
+              <circle cx="70" cy="70" r="54" fill="none" stroke={config.accent} strokeWidth="0.7" strokeOpacity="0.4"/>
+              {/* Reflet */}
+              <ellipse cx="70" cy="50" rx="20" ry="10" fill="url(#rv-grad-shine)" opacity="0.22"/>
+              {/* Cadenas centré dans le cercle */}
+              <g transform="translate(53, 53)">
+                <rect x="0" y="15" width="34" height="19" rx="3.5"
+                  fill="none" stroke={config.accent} strokeWidth="1.6" strokeOpacity="0.95"/>
+                <path
+                  className="rv-shackle"
+                  d="M6 15V10a11 11 0 0 1 22 0v5"
+                  fill="none" stroke={config.accent} strokeWidth="1.6" strokeLinecap="round" strokeOpacity="0.95"
+                />
+                <circle cx="17" cy="24.5" r="2" fill={config.accent} fillOpacity="0.75"/>
+              </g>
+            </g>
+          </svg>
+
+          <p className="rv-fadein ekko-serif"
+            style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}>
             Votre écho se dévoile…
           </p>
-          {/* Spinner */}
-          <div
-            className="reveal-spin"
+          <div className="rv-spin"
             style={{ width: 22, height: 22, border: `1.5px solid ${config.accent}30`, borderTop: `1.5px solid ${config.accent}`, borderRadius: "50%" }}
           />
         </div>
