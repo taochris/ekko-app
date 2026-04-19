@@ -62,7 +62,7 @@ function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: strin
     const listContent = inputPaths.map((p) => `file '${p.replace(/\\/g, "/")}'`).join("\n");
     await fs.writeFile(listPath, listContent, "utf8");
 
-    const args = ["-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", outputPath];
+    const args = ["-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", "-strict", "-2", outputPath];
     const bin = resolveFfmpegPath();
     const proc = spawn(bin, args);
     let stderr = "";
@@ -114,7 +114,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     // 2. Trier + télécharger
     tempFiles.sort((a, b) => a.name.localeCompare(b.name));
-    const ext = tempFiles[0].name.split(".").pop() ?? "mp4";
+    const ext = tempFiles[0].name.split(".").pop() ?? "opus";
+    const mimeByExt: Record<string, string> = {
+      opus: "audio/ogg; codecs=opus",
+      ogg: "audio/ogg",
+      mp3: "audio/mpeg",
+      m4a: "audio/mp4",
+      wav: "audio/wav",
+      webm: "audio/webm",
+    };
+    const contentType = mimeByExt[ext] ?? "audio/ogg; codecs=opus";
     const orderedPaths: string[] = new Array(tempFiles.length);
     await Promise.all(
       tempFiles.map(async (f, i) => {
@@ -126,7 +135,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     );
 
     // 3. Fusionner (ou simple copie si un seul fichier)
-    const outputPath = path.join(tmpDir, "output.mp4");
+    const outputPath = path.join(tmpDir, `output.${ext}`);
     if (orderedPaths.length === 1) {
       await fs.copyFile(orderedPaths[0], outputPath);
     } else {
@@ -134,16 +143,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const mergedBuf = await fs.readFile(outputPath);
-    console.log("[capsule/process] fusion OK, taille:", mergedBuf.byteLength);
+    console.log("[capsule/process] fusion OK, taille:", mergedBuf.byteLength, "ext:", ext);
 
     // 4. Upload final
     const echoId = crypto.randomUUID();
     const expires = expiresAt(capsule.storageOption);
-    const destPath = `echos/${capsule.uid}/${echoId}/audio.mp4`;
+    const destPath = `echos/${capsule.uid}/${echoId}/audio.${ext}`;
     const destFile = bucket.file(destPath);
     await destFile.save(mergedBuf, {
       metadata: {
-        contentType: "video/mp4",
+        contentType,
         metadata: {
           theme: capsule.theme,
           accentColor: capsule.accentColor,
