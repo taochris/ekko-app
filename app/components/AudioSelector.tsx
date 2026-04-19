@@ -2,6 +2,14 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+  }, []);
+  return isMobile;
+}
+
 interface AudioSelectorProps {
   audios: File[];
   config: { accent: string; accentDim: string };
@@ -52,6 +60,42 @@ const sourceColors: Record<string, string> = {
   Audio: "#c9a96e",
 };
 
+function MobileAudioPlayer({ url, accent }: { url: string; accent: string }) {
+  const [playing, setPlaying] = useState(false);
+  const ref = useRef<HTMLAudioElement>(null);
+  const toggle = () => {
+    const a = ref.current;
+    if (!a) return;
+    if (playing) { a.pause(); setPlaying(false); }
+    else { a.play().catch(() => {}); setPlaying(true); }
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, height: 28 }}>
+      <audio ref={ref} src={url} onEnded={() => setPlaying(false)} preload="none" />
+      <button
+        onClick={toggle}
+        style={{
+          width: 28, height: 28, borderRadius: "50%", border: "none", cursor: "pointer",
+          background: `${accent}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}
+      >
+        {playing ? (
+          <svg viewBox="0 0 24 24" fill={accent} style={{ width: 10, height: 10 }}>
+            <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill={accent} style={{ width: 10, height: 10, marginLeft: 2 }}>
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        )}
+      </button>
+      <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: `${accent}80` }}>
+        {playing ? "en cours…" : "écouter"}
+      </span>
+    </div>
+  );
+}
+
 export default function AudioSelector({
   audios, config, onSelect, onVocapsule, onLivre, ctaVocapsule, ctaLivre, showLivre = true,
 }: AudioSelectorProps) {
@@ -71,17 +115,27 @@ export default function AudioSelector({
   useEffect(() => {
     const load = async () => {
       const results: Record<number, number> = {};
+      // Charger séquentiellement avec une seule instance Audio réutilisée
+      // iOS Safari crashe si on crée trop d'instances HTMLAudioElement en parallèle
+      const a = new Audio();
+      a.preload = "metadata";
       for (let i = 0; i < audios.length; i++) {
         try {
           const url = URL.createObjectURL(audios[i]);
           urlsRef.current[i] = url;
           await new Promise<void>((resolve) => {
-            const a = new Audio();
-            a.preload = "metadata";
-            a.onloadedmetadata = () => { results[i] = isFinite(a.duration) ? a.duration : 0; resolve(); };
-            a.onerror = () => { results[i] = 0; resolve(); };
+            const onMeta = () => { results[i] = isFinite(a.duration) ? a.duration : 0; cleanup(); resolve(); };
+            const onErr = () => { results[i] = 0; cleanup(); resolve(); };
+            const onTimeout = () => { results[i] = 0; cleanup(); resolve(); };
+            const timer = setTimeout(onTimeout, 4000);
+            function cleanup() { clearTimeout(timer); a.onloadedmetadata = null; a.onerror = null; }
+            a.onloadedmetadata = onMeta;
+            a.onerror = onErr;
             a.src = url;
+            a.load();
           });
+          // Petite pause entre chaque fichier pour laisser respirer Safari
+          await new Promise((r) => setTimeout(r, 50));
         } catch { results[i] = 0; }
       }
       setDurations(results);
@@ -91,6 +145,7 @@ export default function AudioSelector({
     return () => { Object.values(urlsRef.current).forEach(URL.revokeObjectURL); };
   }, [audios]);
 
+  const isMobile = useIsMobile();
   const sources = useMemo(() => Array.from(new Set(audios.map((f) => inferSource(f.name)))), [audios]);
 
   // Group by date, sorted desc
@@ -291,11 +346,15 @@ export default function AudioSelector({
 
                     {/* Audio player */}
                     {url ? (
-                      <audio
-                        src={url}
-                        controls
-                        style={{ width: "100%", height: 28, borderRadius: 8, accentColor: config.accent }}
-                      />
+                      isMobile ? (
+                        <MobileAudioPlayer url={url} accent={config.accent} />
+                      ) : (
+                        <audio
+                          src={url}
+                          controls
+                          style={{ width: "100%", height: 28, borderRadius: 8, accentColor: config.accent }}
+                        />
+                      )
                     ) : (
                       <div style={{
                         height: 28, borderRadius: 8, background: "rgba(255,255,255,0.03)",

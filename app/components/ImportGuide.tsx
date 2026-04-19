@@ -203,13 +203,9 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
-    accept: {
-      "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".opus", ".flac"],
-      "application/zip": [".zip"],
-      "application/x-zip-compressed": [".zip"],
-      "application/x-zip": [".zip"],
-      "application/octet-stream": [".zip"],
-    },
+    // Pas de filtre accept strict : sur Android/iOS les MIME types des fichiers audio
+    // varient selon les apps (ex: opus reçu comme application/octet-stream).
+    // Le filtrage est fait manuellement dans onDrop().
     multiple: true,
     noClick: false,
   });
@@ -574,9 +570,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
             </div>
 
             {isMobile ? (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); open(); }}
+              <label
                 className="ekko-serif text-sm px-6 py-3 rounded-2xl transition-all duration-200"
                 style={{
                   background: `linear-gradient(135deg, ${config.accent}30, ${config.accent}55)`,
@@ -584,10 +578,22 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
                   color: config.accent,
                   cursor: "pointer",
                   fontWeight: 500,
+                  display: "inline-block",
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
                 📂 Parcourir mes fichiers
-              </button>
+                <input
+                  type="file"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length > 0) onDrop(files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
             ) : (
               <span
                 className="text-xs px-4 py-1.5 rounded-full ekko-serif transition-all duration-200"
