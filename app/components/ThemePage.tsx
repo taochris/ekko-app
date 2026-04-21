@@ -7,6 +7,7 @@ import EkkoLogo from "./EkkoLogo";
 import ImportGuide from "./ImportGuide";
 import AudioSelector from "./AudioSelector";
 import AuthModal from "./AuthModal";
+import { SealedCapsule, RevealCapsule } from "./CapsuleAnimations";
 import { useAuth } from "../context/AuthContext";
 import { uploadAudiosToStorage } from "../lib/audioStorage";
 
@@ -513,87 +514,8 @@ function CapsuleScreen({
         margin: "0 auto",
       }}
     >
-      {/* Capsule scellée — SVG pur, zéro filter CSS dynamique */}
-      <style>{`
-        @keyframes cp-halo { 0%,100%{opacity:.18} 50%{opacity:.45} }
-        @keyframes cp-ring { 0%,100%{opacity:.5} 50%{opacity:1} }
-        @keyframes cp-body { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(0,0,0) scale(1.022)} }
-        @keyframes cp-wave { 0%,100%{transform:scaleY(.45)} 50%{transform:scaleY(1)} }
-        .cp-halo { animation: cp-halo 4.8s ease-in-out infinite; will-change:opacity; }
-        .cp-ring { animation: cp-ring 3.4s ease-in-out infinite; will-change:opacity; }
-        .cp-body { animation: cp-body 5.2s ease-in-out infinite; will-change:transform; backface-visibility:hidden; transform-origin:90px 90px; }
-        .cp-wave { animation: cp-wave 1.9s ease-in-out infinite; transform-origin:50% 50%; will-change:transform; }
-      `}</style>
-      <svg width="180" height="180" viewBox="0 0 180 180" style={{ overflow: "visible", display: "block" }}>
-        <defs>
-          {/* Halo flou via filtre SVG déclaratif — rendu GPU, pas recalculé chaque frame */}
-          <radialGradient id="cp-grad-halo" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={config.accent} stopOpacity="0.4"/>
-            <stop offset="60%" stopColor={config.accent} stopOpacity="0.08"/>
-            <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
-          </radialGradient>
-          <radialGradient id="cp-grad-body" cx="38%" cy="30%" r="65%">
-            <stop offset="0%" stopColor={config.accent} stopOpacity="0.22"/>
-            <stop offset="55%" stopColor="#0f0c16" stopOpacity="0.9"/>
-            <stop offset="100%" stopColor="#080610" stopOpacity="1"/>
-          </radialGradient>
-          <radialGradient id="cp-grad-shine" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={config.accent} stopOpacity="0.45"/>
-            <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
-          </radialGradient>
-          <filter id="cp-blur-halo" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="10"/>
-          </filter>
-          <filter id="cp-blur-ring" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3"/>
-          </filter>
-          <clipPath id="cp-circle-clip">
-            <circle cx="90" cy="90" r="72"/>
-          </clipPath>
-        </defs>
-
-        {/* Halo extérieur — opacity animée, blur statique SVG */}
-        <circle className="cp-halo" cx="90" cy="90" r="88" fill="url(#cp-grad-halo)" filter="url(#cp-blur-halo)"/>
-
-        {/* Anneau lumineux */}
-        <circle className="cp-ring" cx="90" cy="90" r="72" fill="none"
-          stroke={config.accent} strokeWidth="1" strokeOpacity="0.5" filter="url(#cp-blur-ring)"/>
-
-        {/* Corps capsule avec respiration scale */}
-        <g className="cp-body">
-          <circle cx="90" cy="90" r="70" fill="url(#cp-grad-body)"/>
-          <circle cx="90" cy="90" r="70" fill="none" stroke={config.accent} strokeWidth="0.8" strokeOpacity="0.45"/>
-
-          {/* Waveform clippée dans le cercle */}
-          <g clipPath="url(#cp-circle-clip)" opacity="0.2">
-            {[0.45,0.7,0.95,0.85,0.6,0.9,0.55,0.75,0.5].map((h, i) => {
-              const barH = 54 * h;
-              const x = 54 + i * 9;
-              return (
-                <rect
-                  key={i}
-                  className="cp-wave"
-                  x={x} y={90 - barH / 2} width="4" height={barH}
-                  rx="2" fill={config.accent}
-                  style={{ animationDelay: `${i * 0.13}s` }}
-                />
-              );
-            })}
-          </g>
-
-          {/* Reflet supérieur */}
-          <ellipse cx="90" cy="62" rx="28" ry="14" fill="url(#cp-grad-shine)" opacity="0.25"/>
-
-          {/* Cadenas */}
-          <g transform="translate(68, 68)">
-            <rect x="0" y="10.5" width="22" height="13" rx="2.5"
-              fill="none" stroke={config.accent} strokeWidth="1.4" strokeOpacity="0.95"/>
-            <path d="M4 10.5V7a7 7 0 0 1 14 0v3.5"
-              fill="none" stroke={config.accent} strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.95"/>
-            <circle cx="11" cy="17" r="1.5" fill={config.accent} fillOpacity="0.75"/>
-          </g>
-        </g>
-      </svg>
+      {/* Capsule scellée */}
+      <SealedCapsule accent={config.accent} size={220} />
 
       {/* Texte */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1460,80 +1382,18 @@ export function EchoRevealScreen({
       style={{ maxWidth: 480, margin: "0 auto", paddingTop: 24, paddingBottom: 48 }}
     >
       {phase === "unlock" ? (
-        // ── Animation cadenas SVG pur qui s'ouvre ──
+        // ── Animation de révélation ──
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28, minHeight: "60vh", justifyContent: "center" }}>
-          <style>{`
-            @keyframes rv-halo  { 0%,100%{opacity:.18} 50%{opacity:.44} }
-            @keyframes rv-ring  { 0%,100%{opacity:.45} 50%{opacity:.95} }
-            @keyframes rv-body  { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(0,0,0) scale(1.022)} }
-            @keyframes rv-shackle { 0%{transform:rotate(0deg) translateY(0px)} 100%{transform:rotate(-38deg) translateY(-6px)} }
-            @keyframes rv-fadein { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-            @keyframes rv-spin   { to{transform:rotate(360deg)} }
-            .rv-halo    { animation: rv-halo  4.8s ease-in-out infinite; will-change:opacity; }
-            .rv-ring    { animation: rv-ring  3.4s ease-in-out infinite; will-change:opacity; }
-            .rv-body    { animation: rv-body  5.2s ease-in-out infinite; will-change:transform; backface-visibility:hidden; transform-origin:70px 70px; }
-            .rv-shackle { transform-origin: 17px 15px; transform-box: fill-box; animation: rv-shackle 0.8s cubic-bezier(0.34,1.56,0.64,1) 1.2s forwards; will-change:transform; }
-            .rv-fadein  { animation: rv-fadein 0.6s ease 0.5s both; }
-            .rv-spin    { animation: rv-spin 1.2s linear infinite; will-change:transform; }
-          `}</style>
-
-          <svg width="140" height="140" viewBox="0 0 140 140" style={{ overflow: "visible", display: "block" }}>
-            <defs>
-              <radialGradient id="rv-grad-halo" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={config.accent} stopOpacity="0.38"/>
-                <stop offset="55%" stopColor={config.accent} stopOpacity="0.08"/>
-                <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
-              </radialGradient>
-              <radialGradient id="rv-grad-body" cx="38%" cy="30%" r="65%">
-                <stop offset="0%" stopColor={config.accent} stopOpacity="0.22"/>
-                <stop offset="55%" stopColor="#0f0c16" stopOpacity="0.9"/>
-                <stop offset="100%" stopColor="#080610" stopOpacity="1"/>
-              </radialGradient>
-              <radialGradient id="rv-grad-shine" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={config.accent} stopOpacity="0.4"/>
-                <stop offset="100%" stopColor={config.accent} stopOpacity="0"/>
-              </radialGradient>
-              <filter id="rv-blur-halo" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="9"/>
-              </filter>
-              <filter id="rv-blur-ring" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="2.5"/>
-              </filter>
-            </defs>
-
-            {/* Halo extérieur */}
-            <circle className="rv-halo" cx="70" cy="70" r="68" fill="url(#rv-grad-halo)" filter="url(#rv-blur-halo)"/>
-            {/* Anneau lumineux */}
-            <circle className="rv-ring" cx="70" cy="70" r="56" fill="none"
-              stroke={config.accent} strokeWidth="0.8" strokeOpacity="0.6" filter="url(#rv-blur-ring)"/>
-
-            {/* Corps + cadenas avec respiration */}
-            <g className="rv-body">
-              <circle cx="70" cy="70" r="54" fill="url(#rv-grad-body)"/>
-              <circle cx="70" cy="70" r="54" fill="none" stroke={config.accent} strokeWidth="0.7" strokeOpacity="0.4"/>
-              {/* Reflet */}
-              <ellipse cx="70" cy="50" rx="20" ry="10" fill="url(#rv-grad-shine)" opacity="0.22"/>
-              {/* Cadenas centré dans le cercle */}
-              <g transform="translate(53, 53)">
-                <rect x="0" y="15" width="34" height="19" rx="3.5"
-                  fill="none" stroke={config.accent} strokeWidth="1.6" strokeOpacity="0.95"/>
-                <path
-                  className="rv-shackle"
-                  d="M6 15V10a11 11 0 0 1 22 0v5"
-                  fill="none" stroke={config.accent} strokeWidth="1.6" strokeLinecap="round" strokeOpacity="0.95"
-                />
-                <circle cx="17" cy="24.5" r="2" fill={config.accent} fillOpacity="0.75"/>
-              </g>
-            </g>
-          </svg>
-
-          <p className="rv-fadein ekko-serif"
-            style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}>
+          <RevealCapsule accent={config.accent} size={280} />
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="ekko-serif"
+            style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}
+          >
             Votre écho se dévoile…
-          </p>
-          <div className="rv-spin"
-            style={{ width: 22, height: 22, border: `1.5px solid ${config.accent}30`, borderTop: `1.5px solid ${config.accent}`, borderRadius: "50%" }}
-          />
+          </motion.p>
         </div>
       ) : (
         // ── Écran de résultat ──
