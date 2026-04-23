@@ -13,6 +13,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 
 export interface EkkoUser {
   uid: string;
@@ -25,7 +26,7 @@ interface AuthContextValue {
   user: EkkoUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, phone?: string) => Promise<{ ok: boolean; error?: string }>;
   loginWithGoogle: () => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
 }
@@ -102,10 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, email: string, password: string, phone?: string) => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
+      const db = getFirestore();
+      await setDoc(doc(db, "users", cred.user.uid), { name, email, phone: phone ?? "" }, { merge: true });
       setUser(toEkkoUser({ ...cred.user, displayName: name }));
       return { ok: true };
     } catch (e: unknown) {

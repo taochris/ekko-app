@@ -42,7 +42,7 @@ export default function AuthModal({ accent, onSuccess }: AuthModalProps) {
     const fullName = mode === "register" ? `${firstName} ${lastName}`.trim() : "";
     const result = mode === "login"
       ? await login(email, password)
-      : await register(fullName, email, password);
+      : await register(fullName, email, password, phone);
     setLoading(false);
     if (result.ok) {
       onSuccess();
