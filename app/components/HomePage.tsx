@@ -358,12 +358,15 @@ export default function HomePage() {
 
       {/* Prix */}
       <section style={{ textAlign: "center", padding: "32px 24px 40px", position: "relative", zIndex: 10 }}>
-        <div
-          style={{ display: "inline-flex", alignItems: "center", gap: 14, padding: "12px 24px", borderRadius: 50, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.25)", textDecoration: "line-through" }}>19,90 €</span>
-          <span style={{ fontFamily: "Georgia, serif", fontSize: 15, color: "#c9a96e" }}>9,90 €</span>
-          <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.3)" }}>offre de lancement</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 50, background: "rgba(201,169,110,0.15)", border: "1px solid rgba(201,169,110,0.35)" }}>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "#c9a96e", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 600 }}>🎉 Offre de lancement — 50% de réduction</span>
+          </div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 16, padding: "14px 28px", borderRadius: 50, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,169,110,0.2)" }}>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "rgba(240,232,216,0.3)", textDecoration: "line-through" }}>19,99 €</span>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 26, color: "#c9a96e", fontWeight: 300 }}>9,99 €</span>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.25)" }}>paiement unique</span>
+          </div>
         </div>
       </section>
 

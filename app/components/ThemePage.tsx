@@ -447,6 +447,7 @@ function CapsuleScreen({
 
   const storageLabel = storageOption === 100 ? "1 an" : storageOption === 200 ? "2 ans" : null;
   const totalLabel = storageOption === 0 ? "9,99 €" : storageOption === 100 ? "10,99 €" : "11,99 €";
+  const totalLabelBarred = storageOption === 0 ? "19,99 €" : storageOption === 100 ? "20,99 €" : "21,99 €";
 
   const handlePay = async () => {
     if (!user) {
@@ -617,6 +618,24 @@ function CapsuleScreen({
             </div>
           </button>
         ))}
+      </motion.div>
+
+      {/* Badge promo */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.0 }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}
+      >
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 50, background: `${config.accent}18`, border: `1px solid ${config.accent}45` }}>
+          <span className="ekko-serif" style={{ fontSize: 11, color: config.accent, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 600 }}>
+            🎉 Offre de lancement — 50% de réduction
+          </span>
+        </div>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
+          <span className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.3)", textDecoration: "line-through" }}>{totalLabelBarred}</span>
+          <span className="ekko-serif" style={{ fontSize: 24, color: config.accent, fontWeight: 300 }}>{totalLabel}</span>
+        </div>
       </motion.div>
 
       {/* Bouton déverrouiller */}
