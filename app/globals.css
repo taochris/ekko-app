@@ -131,9 +131,25 @@ audio {
   color: #f0e8d8;
 }
 
-/* Mobile typography scale — augmente la police de base sur smartphones */
+/* Mobile typography scale — lisibilité améliorée sur smartphones */
 @media (max-width: 768px) {
   html {
     font-size: 18px;
+  }
+
+  /* Renforcer la couleur de base pour tous les textes — supprime les transparences trop faibles */
+  body {
+    color: #f0e8d8;
+  }
+  p, h1, h2, h3, h4, h5, h6, li {
+    color: rgba(240, 232, 216, 0.9);
+  }
+
+  /* Tailles minimales pour les petits textes */
+  .text-xs {
+    font-size: 0.85rem !important;
+  }
+  .text-sm {
+    font-size: 1rem !important;
   }
 }
