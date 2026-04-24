@@ -120,12 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const isMobile = typeof window !== "undefined" &&
-        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-      if (isMobile) {
-        await signInWithRedirect(auth, provider);
-        return { ok: true };
-      }
       try {
         await signInWithPopup(auth, provider);
       } catch (popupErr: unknown) {

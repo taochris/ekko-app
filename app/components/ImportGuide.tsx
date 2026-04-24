@@ -230,6 +230,32 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
     });
   };
 
+  if (isMobile) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-lg mx-auto pt-12 px-6 text-center"
+      >
+        <div className="text-5xl mb-6">💻</div>
+        <h2 className="ekko-serif font-light text-2xl mb-4" style={{ color: "#f0e8d8" }}>
+          Disponible sur ordinateur
+        </h2>
+        <p className="ekko-serif text-sm leading-relaxed mb-8" style={{ color: "rgba(240,232,216,0.55)" }}>
+          L&apos;import de vos souvenirs vocaux fonctionne actuellement sur ordinateur (PC ou Mac).
+          Certains navigateurs mobiles ne supportent pas encore tous les formats d&apos;import nécessaires.
+        </p>
+        <div className="rounded-2xl px-6 py-5 mb-8" style={{ background: "rgba(201,169,110,0.06)", border: "1px solid rgba(201,169,110,0.15)" }}>
+          <p className="ekko-serif text-xs leading-relaxed" style={{ color: "rgba(240,232,216,0.4)", fontStyle: "italic" }}>
+            Nos applications iOS et Android sont en cours de développement et arriveront très prochainement.
+            En attendant, rendez-vous sur <strong style={{ color: "rgba(240,232,216,0.65)" }}>vosekko.com</strong> depuis votre ordinateur pour créer votre vocapsule.
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}

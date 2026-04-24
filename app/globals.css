@@ -130,3 +130,10 @@ audio {
   background: rgba(201, 169, 110, 0.584);
   color: #f0e8d8;
 }
+
+/* Mobile typography scale — augmente la police de base sur smartphones */
+@media (max-width: 768px) {
+  html {
+    font-size: 18px;
+  }
+}
