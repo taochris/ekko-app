@@ -28,8 +28,22 @@ function formatDuration(seconds: number): string {
 }
 
 function extractDateKey(file: File): string {
-  const m = file.name.match(/(\d{4})[-_.](\d{2})[-_.](\d{2})/);
-  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  const name = file.name;
+  // 1. Telegram : audio_N@DD-MM-YYYY_HH-MM-SS.ogg
+  const mTg = name.match(/@(\d{2})-(\d{2})-(\d{4})_/);
+  if (mTg) return `${mTg[3]}-${mTg[2]}-${mTg[1]}`;
+  // 2. WhatsApp : PTT-YYYYMMDD-WA / AUD-YYYYMMDD-WA
+  const mWa = name.match(/(?:PTT|AUD)[_\-](\d{4})(\d{2})(\d{2})[_\-]WA/i);
+  if (mWa) return `${mWa[1]}-${mWa[2]}-${mWa[3]}`;
+  // 3. Format ISO YYYY-MM-DD générique
+  const mIso = name.match(/(20\d{2})[-_.](\d{2})[-_.](\d{2})/);
+  if (mIso) {
+    const month = parseInt(mIso[2]);
+    const day = parseInt(mIso[3]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${mIso[1]}-${mIso[2]}-${mIso[3]}`;
+    }
+  }
   if (file.lastModified) {
     const d = new Date(file.lastModified);
     return d.toISOString().slice(0, 10);

@@ -56,8 +56,8 @@ interface Invoice {
   status: "payee" | "en_attente";
 }
 
-const STORAGE_PRICES: Record<number, string> = { 100: "10,99 €", 200: "11,99 €", 7: "9,99 €" };
-const STORAGE_LABELS_INV: Record<number, string> = { 100: "1 an", 200: "2 ans", 7: "7 jours" };
+const STORAGE_PRICES: Record<number, string> = { 0: "9,99 €", 100: "10,99 €", 200: "11,99 €", 7: "9,99 €" };
+const STORAGE_LABELS_INV: Record<number, string> = { 0: "7 jours", 100: "1 an", 200: "2 ans", 7: "7 jours" };
 
 function SectionLabel({ children, accent }: { children: string; accent: string }) {
   return (
