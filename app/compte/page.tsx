@@ -21,6 +21,7 @@ export default function ComptePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ export default function ComptePage() {
     setLoading(true);
     const res = mode === "login"
       ? await login(email, password)
-      : await register(name, email, password);
+      : await register(name, email, password, phone);
     if (res.ok) {
       router.push("/account");
     } else {
@@ -115,7 +116,10 @@ export default function ComptePage() {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {mode === "register" && (
-              <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} type="text" placeholder="Votre prénom" required />
+              <>
+                <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} type="text" placeholder="Votre prénom" required />
+                <input value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} type="tel" placeholder="Téléphone (optionnel)" />
+              </>
             )}
             <input value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} type="email" placeholder="Email" required />
             <div style={{ position: "relative" }}>

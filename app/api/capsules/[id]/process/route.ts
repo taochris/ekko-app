@@ -62,7 +62,13 @@ function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: strin
     const listContent = inputPaths.map((p) => `file '${p.replace(/\\/g, "/")}'`).join("\n");
     await fs.writeFile(listPath, listContent, "utf8");
 
-    const args = ["-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", "-strict", "-2", outputPath];
+    // Pour les OGG/opus, -c copy peut échouer si les headers diffèrent (Telegram vs WhatsApp)
+    // On re-encode en libopus pour garantir la compatibilité
+    const isOgg = outputPath.endsWith(".ogg") || outputPath.endsWith(".opus");
+    const codecArgs = isOgg
+      ? ["-c:a", "libopus", "-b:a", "64k"]
+      : ["-c", "copy", "-strict", "-2"];
+    const args = ["-y", "-f", "concat", "-safe", "0", "-i", listPath, ...codecArgs, outputPath];
     const bin = resolveFfmpegPath();
     const proc = spawn(bin, args);
     let stderr = "";
@@ -113,7 +119,62 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // 2. Trier + télécharger
-    tempFiles.sort((a, b) => a.name.localeCompare(b.name));
+    // Stratégie de tri : extraire date depuis métadonnées timeCreated, puis nom de fichier
+    // Supporte : PTT-YYYYMMDD-WA0001.ogg (WhatsApp), audio_YYYY-MM-DD (Telegram), timestamps, noms séquentiels
+    // Extraction de date selon la source détectée par pattern spécifique.
+    // On privilégie TOUJOURS les dates dans le nom (date réelle du message) par rapport à
+    // timeCreated (= date d'upload Firebase, identique pour tous les fichiers d'une session).
+    function extractSortKey(f: { name: string; metadata?: { timeCreated?: string; updated?: string; [key: string]: unknown } }): number {
+      const fname = f.name.split("/").pop() ?? "";
+
+      // 1. Telegram : audio_N@DD-MM-YYYY_HH-MM-SS.ogg (présence du @ = signature unique)
+      const mTg = fname.match(/@(\d{2})-(\d{2})-(\d{4})_(\d{2})-(\d{2})-(\d{2})/);
+      if (mTg) {
+        const [, dd, mm, yyyy, hh, min, ss] = mTg;
+        const t = new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`).getTime();
+        if (!isNaN(t)) return t;
+      }
+
+      // 2. WhatsApp : PTT-YYYYMMDD-WA0001.opus ou AUD-YYYYMMDD-WA0001.m4a
+      const mWa = fname.match(/(?:PTT|AUD)[_\-](\d{4})(\d{2})(\d{2})[_\-]WA(\d+)/i);
+      if (mWa) {
+        const [, yyyy, mm, dd, seq] = mWa;
+        const t = new Date(`${yyyy}-${mm}-${dd}`).getTime();
+        if (!isNaN(t)) return t + parseInt(seq); // ajoute seq pour ordre intra-journée
+      }
+
+      // 3. Format ISO générique YYYY-MM-DD (avec séparateurs - ou _)
+      const mIso = fname.match(/(20\d{2})[_\-](\d{2})[_\-](\d{2})(?:[_\-T ](\d{2})[_\-:](\d{2})(?:[_\-:](\d{2}))?)?/);
+      if (mIso) {
+        const [, yyyy, mm, dd, hh, min, ss] = mIso;
+        const iso = `${yyyy}-${mm}-${dd}T${hh ?? "00"}:${min ?? "00"}:${ss ?? "00"}`;
+        const t = new Date(iso).getTime();
+        if (!isNaN(t)) return t;
+      }
+
+      // 4. Timestamp unix (Messenger/Instagram exportent parfois en timestamp)
+      const mTs = fname.match(/(?:^|[_\-])(\d{10,13})(?:[_\-.]|$)/);
+      if (mTs) {
+        const n = parseInt(mTs[1]);
+        return n > 9999999999 ? n : n * 1000;
+      }
+
+      // 5. Fallback : timeCreated Firebase (date d'upload, moins précis mais ordonné)
+      const tc = f.metadata?.timeCreated as string | undefined;
+      if (tc) {
+        const t = new Date(tc).getTime();
+        if (!isNaN(t)) return t;
+      }
+
+      // 6. Dernier recours : tri lexicographique via la clé 0 (les noms départageront)
+      return 0;
+    }
+    tempFiles.sort((a, b) => {
+      const ka = extractSortKey(a);
+      const kb = extractSortKey(b);
+      if (ka !== kb) return ka - kb;
+      return a.name.localeCompare(b.name);
+    });
     const ext = tempFiles[0].name.split(".").pop() ?? "opus";
     const mimeByExt: Record<string, string> = {
       opus: "audio/ogg; codecs=opus",

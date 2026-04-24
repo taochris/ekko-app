@@ -25,8 +25,9 @@ export async function GET(req: NextRequest) {
     const bucket = getStorage().bucket();
     const [files] = await bucket.getFiles({ prefix: `echos/${uid}/` });
 
+    const AUDIO_EXTS = [".mp4", ".ogg", ".opus", ".mp3", ".m4a", ".wav", ".webm"];
     const echos = files
-      .filter((f) => f.name.endsWith("/audio.mp4"))
+      .filter((f) => AUDIO_EXTS.some((ext) => f.name.endsWith(`/audio${ext}`)))
       .map((f) => {
         const meta = f.metadata?.metadata ?? {};
         const parts = f.name.split("/");
