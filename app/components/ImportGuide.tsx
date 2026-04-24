@@ -114,7 +114,7 @@ const platforms = [
       </svg>
     ),
     stepsPerOs: telegramSteps,
-    tip: "Telegram Desktop est obligatoire. L'appli mobile ne permet pas l'export complet.",
+    tip: "Telegram Desktop est obligatoire — la version web et l'app mobile ne permettent pas l'export. Téléchargez l'app PC/Mac sur desktop.telegram.org",
   },
   {
     id: "messenger",
@@ -392,8 +392,8 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
                 </div>
                 <p className="ekko-serif text-xs mt-3" style={{ color: "rgba(240,232,216,0.25)", fontStyle: "italic", textAlign: "right" }}>
                   * Pour une explication plus détaillée,{" "}
-                  <a href="/faq" style={{ color: "rgba(240,232,216,0.45)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                    consultez la FAQ
+                  <a href="/faq" style={{ color: platform.color, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 600 }}>
+                    consulter la FAQ
                   </a>
                 </p>
               </div>
