@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Cormorant } from "next/font/google";
+import Script from "next/script";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import AuthProvider from "./components/AuthProvider";
 
@@ -34,7 +36,20 @@ export default function RootLayout({
       className={`${cormorantGaramond.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-screen w-full bg-[#0d0a0f] text-[#f0e8d8]">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-HSCJ0SY2NK"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-HSCJ0SY2NK');
+          `}
+        </Script>
         <AuthProvider>{children}</AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
