@@ -55,6 +55,11 @@ function makeFile(entry: AudioEntry): File {
   return new File([entry.buffer], entry.name, { type: entry.mime });
 }
 
+function isOpusFormat(entry: AudioEntry): boolean {
+  const ext = entry.name.split(".").pop()?.toLowerCase() ?? "";
+  return ext === "ogg" || ext === "oga" || ext === "opus" || entry.mime.includes("ogg") || entry.mime.includes("opus");
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
@@ -68,9 +73,10 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [debugLog, setDebugLog] = useState<string[]>([]);
-  const [unplayableFormat, setUnplayableFormat] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentBlobUrl = useRef<string | null>(null);
 
@@ -81,7 +87,6 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
 
   const processFiles = useCallback(async (files: FileList | File[]) => {
     setError(null);
-    setUnplayableFormat(null);
     setStep("processing");
     setProgress(0);
     setDebugLog([]);
@@ -168,46 +173,75 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
     e.target.value = "";
   };
 
-  const playEntry = (index: number) => {
-    setUnplayableFormat(null);
-
+  const stopCurrent = () => {
+    // Arrêt lecture HTML audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
     if (currentBlobUrl.current) {
       URL.revokeObjectURL(currentBlobUrl.current);
       currentBlobUrl.current = null;
     }
+    // Arrêt lecture WebAudio (Opus)
+    if (currentSourceRef.current) {
+      try { currentSourceRef.current.stop(); } catch {}
+      currentSourceRef.current = null;
+    }
+  };
+
+  const playEntry = async (index: number) => {
+    stopCurrent();
 
     if (playingIndex === index) {
-      audioRef.current?.pause();
       setPlayingIndex(null);
       return;
     }
 
     const entry = entries[index];
-    const ext = entry.name.split(".").pop()?.toLowerCase() ?? "";
-    const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    // iOS Safari ne peut PAS lire OGG/Opus nativement
-    if (isIOS && (ext === "ogg" || ext === "oga" || ext === "opus" || entry.mime.includes("ogg") || entry.mime.includes("opus"))) {
-      setUnplayableFormat(`Format ${ext.toUpperCase()} non lisible sur iOS — le fichier sera quand même envoyé pour traitement.`);
-      return;
-    }
-
-    const blob = new Blob([entry.buffer], { type: entry.mime });
-    const url = URL.createObjectURL(blob);
-    currentBlobUrl.current = url;
-
-    if (!audioRef.current) audioRef.current = new Audio();
-    audioRef.current.src = url;
-    audioRef.current.onended = () => setPlayingIndex(null);
-    audioRef.current.onerror = () => {
-      setPlayingIndex(null);
-      setUnplayableFormat(`Format non lisible par votre navigateur — le fichier reste valide pour le traitement.`);
-    };
-    audioRef.current.play().catch(() => {
-      setPlayingIndex(null);
-      setUnplayableFormat(`Lecture impossible — le fichier reste valide pour le traitement.`);
-    });
     setPlayingIndex(index);
+
+    try {
+      if (isOpusFormat(entry)) {
+        // Décodage Opus pur JS → PCM → AudioContext (fonctionne sur iOS et Android)
+        const { OggOpusDecoder } = await import("ogg-opus-decoder");
+        const decoder = new OggOpusDecoder();
+        await decoder.ready;
+        const { channelData, samplesDecoded, sampleRate } = await decoder.decode(new Uint8Array(entry.buffer));
+        await decoder.free();
+
+        if (samplesDecoded === 0) throw new Error("0 samples décodés");
+
+        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+          audioCtxRef.current = new AudioCtx();
+        }
+        // iOS nécessite un resume après interaction utilisateur
+        if (audioCtxRef.current.state === "suspended") await audioCtxRef.current.resume();
+
+        const audioBuffer = audioCtxRef.current.createBuffer(channelData.length, samplesDecoded, sampleRate);
+        channelData.forEach((ch: Float32Array, i: number) => audioBuffer.copyToChannel(ch as unknown as Float32Array<ArrayBuffer>, i));
+
+        const source = audioCtxRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtxRef.current.destination);
+        source.onended = () => setPlayingIndex(null);
+        currentSourceRef.current = source;
+        source.start();
+      } else {
+        // Formats natifs (mp3, m4a, aac, wav) → lecture HTML audio directe
+        const blob = new Blob([entry.buffer], { type: entry.mime });
+        const url = URL.createObjectURL(blob);
+        currentBlobUrl.current = url;
+        if (!audioRef.current) audioRef.current = new Audio();
+        audioRef.current.src = url;
+        audioRef.current.onended = () => setPlayingIndex(null);
+        audioRef.current.onerror = () => setPlayingIndex(null);
+        await audioRef.current.play();
+      }
+    } catch {
+      setPlayingIndex(null);
+    }
   };
 
   const handleConfirm = () => {
@@ -383,18 +417,6 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
               </button>
             </div>
 
-            {/* Message format non lisible (iOS OGG par exemple) */}
-            {unplayableFormat && (
-              <div style={{
-                background: `${config.accent}10`, border: `1px solid ${config.accent}30`,
-                borderRadius: 12, padding: "10px 14px", marginBottom: 14,
-              }}>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.75)", lineHeight: 1.5, margin: 0 }}>
-                  {unplayableFormat}
-                </p>
-              </div>
-            )}
-
             {/* Liste des fichiers */}
             <div style={{
               maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8,
@@ -415,7 +437,7 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
                     border: `1px solid ${playingIndex === i ? config.accent + "40" : "rgba(255,255,255,0.06)"}`,
                   }}
                 >
-                  {/* Bouton play */}
+                  {/* Bouton play — tous formats lisibles (Opus décodé via ogg-opus-decoder) */}
                   <button
                     onClick={() => playEntry(i)}
                     style={{
