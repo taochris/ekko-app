@@ -67,41 +67,84 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [unplayableFormat, setUnplayableFormat] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentBlobUrl = useRef<string | null>(null);
 
+  const log = (msg: string) => {
+    console.log("[MobileImport]", msg);
+    setDebugLog((prev) => [...prev.slice(-15), msg]);
+  };
+
   const processFiles = useCallback(async (files: FileList | File[]) => {
     setError(null);
+    setUnplayableFormat(null);
     setStep("processing");
     setProgress(0);
+    setDebugLog([]);
 
     const fileArray = Array.from(files);
+    log(`${fileArray.length} fichier(s) sélectionné(s)`);
     const allEntries: AudioEntry[] = [];
 
     try {
       for (let i = 0; i < fileArray.length; i++) {
         const file = fileArray[i];
+        const fileName = file.name || `file-${i}`;
+        const fileType = file.type || "(type vide)";
+        log(`[${i + 1}/${fileArray.length}] ${fileName} · ${fileType} · ${formatSize(file.size)}`);
         setProgress(Math.round((i / fileArray.length) * 80));
 
-        if (file.name.toLowerCase().endsWith(".zip") || file.type.includes("zip") || file.type === "application/octet-stream") {
-          const zipEntries = await extractFromZipMobile(file);
-          allEntries.push(...zipEntries);
-        } else if (AUDIO_EXTENSIONS.test(file.name) || file.type.startsWith("audio/")) {
-          if (!VIDEO_EXCLUDE.test(file.name)) {
+        try {
+          const isZip = fileName.toLowerCase().endsWith(".zip") ||
+                        fileType.includes("zip") ||
+                        fileType === "application/octet-stream" ||
+                        fileType === "" ||
+                        fileType === "application/x-zip" ||
+                        fileType === "application/x-zip-compressed";
+
+          // Forcer en ZIP si nom .zip OU si extension audio absente ET fichier > 100Ko
+          const looksLikeAudio = AUDIO_EXTENSIONS.test(fileName) || fileType.startsWith("audio/");
+
+          if (isZip && !looksLikeAudio) {
+            log(`  → ZIP détecté, extraction…`);
+            const zipEntries = await extractFromZipMobile(file);
+            log(`  → ${zipEntries.length} audio(s) extrait(s)`);
+            allEntries.push(...zipEntries);
+          } else if (looksLikeAudio) {
+            if (VIDEO_EXCLUDE.test(fileName)) {
+              log(`  → Vidéo exclue`);
+              continue;
+            }
+            log(`  → Audio direct, lecture…`);
             const buffer = await file.arrayBuffer();
-            const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-            const mime = file.type.startsWith("audio/") ? file.type : (AUDIO_MIME[ext] ?? "audio/octet-stream");
-            allEntries.push({ name: file.name, buffer, mime, size: buffer.byteLength });
+            const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+            const mime = fileType.startsWith("audio/") ? fileType : (AUDIO_MIME[ext] ?? "audio/octet-stream");
+            allEntries.push({ name: fileName, buffer, mime, size: buffer.byteLength });
+            log(`  → OK (${formatSize(buffer.byteLength)})`);
+          } else {
+            log(`  → Type inconnu, tentative ZIP…`);
+            try {
+              const zipEntries = await extractFromZipMobile(file);
+              log(`  → ${zipEntries.length} audio(s) extrait(s)`);
+              allEntries.push(...zipEntries);
+            } catch {
+              log(`  → Pas un ZIP valide, ignoré`);
+            }
           }
+        } catch (fileErr) {
+          log(`  → ERREUR : ${fileErr instanceof Error ? fileErr.message : "inconnue"}`);
         }
       }
 
       setProgress(100);
+      log(`Total : ${allEntries.length} audio(s)`);
 
       if (allEntries.length === 0) {
-        setError("Aucun fichier audio trouvé. Vérifiez que votre export contient bien des messages vocaux.");
+        setError("Aucun fichier audio trouvé. Voir détails ci-dessous.");
         setStep("pick");
         return;
       }
@@ -109,7 +152,9 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
       setEntries(allEntries);
       setStep("preview");
     } catch (e) {
-      setError(`Erreur lors du traitement : ${e instanceof Error ? e.message : "erreur inconnue"}`);
+      const msg = e instanceof Error ? e.message : "erreur inconnue";
+      log(`ERREUR FATALE : ${msg}`);
+      setError(`Erreur : ${msg}`);
       setStep("pick");
     }
   }, []);
@@ -117,13 +162,15 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       processFiles(e.target.files);
+    } else {
+      log("Aucun fichier dans l'input (annulé ?)");
     }
-    // Reset pour permettre re-sélection du même fichier
     e.target.value = "";
   };
 
   const playEntry = (index: number) => {
-    // Nettoyer l'ancienne URL blob (iOS : on recrée à chaque lecture)
+    setUnplayableFormat(null);
+
     if (currentBlobUrl.current) {
       URL.revokeObjectURL(currentBlobUrl.current);
       currentBlobUrl.current = null;
@@ -136,7 +183,15 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
     }
 
     const entry = entries[index];
-    // Créer une NOUVELLE blob URL à chaque lecture (contourne l'expiration iOS)
+    const ext = entry.name.split(".").pop()?.toLowerCase() ?? "";
+    const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // iOS Safari ne peut PAS lire OGG/Opus nativement
+    if (isIOS && (ext === "ogg" || ext === "oga" || ext === "opus" || entry.mime.includes("ogg") || entry.mime.includes("opus"))) {
+      setUnplayableFormat(`Format ${ext.toUpperCase()} non lisible sur iOS — le fichier sera quand même envoyé pour traitement.`);
+      return;
+    }
+
     const blob = new Blob([entry.buffer], { type: entry.mime });
     const url = URL.createObjectURL(blob);
     currentBlobUrl.current = url;
@@ -146,8 +201,12 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
     audioRef.current.onended = () => setPlayingIndex(null);
     audioRef.current.onerror = () => {
       setPlayingIndex(null);
+      setUnplayableFormat(`Format non lisible par votre navigateur — le fichier reste valide pour le traitement.`);
     };
-    audioRef.current.play().catch(() => setPlayingIndex(null));
+    audioRef.current.play().catch(() => {
+      setPlayingIndex(null);
+      setUnplayableFormat(`Lecture impossible — le fichier reste valide pour le traitement.`);
+    });
     setPlayingIndex(index);
   };
 
@@ -214,12 +273,11 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
             </div>
           )}
 
-          {/* Input natif — essentiel pour Android */}
+          {/* Input natif — pas d'accept restrictif, certains gestionnaires Android filtrent les ZIP */}
           <input
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".zip,.mp3,.wav,.ogg,.oga,.m4a,.aac,.opus,.flac,.3gp,.amr,audio/*"
             style={{ display: "none" }}
             onChange={handleInputChange}
           />
@@ -244,6 +302,31 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
           }}>
             Formats acceptés : ZIP WhatsApp / Messenger / Instagram · OGG · MP3 · M4A · OPUS
           </p>
+
+          {/* Panneau debug — visible quand il y a des logs (utile pour diagnostiquer Android) */}
+          {debugLog.length > 0 && (
+            <div style={{
+              marginTop: 24, padding: "12px 14px", borderRadius: 12,
+              background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)",
+              textAlign: "left",
+            }}>
+              <p style={{
+                fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.2em",
+                textTransform: "uppercase", color: "rgba(240,232,216,0.4)", marginBottom: 8,
+              }}>
+                Détails techniques
+              </p>
+              <div style={{
+                fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10,
+                color: "rgba(240,232,216,0.55)", lineHeight: 1.5,
+                maxHeight: 200, overflowY: "auto",
+              }}>
+                {debugLog.map((l, idx) => (
+                  <div key={idx} style={{ wordBreak: "break-all" }}>{l}</div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -299,6 +382,18 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
                 Changer
               </button>
             </div>
+
+            {/* Message format non lisible (iOS OGG par exemple) */}
+            {unplayableFormat && (
+              <div style={{
+                background: `${config.accent}10`, border: `1px solid ${config.accent}30`,
+                borderRadius: 12, padding: "10px 14px", marginBottom: 14,
+              }}>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.75)", lineHeight: 1.5, margin: 0 }}>
+                  {unplayableFormat}
+                </p>
+              </div>
+            )}
 
             {/* Liste des fichiers */}
             <div style={{
