@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import JSZip from "jszip";
+import MobileImport from "./MobileImport";
 
 interface ImportGuideProps {
   theme: string;
@@ -142,6 +143,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
   const [pendingZip, setPendingZip] = useState<File | null>(null);
   const [selectedConvs, setSelectedConvs] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
+  const [showMobileImport, setShowMobileImport] = useState(false);
   useEffect(() => {
     setIsMobile(typeof window !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
   }, []);
@@ -231,6 +233,26 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
   };
 
   if (isMobile) {
+    if (showMobileImport) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-lg mx-auto pt-8 px-4"
+        >
+          <MobileImport
+            config={config}
+            onAudiosImported={(files) => {
+              setShowMobileImport(false);
+              onAudiosImported(files);
+            }}
+            onClose={() => setShowMobileImport(false)}
+          />
+        </motion.div>
+      );
+    }
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -246,12 +268,25 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
           L&apos;import de vos souvenirs vocaux fonctionne actuellement sur ordinateur (PC ou Mac).
           Certains navigateurs mobiles ne supportent pas encore tous les formats d&apos;import nécessaires.
         </p>
-        <div className="rounded-2xl px-6 py-5 mb-8" style={{ background: "rgba(201,169,110,0.06)", border: "1px solid rgba(201,169,110,0.15)" }}>
+        <div className="rounded-2xl px-6 py-5 mb-6" style={{ background: "rgba(201,169,110,0.06)", border: "1px solid rgba(201,169,110,0.15)" }}>
           <p className="ekko-serif text-xs leading-relaxed mobile-info-italic" style={{ color: "rgba(240,232,216,0.4)", fontStyle: "italic" }}>
             Nos applications iOS et Android sont en cours de développement et arriveront très prochainement.
             En attendant, rendez-vous sur <strong style={{ color: "rgba(240,232,216,0.65)" }}>vosekko.com</strong> depuis votre ordinateur pour créer votre vocapsule.
           </p>
         </div>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setShowMobileImport(true)}
+          style={{
+            width: "100%", padding: "14px 0", borderRadius: 14,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "rgba(240,232,216,0.5)", fontFamily: "Georgia, serif",
+            fontSize: 13, cursor: "pointer", letterSpacing: "0.03em",
+          }}
+        >
+          Essayer quand même depuis ce téléphone
+        </motion.button>
       </motion.div>
     );
   }
