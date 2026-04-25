@@ -5,7 +5,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   // Exclure @ffmpeg-installer du bundling pour éviter les require() dynamiques
   // (le module est chargé au runtime Node.js directement, pas via le bundle)
-  serverExternalPackages: ["@ffmpeg-installer/ffmpeg", "fluent-ffmpeg", "ffprobe-static"],
+  serverExternalPackages: [
+    "@ffmpeg-installer/ffmpeg", "fluent-ffmpeg", "ffprobe-static",
+    "ogg-opus-decoder", "opus-decoder", "@wasm-audio-decoders", "@eshaz/web-worker",
+  ],
   outputFileTracingIncludes: {
     "/api/capsules/[id]/process": ["./node_modules/@ffmpeg-installer/**"],
   },

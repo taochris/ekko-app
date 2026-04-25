@@ -13,7 +13,9 @@
  */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import MobileImport from "./MobileImport";
+import dynamic from "next/dynamic";
+
+const MobileImport = dynamic(() => import("./MobileImport"), { ssr: false });
 
 interface MobileLandingProps {
   config: { accent: string; accentDim: string; label: string };
