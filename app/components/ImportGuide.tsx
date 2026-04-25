@@ -247,7 +247,7 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
           Certains navigateurs mobiles ne supportent pas encore tous les formats d&apos;import nécessaires.
         </p>
         <div className="rounded-2xl px-6 py-5 mb-8" style={{ background: "rgba(201,169,110,0.06)", border: "1px solid rgba(201,169,110,0.15)" }}>
-          <p className="ekko-serif text-xs leading-relaxed" style={{ color: "rgba(240,232,216,0.4)", fontStyle: "italic" }}>
+          <p className="ekko-serif text-xs leading-relaxed mobile-info-italic" style={{ color: "rgba(240,232,216,0.4)", fontStyle: "italic" }}>
             Nos applications iOS et Android sont en cours de développement et arriveront très prochainement.
             En attendant, rendez-vous sur <strong style={{ color: "rgba(240,232,216,0.65)" }}>vosekko.com</strong> depuis votre ordinateur pour créer votre vocapsule.
           </p>

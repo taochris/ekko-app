@@ -137,19 +137,23 @@ audio {
     font-size: 18px;
   }
 
-  /* Renforcer la couleur de base pour tous les textes — supprime les transparences trop faibles */
-  body {
-    color: #f0e8d8;
-  }
-  p, h1, h2, h3, h4, h5, h6, li {
-    color: rgba(240, 232, 216, 0.9);
-  }
-
   /* Tailles minimales pour les petits textes */
   .text-xs {
     font-size: 0.85rem !important;
   }
   .text-sm {
     font-size: 1rem !important;
+  }
+
+  /* Encart mobile ImportGuide — texte italique en bas trop pâle */
+  .mobile-info-italic {
+    color: rgba(240, 232, 216, 0.82) !important;
+    font-size: 0.88rem !important;
+  }
+
+  /* ThemeCard — description sous le titre trop petite et trop pâle */
+  .themecard-desc {
+    font-size: 15px !important;
+    color: rgba(240, 232, 216, 0.8) !important;
   }
 }

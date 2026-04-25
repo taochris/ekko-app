@@ -171,7 +171,7 @@ export default function ThemeCard({ theme, index }: ThemeCardProps) {
           }}>
             {config.title}
           </h3>
-          <p style={{
+          <p className="themecard-desc" style={{
             fontFamily: "Georgia, serif",
             fontSize: 13,
             lineHeight: 1.7,
