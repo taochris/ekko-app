@@ -66,15 +66,24 @@ export default function ComptePage() {
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <EkkoLogo size="md" glow={true} />
         <button
-          onClick={() => {
-            if (typeof window !== "undefined" && window.history.length > 1) {
-              router.back();
-            } else {
-              router.push("/");
-            }
-          }}
+          onClick={() => router.push("/")}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(240,232,216,0.5)" }}
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "rgba(240,232,216,0.5)",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(201,169,110,0.12)";
+            e.currentTarget.style.borderColor = "rgba(201,169,110,0.25)";
+            e.currentTarget.style.color = "rgba(201,169,110,0.9)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+            e.currentTarget.style.color = "rgba(240,232,216,0.5)";
+          }}
         >
           ← Retour
         </button>

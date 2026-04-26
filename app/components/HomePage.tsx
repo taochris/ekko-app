@@ -384,15 +384,15 @@ export default function HomePage() {
             <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "#c9a96e", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 600 }}>🎉 Offre de lancement — 50% de réduction</span>
           </div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 16, padding: "14px 28px", borderRadius: 50, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,169,110,0.2)" }}>
-            <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "rgba(240,232,216,0.3)", textDecoration: "line-through" }}>19,99 €</span>
-            <span style={{ fontFamily: "Georgia, serif", fontSize: 26, color: "#c9a96e", fontWeight: 300 }}>9,99 €</span>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 18, color: "rgba(240,232,216,0.45)", textDecoration: "line-through" }}>19,99 €</span>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 32, color: "#c9a96e", fontWeight: 300 }}>9,99 €</span>
             <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.25)" }}>paiement unique</span>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={S.footer} className="home-footer">
+      <footer style={{ ...S.footer, flexDirection: "column", gap: 16, alignItems: "center" }} className="home-footer">
         <EkkoLogo size="sm" glow={false} />
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <a href="mailto:vosekko@outlook.com" style={S.footerContact}>Contact</a>
