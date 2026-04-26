@@ -373,7 +373,10 @@ export default function HomePage() {
       {/* Footer */}
       <footer style={S.footer} className="home-footer">
         <EkkoLogo size="sm" glow={false} />
-        <p style={S.footerCopy}>© 2025 EKKO. Tous droits réservés.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <a href="mailto:vosekko@outlook.com" style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.2)", textDecoration: "none" }}>vosekko@outlook.com</a>
+          <p style={S.footerCopy}>© 2025 EKKO. Tous droits réservés.</p>
+        </div>
         <p style={S.footerPrivacy}>Vos données restent sur votre appareil</p>
       </footer>
     </div>
