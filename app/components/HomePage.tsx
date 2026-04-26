@@ -392,13 +392,13 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer style={{ ...S.footer, flexDirection: "column", gap: 16, alignItems: "center" }} className="home-footer">
+      <footer style={S.footer} className="home-footer">
         <EkkoLogo size="sm" glow={false} />
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <a href="mailto:vosekko@outlook.com" style={S.footerContact}>Contact</a>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <p style={S.footerPrivacy}>Vos données restent sur votre appareil</p>
           <p style={S.footerCopy}>© 2025 EKKO. Tous droits réservés.</p>
+          <a href="mailto:vosekko@outlook.com" style={S.footerContact}>Contact</a>
         </div>
-        <p style={S.footerPrivacy}>Vos données restent sur votre appareil</p>
       </footer>
     </div>
   );

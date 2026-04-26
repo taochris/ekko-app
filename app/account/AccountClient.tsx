@@ -173,8 +173,13 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           <EkkoLogo size="sm" />
         </button>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => router.back()} className="ekko-serif"
-            style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14 }}>
+          <button
+            onClick={() => router.push("/")}
+            className="ekko-serif"
+            style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14, transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = accent + "15"; e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent + "60"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = accent + "80"; e.currentTarget.style.borderColor = accent + "30"; }}
+          >
             ← Retour
           </button>
           <button onClick={logout} className="ekko-serif"
