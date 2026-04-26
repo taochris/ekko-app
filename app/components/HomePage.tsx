@@ -34,6 +34,19 @@ const S = {
     fontFamily: "Georgia, serif",
     transition: "color 0.2s",
   },
+  navButton: {
+    padding: "8px 18px",
+    borderRadius: 20,
+    border: "1px solid rgba(201,169,110,0.3)",
+    background: "rgba(201,169,110,0.08)",
+    color: "rgba(201,169,110,0.85)",
+    fontSize: 11,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase" as const,
+    fontFamily: "Georgia, serif",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
   hero: {
     position: "relative" as const,
     zIndex: 10,
@@ -203,14 +216,21 @@ const S = {
   footerCopy: {
     fontFamily: "Georgia, serif",
     fontSize: 11,
-    color: "rgba(240,232,216,0.2)",
+    color: "rgba(240,232,216,0.26)",
   },
   footerPrivacy: {
     fontFamily: "Georgia, serif",
     fontSize: 10,
     letterSpacing: "0.3em",
     textTransform: "uppercase" as const,
-    color: "rgba(201,169,110,0.3)",
+    color: "rgba(201,169,110,0.39)",
+  },
+  footerContact: {
+    fontFamily: "Georgia, serif",
+    fontSize: 15,
+    color: "rgba(240,232,216,0.26)",
+    textDecoration: "none",
+    transition: "color 0.2s",
   },
 };
 
@@ -261,6 +281,7 @@ export default function HomePage() {
         >
           <a href="#produit" style={S.navLink}>Le produit</a>
           <a href="#comment" style={S.navLink}>Comment ça marche</a>
+          <a href="/compte" style={S.navButton}>Mon compte</a>
         </motion.div>
       </nav>
 
@@ -374,7 +395,7 @@ export default function HomePage() {
       <footer style={S.footer} className="home-footer">
         <EkkoLogo size="sm" glow={false} />
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <a href="mailto:vosekko@outlook.com" style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.2)", textDecoration: "none" }}>vosekko@outlook.com</a>
+          <a href="mailto:vosekko@outlook.com" style={S.footerContact}>Contact</a>
           <p style={S.footerCopy}>© 2025 EKKO. Tous droits réservés.</p>
         </div>
         <p style={S.footerPrivacy}>Vos données restent sur votre appareil</p>
