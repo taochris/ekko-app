@@ -12,6 +12,83 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import JSZip from "jszip";
 
+// Données plateformes — copiées et isolées du code PC (règle de séparation stricte)
+const MOBILE_PLATFORMS = [
+  {
+    id: "whatsapp", name: "WhatsApp", color: "#25d366",
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>,
+    steps: {
+      android: [
+        { label: "Ouvrir la conversation", desc: "Allez dans la conversation WhatsApp souhaitée" },
+        { label: "Appuyer sur les 3 points", desc: "En haut à droite → ‘Plus’ → ‘Exporter la discussion’" },
+        { label: "Choisir avec médias", desc: "Sélectionnez ‘Joindre les médias’. Si la conversation est très longue, l’export peut être incomplet." },
+        { label: "Importer le ZIP ici", desc: "Déposez le fichier ZIP reçu dans ce formulaire." },
+      ],
+      iphone: [
+        { label: "Ouvrir la conversation", desc: "Allez dans la conversation WhatsApp souhaitée" },
+        { label: "Appuyer sur le nom du contact", desc: "En haut de la conversation, appuyez sur le nom" },
+        { label: "Défiler jusqu’à ‘Exporter la discussion’", desc: "Faites défiler vers le bas dans les informations" },
+        { label: "Choisir ‘Avec média’", desc: "Sélectionnez ‘Avec média’ pour inclure les messages vocaux" },
+        { label: "Importer le ZIP ici", desc: "Appuyez sur ‘Enregistrer dans Fichiers’ puis importez directement depuis ce formulaire." },
+      ],
+    },
+  },
+  {
+    id: "instagram", name: "Instagram", color: "#e1306c",
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>,
+    steps: {
+      android: [
+        { label: "Profil → ☰ → Paramètres → Comptes", desc: "Appuyez sur ‘Vos informations et autorisations’ puis ‘Exporter vos informations’" },
+        { label: "Créer une exportation", desc: "Destination : votre appareil ou Google Drive" },
+        { label: "Cocher Messages uniquement", desc: "Décochez tout, cochez uniquement ‘Messages’. Choisissez la période." },
+        { label: "Format JSON · Qualité élevée", desc: "Format JSON obligatoire (pas HTML). Lancez l’exportation puis importez le ZIP ici." },
+      ],
+      iphone: [
+        { label: "Profil → ☰ → Paramètres → Comptes", desc: "Appuyez sur ‘Vos informations et autorisations’ puis ‘Exporter vos informations’" },
+        { label: "Créer une exportation", desc: "Destination : iCloud, Google Drive ou Dropbox" },
+        { label: "Cocher Messages uniquement", desc: "Décochez tout, cochez uniquement ‘Messages’. Choisissez la période." },
+        { label: "Format JSON · Qualité élevée", desc: "Format JSON obligatoire (pas HTML). Lancez l’exportation puis importez le ZIP ici." },
+      ],
+    },
+  },
+  {
+    id: "messenger", name: "Messenger", color: "#0084ff",
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.654V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8l3.131 3.26L19.752 8l-6.561 6.963z"/></svg>,
+    steps: {
+      android: [
+        { label: "Facebook → ☰ → Paramètres", desc: "Menu ☰ → ‘Paramètres et confidentialité’ → ‘Paramètres’" },
+        { label: "Espace compte → Exporter", desc: "‘Vos informations et autorisations’ → ‘Exporter vos informations’ → ‘Créer une exportation’" },
+        { label: "Messages uniquement · JSON · Supérieure", desc: "Personnaliser → décochez TOUT, cochez ‘Messages’ → Format JSON → Qualité supérieure." },
+        { label: "Importer le ZIP ici", desc: "Conversations chiffrées E2E : audios absents, utiliser Messenger Desktop sur PC." },
+      ],
+      iphone: [
+        { label: "Facebook → photo de profil", desc: "Appuyez sur votre photo en haut à gauche" },
+        { label: "Flèche déroulante → Espace compte", desc: "Flèche à côté de votre nom → ‘Espace compte’ en bas" },
+        { label: "Vos informations → Exporter", desc: "‘Vos informations et autorisations’ → ‘Exporter vos informations’ → ‘Créer une exportation’" },
+        { label: "Messages uniquement · JSON · Supérieure", desc: "Personnaliser → décochez TOUT, cochez ‘Messages’ → Format JSON → Qualité supérieure. Importez le ZIP ici." },
+      ],
+    },
+  },
+  {
+    id: "telegram", name: "Telegram", color: "#2aabee",
+    icon: <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>,
+    steps: {
+      android: [
+        { label: "Telegram Desktop obligatoire", desc: "L’export n’est possible que sur PC/Mac. Téléchargez sur desktop.telegram.org" },
+        { label: "Ouvrir la conversation → 3 points", desc: "Cliquez sur les 3 points en haut à droite" },
+        { label: "Export chat history", desc: "Cochez ‘Voice messages’ uniquement puis lancez l’export" },
+        { label: "Importer le dossier ZIP ici", desc: "Telegram exporte un dossier avec fichiers audio. Importez-le ici." },
+      ],
+      iphone: [
+        { label: "Telegram Desktop obligatoire", desc: "L’export n’est possible que sur PC/Mac. Téléchargez sur desktop.telegram.org" },
+        { label: "Ouvrir la conversation → 3 points", desc: "Cliquez sur les 3 points en haut à droite" },
+        { label: "Export chat history", desc: "Cochez ‘Voice messages’ uniquement puis lancez l’export" },
+        { label: "Importer le dossier ZIP ici", desc: "Telegram exporte un dossier avec fichiers audio. Importez-le ici." },
+      ],
+    },
+  },
+];
+
 interface MobileImportProps {
   config: { accent: string; accentDim: string };
   onAudiosImported: (files: File[]) => void;
@@ -67,6 +144,9 @@ function formatSize(bytes: number): string {
 }
 
 export default function MobileImport({ config, onAudiosImported, onClose }: MobileImportProps) {
+  const [os, setOs] = useState<"android" | "iphone">("android");
+  const [activeGuide, setActiveGuide] = useState<string | null>(null);
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [step, setStep] = useState<"pick" | "processing" | "preview">("pick");
   const [entries, setEntries] = useState<AudioEntry[]>([]);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
@@ -306,6 +386,93 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
               </p>
             </div>
           )}
+
+          {/* Sélecteur OS */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <div style={{ display: "flex", borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
+              {(["android", "iphone"] as const).map((o) => (
+                <button key={o} onClick={() => { setOs(o); setActiveGuide(null); setExpandedStep(null); }}
+                  style={{
+                    padding: "7px 18px", border: "none", cursor: "pointer",
+                    fontFamily: "Georgia, serif", fontSize: 12,
+                    background: os === o ? `${config.accent}22` : "transparent",
+                    color: os === o ? config.accent : "rgba(240,232,216,0.4)",
+                    borderRight: o === "android" ? "1px solid rgba(255,255,255,0.07)" : "none",
+                  }}
+                >
+                  {o === "android" ? "🧑‍💻 Android" : "📱 iPhone"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sélecteur plateformes */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+            {MOBILE_PLATFORMS.map((p) => (
+              <button key={p.id}
+                onClick={() => { setActiveGuide(activeGuide === p.id ? null : p.id); setExpandedStep(null); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "10px 12px", borderRadius: 12, cursor: "pointer",
+                  background: activeGuide === p.id ? `${p.color}18` : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${activeGuide === p.id ? p.color + "50" : "rgba(255,255,255,0.07)"}`,
+                  color: activeGuide === p.id ? p.color : "rgba(240,232,216,0.5)",
+                  fontFamily: "Georgia, serif", fontSize: 12,
+                }}
+              >
+                {p.icon} {p.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Guide accordéon */}
+          <AnimatePresence>
+            {activeGuide && (() => {
+              const p = MOBILE_PLATFORMS.find((x) => x.id === activeGuide)!;
+              const steps = p.steps[os];
+              return (
+                <motion.div
+                  key={activeGuide + os}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ overflow: "hidden", marginBottom: 16 }}
+                >
+                  <div style={{ borderRadius: 14, padding: "14px 16px", background: `${p.color}08`, border: `1px solid ${p.color}25` }}>
+                    <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: p.color, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>
+                      Guide {p.name}
+                    </p>
+                    {steps.map((s, i) => (
+                      <div key={i} style={{ marginBottom: 8 }}>
+                        <button
+                          onClick={() => setExpandedStep(expandedStep === i ? null : i)}
+                          style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
+                        >
+                          <div style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `${p.color}20`, border: `1px solid ${p.color}30`, color: p.color, fontFamily: "Georgia, serif", fontSize: 10 }}>
+                            {i + 1}
+                          </div>
+                          <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#f0e8d8", margin: 0, flex: 1 }}>{s.label}</p>
+                        </button>
+                        <AnimatePresence>
+                          {expandedStep === i && (
+                            <motion.p
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)", lineHeight: 1.6, margin: "6px 0 0 32px" }}
+                            >
+                              {s.desc}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })()}
+          </AnimatePresence>
 
           {/* Input natif — pas d'accept restrictif, certains gestionnaires Android filtrent les ZIP */}
           <input
