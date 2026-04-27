@@ -126,7 +126,7 @@ export default function ArticleWhatsAppIphone() {
             </P>
             <P>
               Et une fois récupérés, ces audios peuvent même devenir quelque chose de plus beau : un souvenir vivant à réécouter grâce à{" "}
-              <span style={{ color: accent, fontWeight: 400 }}>EKKO</span>.
+              <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a>.
             </P>
           </div>
 
