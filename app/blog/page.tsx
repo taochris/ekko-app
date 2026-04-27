@@ -25,6 +25,15 @@ const ARTICLES = [
     date: "Avril 2026",
     readTime: "5 min",
   },
+  {
+    slug: "exporter-audios-instagram-iphone-2026",
+    tag: "Guide Instagram · iPhone",
+    tagColor: "#e1306c",
+    title: "Comment exporter les audios d'une conversation Instagram sur iPhone en 2026",
+    excerpt: "Instagram ne permet pas d'exporter une conversation directement. Voici comment récupérer vos audios via l'archive Meta, et comment EKKO simplifie toute cette étape.",
+    date: "Avril 2026",
+    readTime: "5 min",
+  },
 ];
 
 export default function BlogPage() {
