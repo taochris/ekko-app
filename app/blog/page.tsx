@@ -9,10 +9,19 @@ const accent = "#c9a96e";
 const ARTICLES = [
   {
     slug: "exporter-whatsapp-iphone-2026",
-    tag: "Guide WhatsApp",
+    tag: "Guide WhatsApp · iPhone",
     tagColor: "#25d366",
     title: "Comment exporter une conversation WhatsApp avec audios sur iPhone en 2026",
     excerpt: "Vos messages vocaux sont précieux. Voix d'un proche, fous rires entre amis, premiers mots d'amour — voici comment les récupérer et leur donner une vraie seconde vie.",
+    date: "Avril 2026",
+    readTime: "5 min",
+  },
+  {
+    slug: "exporter-whatsapp-android-2026",
+    tag: "Guide WhatsApp · Android",
+    tagColor: "#25d366",
+    title: "Comment exporter une conversation WhatsApp avec audios sur Android en 2026",
+    excerpt: "Samsung, Xiaomi, Google, OnePlus… Ce guide concerne tous les smartphones Android. Récupérez vos messages vocaux et transformez-les en souvenir avec EKKO.",
     date: "Avril 2026",
     readTime: "5 min",
   },
