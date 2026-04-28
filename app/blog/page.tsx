@@ -26,6 +26,15 @@ const ARTICLES = [
     readTime: "5 min",
   },
   {
+    slug: "exporter-audios-telegram-iphone-2026",
+    tag: "Guide Telegram · iPhone",
+    tagColor: "#2AABEE",
+    title: "Comment exporter les audios d'une conversation Telegram sur iPhone en 2026",
+    excerpt: "Telegram Desktop uniquement — pas Telegram Web. Tout comprendre pour récupérer vos vocaux depuis iPhone via ordinateur, et comment EKKO simplifie la suite.",
+    date: "Avril 2026",
+    readTime: "5 min",
+  },
+  {
     slug: "exporter-audios-messenger-android-2026",
     tag: "Guide Messenger · Android",
     tagColor: "#0084ff",
