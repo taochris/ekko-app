@@ -26,6 +26,15 @@ const ARTICLES = [
     readTime: "5 min",
   },
   {
+    slug: "exporter-audios-telegram-android-2026",
+    tag: "Guide Telegram · Android",
+    tagColor: "#2AABEE",
+    title: "Comment exporter les audios d'une conversation Telegram sur Android en 2026",
+    excerpt: "Samsung, Xiaomi, Google… Telegram Desktop uniquement, pas Telegram Web. Le guide complet pour récupérer vos vocaux depuis Android via ordinateur.",
+    date: "Avril 2026",
+    readTime: "5 min",
+  },
+  {
     slug: "exporter-audios-telegram-iphone-2026",
     tag: "Guide Telegram · iPhone",
     tagColor: "#2AABEE",
