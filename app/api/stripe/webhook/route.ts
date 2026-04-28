@@ -59,7 +59,7 @@ function buildConfirmationEmail({ capsuleUrl, capsuleId }: { capsuleUrl: string;
 
               <p style="margin:0 0 8px;font-size:15px;color:rgba(240,232,216,0.85);line-height:1.75;">
                 Si vous avez des questions, répondez simplement à cet email ou contactez-nous à{' '}
-                <a href="mailto:contact@vosekko.com" style="color:#c9a96e;text-decoration:underline;">contact@vosekko.com</a>.
+                <a href="mailto:vosekko@outlook.com" style="color:#c9a96e;text-decoration:underline;">vosekko@outlook.com</a>.
               </p>
 
               <p style="margin:32px 0 0;font-size:14px;color:rgba(240,232,216,0.5);font-style:italic;line-height:1.7;">

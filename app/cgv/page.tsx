@@ -119,8 +119,8 @@ export default function CGVPage() {
           </P>
           <P>
             Pour toute question ou réclamation :{" "}
-            <a href="mailto:contact@vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
-              contact@vosekko.com
+            <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              vosekko@outlook.com
             </a>
           </P>
         </Section>
@@ -209,8 +209,8 @@ export default function CGVPage() {
           </P>
           <P>
             En cas de problème technique imputable à VosEkko empêchant la livraison du service, le client peut contacter{" "}
-            <a href="mailto:contact@vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
-              contact@vosekko.com
+            <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              vosekko@outlook.com
             </a>{" "}
             pour un examen de sa situation.
           </P>
@@ -231,8 +231,8 @@ export default function CGVPage() {
           </Ul>
           <P>
             En cas de dysfonctionnement technique, le client est invité à contacter{" "}
-            <a href="mailto:contact@vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
-              contact@vosekko.com
+            <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              vosekko@outlook.com
             </a>.
           </P>
         </Section>
@@ -252,8 +252,8 @@ export default function CGVPage() {
           </P>
           <P>
             Conformément au Règlement Général sur la Protection des Données (RGPD), le client dispose d&apos;un droit d&apos;accès, de rectification, de suppression et de portabilité de ses données. Pour exercer ces droits :{" "}
-            <a href="mailto:contact@vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
-              contact@vosekko.com
+            <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              vosekko@outlook.com
             </a>.
           </P>
         </Section>
@@ -284,8 +284,8 @@ export default function CGVPage() {
         <Section title="Article 11 — Loi applicable et litiges">
           <P>
             Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité via{" "}
-            <a href="mailto:contact@vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
-              contact@vosekko.com
+            <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              vosekko@outlook.com
             </a>.
           </P>
           <P>
@@ -297,8 +297,8 @@ export default function CGVPage() {
         <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 24 }} />
         <p className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.25)", textAlign: "center" }}>
           CGV en vigueur au 28 avril 2026 · VosEkko ·{" "}
-          <a href="mailto:contact@vosekko.com" style={{ color: "rgba(240,232,216,0.35)" }}>
-            contact@vosekko.com
+          <a href="mailto:vosekko@outlook.com" style={{ color: "rgba(240,232,216,0.35)" }}>
+            vosekko@outlook.com
           </a>
         </p>
       </div>
