@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
         const origin = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get("host")}`;
         const capsuleUrl = `${origin}/capsule/${capsuleId}`;
         resend.emails.send({
-          from: "EKKO <noreply@vosekko.com>",
+          from: "EKKO <onboarding@resend.dev>",
           to: customerEmail,
           subject: "Votre vocapsule EKKO est en cours de création ✦",
           html: buildConfirmationEmail({ capsuleUrl, capsuleId }),
