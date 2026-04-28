@@ -434,6 +434,7 @@ function CapsuleScreen({
   const [status, setStatus] = useState<"idle" | "uploading" | "redirecting">("idle");
   const [showAuth, setShowAuth] = useState(false);
   const [storageOption, setStorageOption] = useState<0 | 100 | 200>(0);
+  const [consentChecked, setConsentChecked] = useState(false);
   const { user } = useAuth();
   const variant = config.blobVariant ?? theme;
   const texts = capsuleTexts[variant] ?? capsuleTexts.deuil;
@@ -454,6 +455,7 @@ function CapsuleScreen({
       setShowAuth(true);
       return;
     }
+    if (!consentChecked) return;
     setStatus("uploading");
     try {
       // Upload direct des audios dans temp/ — fusion gérée côté serveur après paiement
@@ -469,6 +471,7 @@ function CapsuleScreen({
           storageLabel,
           uid: user?.uid ?? "",
           accentColor: config.accent,
+          email: user?.email ?? "",
         }),
       });
       const data = await res.json();
@@ -638,6 +641,39 @@ function CapsuleScreen({
         </div>
       </motion.div>
 
+      {/* Case de consentement — renonciation droit de rétractation */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.05 }}
+        style={{ width: "100%" }}
+      >
+        <label
+          style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer", padding: "14px 16px", borderRadius: 12, background: consentChecked ? `${config.accent}0a` : "rgba(255,255,255,0.03)", border: `1px solid ${consentChecked ? config.accent + "35" : "rgba(255,255,255,0.08)"}`, transition: "all 0.2s" }}
+        >
+          <div
+            onClick={() => setConsentChecked((v) => !v)}
+            style={{ width: 18, height: 18, borderRadius: 4, flexShrink: 0, marginTop: 1, border: `1.5px solid ${consentChecked ? config.accent : "rgba(255,255,255,0.25)"}`, background: consentChecked ? config.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+          >
+            {consentChecked && (
+              <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                <path d="M1 4L4 7L10 1" stroke="#0d0a0f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.55)", lineHeight: 1.65, margin: 0 }} onClick={() => setConsentChecked((v) => !v)}>
+            J&apos;accepte que la création de mon EKKO commence immédiatement après le paiement et je reconnais que, une fois le traitement commencé, je renonce à mon{" "}
+            <a href="/cgv" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: config.accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              droit de rétractation
+            </a>{" "}
+            conformément aux{" "}
+            <a href="/cgv" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: config.accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              CGV
+            </a>.
+          </p>
+        </label>
+      </motion.div>
+
       {/* Bouton déverrouiller */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -646,18 +682,22 @@ function CapsuleScreen({
         style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}
       >
         <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={consentChecked && status === "idle" ? { scale: 1.03 } : {}}
+          whileTap={consentChecked && status === "idle" ? { scale: 0.97 } : {}}
           onClick={handlePay}
-          disabled={status !== "idle"}
+          disabled={status !== "idle" || !consentChecked}
           style={{
             width: "100%", padding: "16px 0", borderRadius: 18,
-            background: `linear-gradient(135deg, ${config.accent}60, ${config.accent}90)`,
-            border: `1px solid ${config.accent}60`,
-            color: "#fff",
+            background: consentChecked
+              ? `linear-gradient(135deg, ${config.accent}60, ${config.accent}90)`
+              : "rgba(255,255,255,0.05)",
+            border: `1px solid ${consentChecked ? config.accent + "60" : "rgba(255,255,255,0.08)"}`,
+            color: consentChecked ? "#fff" : "rgba(240,232,216,0.25)",
             fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 500,
-            letterSpacing: "0.05em", cursor: status !== "idle" ? "wait" : "pointer",
-            boxShadow: `0 8px 32px ${config.accent}30`,
+            letterSpacing: "0.05em",
+            cursor: !consentChecked ? "not-allowed" : status !== "idle" ? "wait" : "pointer",
+            boxShadow: consentChecked ? `0 8px 32px ${config.accent}30` : "none",
+            transition: "all 0.25s",
           }}
         >
           {status === "uploading" ? "Préparation de votre écho…" : status === "redirecting" ? "Redirection vers le paiement…" : `Déverrouiller mon écho — ${totalLabel}`}

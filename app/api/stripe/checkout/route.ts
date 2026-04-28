@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     apiVersion: "2026-03-25.dahlia",
   });
   try {
-    const { theme, uploadId, storage, storageLabel, uid, accentColor } = await req.json();
+    const { theme, uploadId, storage, storageLabel, uid, accentColor, email } = await req.json();
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
     // 1. Créer la capsule Firestore en statut "pending"
@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      metadata: { capsuleId },
+      metadata: { capsuleId, customerEmail: email || "" },
+      ...(email ? { customer_email: email } : {}),
       success_url: `${origin}/capsule/${capsuleId}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/theme/${theme ?? "deuil"}?payment=cancel`,
       locale: "fr",
