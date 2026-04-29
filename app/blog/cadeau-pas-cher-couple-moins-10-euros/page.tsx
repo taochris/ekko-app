@@ -123,7 +123,7 @@ export default function CadeauPasCherCouplePage() {
             src="/couple-hero.png"
             alt="Jeune couple enlacé dans la lumière dorée des guirlandes"
             fill
-            style={{ objectFit: "cover", objectPosition: "center 25%", opacity: 0.55 }}
+            style={{ objectFit: "cover", objectPosition: "center 65%", opacity: 0.6 }}
             priority
           />
           {/* Fondu haut vers le fond de page */}
