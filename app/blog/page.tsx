@@ -8,6 +8,15 @@ const accent = "#c9a96e";
 
 const ARTICLES = [
   {
+    slug: "cadeau-pas-cher-couple-moins-10-euros",
+    tag: "Idées cadeaux · Couple",
+    tagColor: "#e8637a",
+    title: "🎁 10 idées de cadeaux pas chers pour son ou sa chérie (moins de 10€ mais inoubliables)",
+    excerpt: "Tu cherches un cadeau pour ton ou ta chérie sans exploser ton budget ? Les meilleurs cadeaux ne coûtent presque rien — ils sont juste plus personnels, plus vrais, plus marquants.",
+    date: "Avril 2026",
+    readTime: "5 min",
+  },
+  {
     slug: "exporter-whatsapp-iphone-2026",
     tag: "Guide WhatsApp · iPhone",
     tagColor: "#25d366",
