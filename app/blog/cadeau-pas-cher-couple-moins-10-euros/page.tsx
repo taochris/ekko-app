@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import EkkoLogo from "../../components/EkkoLogo";
 import BlobBackground from "../../components/BlobBackground";
 
@@ -115,8 +116,25 @@ export default function CadeauPasCherCouplePage() {
         </button>
       </nav>
 
+      {/* Photo hero avec fondu */}
+      <div className="relative z-10 w-full" style={{ marginTop: -20 }}>
+        <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden" }}>
+          <Image
+            src="/couple-hero.png"
+            alt="Jeune couple enlacé dans la lumière dorée des guirlandes"
+            fill
+            style={{ objectFit: "cover", objectPosition: "center 25%", opacity: 0.55 }}
+            priority
+          />
+          {/* Fondu haut vers le fond de page */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, #0d0a0f 0%, transparent 28%, transparent 55%, #0d0a0f 100%)" }} />
+          {/* Fondu latéral subtil */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, #0d0a0f 0%, transparent 15%, transparent 85%, #0d0a0f 100%)" }} />
+        </div>
+      </div>
+
       {/* Hero */}
-      <div className="relative z-10 px-6 pt-10 pb-8 max-w-2xl mx-auto">
+      <div className="relative z-10 px-6 pt-2 pb-8 max-w-2xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
             <span className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: rose, padding: "3px 10px", borderRadius: 20, background: `${rose}18`, border: `1px solid ${rose}30` }}>
