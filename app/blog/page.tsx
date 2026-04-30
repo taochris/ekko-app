@@ -8,6 +8,15 @@ const accent = "#c9a96e";
 
 const ARTICLES = [
   {
+    slug: "conversations-numeriques-memoire-2026",
+    tag: "Mémoire · Psychologie",
+    tagColor: "#7b9ec9",
+    title: "Nos conversations sont-elles devenues une nouvelle forme de mémoire ?",
+    excerpt: "Mémoire autobiographique, esprit étendu, paradoxe de l'archive numérique… Ce que la recherche dit sur nos messages vocaux et pourquoi la voix garde une puissance que le texte ne peut pas transmettre.",
+    date: "Avril 2026",
+    readTime: "12 min",
+  },
+  {
     slug: "cadeau-pas-cher-couple-moins-10-euros",
     tag: "Idées cadeaux · Couple",
     tagColor: "#e8637a",
