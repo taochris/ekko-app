@@ -35,17 +35,17 @@ const S = {
     transition: "color 0.2s",
   },
   navButton: {
-    padding: "8px 18px",
-    borderRadius: 20,
-    border: "1px solid rgba(201,169,110,0.3)",
-    background: "rgba(201,169,110,0.08)",
-    color: "rgba(201,169,110,0.85)",
-    fontSize: 11,
-    letterSpacing: "0.15em",
+    fontSize: 12,
+    letterSpacing: "0.2em",
     textTransform: "uppercase" as const,
+    color: "rgba(240,232,216,0.35)",
+    textDecoration: "none",
     fontFamily: "Georgia, serif",
+    transition: "color 0.2s",
+    background: "none",
+    border: "none",
     cursor: "pointer",
-    transition: "all 0.2s",
+    padding: 0,
   },
   hero: {
     position: "relative" as const,
@@ -281,6 +281,8 @@ export default function HomePage() {
         >
           <a href="#produit" style={S.navLink}>Le produit</a>
           <a href="#comment" style={S.navLink}>Comment ça marche</a>
+          <a href="/faq" style={S.navLink}>FAQ</a>
+          <a href="/blog" style={S.navLink}>Blog</a>
           <a href="/compte" style={S.navButton}>Mon compte</a>
         </motion.div>
       </nav>
