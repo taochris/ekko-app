@@ -9,7 +9,7 @@ const bleu = "#7b9ec9";
 
 function H2({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="ekko-serif" style={{ fontSize: 24, fontWeight: 400, color: "#f0e8d8", marginTop: 56, marginBottom: 16, lineHeight: 1.35 }}>
+    <h2 className="ekko-serif" style={{ fontSize: 24, fontWeight: 400, color: bleu, marginTop: 64, marginBottom: 20, lineHeight: 1.35 }}>
       {children}
     </h2>
   );
@@ -17,14 +17,14 @@ function H2({ children }: { children: React.ReactNode }) {
 
 function P({ children }: { children: React.ReactNode }) {
   return (
-    <p className="ekko-serif" style={{ fontSize: 16, color: "rgba(240,232,216,0.88)", lineHeight: 1.8, marginBottom: 16 }}>
+    <p className="ekko-serif" style={{ fontSize: 16, color: "rgba(240,232,216,0.88)", lineHeight: 1.85, marginBottom: 24 }}>
       {children}
     </p>
   );
 }
 
 function Separator() {
-  return <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "44px 0" }} />;
+  return <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "52px 0" }} />;
 }
 
 function Source({ href, children }: { href: string; children: React.ReactNode }) {
@@ -40,40 +40,38 @@ function Source({ href, children }: { href: string; children: React.ReactNode })
   );
 }
 
-function KeyIdea({ children, source }: { children: React.ReactNode; source?: React.ReactNode }) {
+type KeyIdeaItem = {
+  title: string;
+  body: string;
+  href?: string;
+  sourceLabel?: string;
+};
+
+function KeyIdeasBlock({ ideas }: { ideas: KeyIdeaItem[] }) {
   return (
     <div style={{
-      padding: "22px 26px",
-      borderRadius: 16,
-      background: `${bleu}0a`,
-      border: `1px solid ${bleu}28`,
-      margin: "0 0 20px",
-      position: "relative",
+      padding: "32px 32px 24px",
+      borderRadius: 20,
+      background: `${bleu}12`,
+      border: `1px solid ${bleu}35`,
+      marginBottom: 48,
     }}>
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <span style={{ color: bleu, fontSize: 16, flexShrink: 0, marginTop: 2 }}>◈</span>
-        <div>
-          <p className="ekko-serif" style={{ fontSize: 15, color: "rgba(240,232,216,0.9)", lineHeight: 1.75, margin: 0 }}>
-            {children}
-          </p>
-          {source && (
-            <p style={{ margin: "10px 0 0" }}>{source}</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EkkoBlock({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ padding: "22px 26px", borderRadius: 16, background: `${accent}0d`, border: `1px solid ${accent}35`, margin: "32px 0" }}>
-      <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 12 }}>
-        ✦ EKKO
+      <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: `${bleu}90`, marginBottom: 28, margin: "0 0 28px" }}>
+        Les grandes idées de cet article
       </p>
-      <div className="ekko-serif" style={{ fontSize: 16, color: "rgba(240,232,216,0.88)", lineHeight: 1.75 }}>
-        {children}
-      </div>
+      {ideas.map((idea, i) => (
+        <div key={i} style={{ marginBottom: i < ideas.length - 1 ? 28 : 0, paddingBottom: i < ideas.length - 1 ? 28 : 0, borderBottom: i < ideas.length - 1 ? `1px solid ${bleu}18` : "none" }}>
+          <p className="ekko-serif" style={{ fontSize: 15, fontWeight: 600, color: bleu, marginBottom: 8, lineHeight: 1.4 }}>
+            {idea.title}
+          </p>
+          <p className="ekko-serif" style={{ fontSize: 15, color: "rgba(240,232,216,0.82)", lineHeight: 1.75, margin: 0 }}>
+            {idea.body}
+            {idea.href && (
+              <>{" "}<a href={idea.href} target="_blank" rel="noopener noreferrer" style={{ color: bleu, fontSize: 12, textDecoration: "underline", textUnderlineOffset: 2, fontStyle: "italic" }}>{idea.sourceLabel}</a></>
+            )}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -136,42 +134,43 @@ export default function ConversationsMemoire2026Page() {
       <div className="relative z-10 px-6 pb-32 max-w-2xl mx-auto">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
 
-          {/* Grandes idées encadrées */}
-          <div style={{ marginBottom: 48 }}>
-            <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${bleu}80`, marginBottom: 20 }}>
-              Les grandes idées de cet article
-            </p>
-
-            <KeyIdea source={<Source href="https://pubmed.ncbi.nlm.nih.gov/10789197/">PubMed — The construction of autobiographical memories in the self-memory system</Source>}>
-              <strong style={{ color: "#f0e8d8" }}>La mémoire autobiographique construit notre identité.</strong>{" "}
-              Nos souvenirs ne servent pas seulement à raconter le passé. Ils nous aident à comprendre qui nous sommes, ce que nous avons vécu, les liens qui nous ont marqués et les périodes qui nous ont transformés. Le modèle du &laquo;&nbsp;self-memory system&nbsp;&raquo; décrit les souvenirs autobiographiques comme des constructions mentales dynamiques, liées au soi et aux buts personnels.
-            </KeyIdea>
-
-            <KeyIdea source={<Source href="https://www.alice.id.tue.nl/references/clark-chalmers-1998.pdf">Alice ID — The Extended Mind (Clark & Chalmers, 1998)</Source>}>
-              <strong style={{ color: "#f0e8d8" }}>Le téléphone est devenu une mémoire externe.</strong>{" "}
-              Comme les albums photo, les lettres ou les carnets autrefois, nos smartphones gardent aujourd&apos;hui une partie de notre histoire personnelle. Cette idée rejoint les réflexions sur &laquo;&nbsp;l&apos;esprit étendu&nbsp;&raquo; : certains objets extérieurs peuvent participer à nos processus cognitifs lorsqu&apos;ils sont utilisés pour penser, agir ou se souvenir.
-            </KeyIdea>
-
-            <KeyIdea source={<Source href="https://www.mcm.uni-wuerzburg.de/fileadmin/06110300/2024/Pdfs/Hutmacher_et_al_2024_Understanding_Autobiographical_Memory_in_the_Digital_Age_The_AMEDIA-Model.pdf">Institut Mensch-Computer-Medien — Understanding Autobiographical Memory in the Digital Age (2024)</Source>}>
-              <strong style={{ color: "#f0e8d8" }}>Les conversations numériques dialoguent avec nos souvenirs.</strong>{" "}
-              Relire un message ou réécouter un vocal ne fait pas seulement revenir une information. Cela peut raviver une ambiance, une émotion, une époque, une relation. Les recherches récentes sur la mémoire autobiographique à l&apos;ère numérique insistent sur cette interaction entre souvenirs internes et traces externes.
-            </KeyIdea>
-
-            <KeyIdea source={<Source href="https://www.nature.com/articles/s44271-023-00001-4">Nature — A model for person perception from familiar and unfamiliar voices</Source>}>
-              <strong style={{ color: "#f0e8d8" }}>La voix a une puissance particulière.</strong>{" "}
-              Un message vocal conserve le rythme, le souffle, l&apos;intonation, la fatigue, le sourire ou la gêne d&apos;une personne. Il garde une présence que le texte ou la photo ne peuvent pas toujours transmettre. Les travaux sur la perception vocale montrent que la voix participe à l&apos;identification d&apos;une personne et à la perception de caractéristiques sociales ou affectives.
-            </KeyIdea>
-
-            <KeyIdea source={<Source href="https://www.marshmemorylab.com/s/Eliseev_Marsh_TICS.pdf">MARSH LAB — Externalizing autobiographical memories in the digital age</Source>}>
-              <strong style={{ color: "#f0e8d8" }}>Tout conserver ne signifie pas mieux se souvenir.</strong>{" "}
-              Nos téléphones accumulent des milliers de messages, photos, audios et fichiers. Pourtant, seule une petite partie de ces traces devient réellement importante avec le temps. Cette abondance peut modifier ce à quoi nous prêtons attention et ce que nous retenons.
-            </KeyIdea>
-
-            <KeyIdea>
-              <strong style={{ color: "#f0e8d8" }}>Choisir ses souvenirs leur donne du sens.</strong>{" "}
-              Transformer quelques messages ou quelques voix en souvenir choisi permet de passer d&apos;une masse de données oubliées à une mémoire intime, personnelle et transmissible. L&apos;enjeu n&apos;est pas de tout archiver, mais d&apos;apprendre à reconnaître ce qui mérite de rester accessible.
-            </KeyIdea>
-          </div>
+          {/* Grandes idées — bloc unique */}
+          <KeyIdeasBlock ideas={[
+            {
+              title: "La mémoire autobiographique construit notre identité.",
+              body: "Nos souvenirs ne servent pas seulement à raconter le passé. Ils nous aident à comprendre qui nous sommes, ce que nous avons vécu, les liens qui nous ont marqués et les périodes qui nous ont transformés. Le modèle du \u00ab\u00a0self-memory system\u00a0\u00bb décrit les souvenirs autobiographiques comme des constructions mentales dynamiques, liées au soi et aux buts personnels.",
+              href: "https://pubmed.ncbi.nlm.nih.gov/10789197/",
+              sourceLabel: "PubMed",
+            },
+            {
+              title: "Le téléphone est devenu une mémoire externe.",
+              body: "Comme les albums photo, les lettres ou les carnets autrefois, nos smartphones gardent aujourd'hui une partie de notre histoire personnelle. Cette idée rejoint les réflexions sur l'esprit étendu : certains objets extérieurs peuvent participer à nos processus cognitifs lorsqu'ils sont utilisés pour penser, agir ou se souvenir.",
+              href: "https://www.alice.id.tue.nl/references/clark-chalmers-1998.pdf",
+              sourceLabel: "Alice ID — The Extended Mind",
+            },
+            {
+              title: "Les conversations numériques dialoguent avec nos souvenirs.",
+              body: "Relire un message ou réécouter un vocal ne fait pas seulement revenir une information. Cela peut raviver une ambiance, une émotion, une époque, une relation. Les recherches récentes insistent sur cette interaction entre souvenirs internes et traces externes.",
+              href: "https://www.mcm.uni-wuerzburg.de/fileadmin/06110300/2024/Pdfs/Hutmacher_et_al_2024_Understanding_Autobiographical_Memory_in_the_Digital_Age_The_AMEDIA-Model.pdf",
+              sourceLabel: "Institut Mensch-Computer-Medien, 2024",
+            },
+            {
+              title: "La voix a une puissance particulière.",
+              body: "Un message vocal conserve le rythme, le souffle, l'intonation, la fatigue, le sourire ou la gêne d'une personne. Il garde une présence que le texte ou la photo ne peuvent pas toujours transmettre.",
+              href: "https://www.nature.com/articles/s44271-023-00001-4",
+              sourceLabel: "Nature",
+            },
+            {
+              title: "Tout conserver ne signifie pas mieux se souvenir.",
+              body: "Nos téléphones accumulent des milliers de messages, photos, audios et fichiers. Pourtant, seule une petite partie de ces traces devient réellement importante avec le temps. Cette abondance peut modifier ce à quoi nous prêtons attention et ce que nous retenons.",
+              href: "https://www.marshmemorylab.com/s/Eliseev_Marsh_TICS.pdf",
+              sourceLabel: "MARSH LAB",
+            },
+            {
+              title: "Choisir ses souvenirs leur donne du sens.",
+              body: "Transformer quelques messages ou quelques voix en souvenir choisi permet de passer d'une masse de données oubliées à une mémoire intime, personnelle et transmissible. L'enjeu n'est pas de tout archiver, mais d'apprendre à reconnaître ce qui mérite de rester accessible.",
+            },
+          ]} />
 
           <Separator />
 
@@ -238,15 +237,8 @@ export default function ConversationsMemoire2026Page() {
           <P>Pourtant, conserver n&apos;est pas forcément se souvenir. Une archive oubliée dans un téléphone n&apos;a pas le même statut qu&apos;un souvenir choisi, organisé, transmis ou ritualisé.</P>
           <P>C&apos;est là que l&apos;enjeu devient moins technique que symbolique : comment transformer une masse de traces numériques en souvenir signifiant ?</P>
 
-          <EkkoBlock>
-            Aujourd&apos;hui, certaines applications proposent par exemple de créer des capsules audio à partir de messages vocaux sélectionnés. L&apos;intérêt n&apos;est pas de dupliquer toute sa mémoire numérique, déjà trop pleine, mais d&apos;en extraire l&apos;essence : quelques voix, quelques instants, quelques messages qui portent vraiment quelque chose.{" "}
-            <br /><br />
-            C&apos;est précisément ce que permet{" "}
-            <a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>
-              EKKO
-            </a>{" "}
-            : créer une capsule audio à partir de messages vocaux importants, pour garder une mémoire plus intime, plus courte, plus accessible, et surtout plus incarnée, parce qu&apos;elle est portée par la voix.
-          </EkkoBlock>
+          <P>Aujourd&apos;hui, certaines applications proposent de créer des capsules audio à partir de messages vocaux sélectionnés. L&apos;intérêt n&apos;est pas de dupliquer toute sa mémoire numérique, déjà trop pleine, mais d&apos;en extraire l&apos;essence : quelques voix, quelques instants, quelques messages qui portent vraiment quelque chose.</P>
+          <P>C&apos;est précisément ce que permet{" "}<a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>EKKO</a>{" "}: créer une capsule audio à partir de messages vocaux importants, pour garder une mémoire plus intime, plus courte, plus accessible, et surtout plus incarnée, parce qu&apos;elle est portée par la voix.</P>
 
           <Separator />
 
@@ -279,16 +271,8 @@ export default function ConversationsMemoire2026Page() {
           <P>Choisir un échange, une voix, une période, une relation, c&apos;est déjà produire du sens. C&apos;est décider qu&apos;un fragment de vie ne doit pas rester perdu dans une archive immense. C&apos;est lui donner une forme, une place, une intention.</P>
           <P>Cela rapproche les conversations numériques des anciennes pratiques de mémoire familiale : choisir les photos d&apos;un album, garder une lettre dans une boîte, recopier une phrase dans un carnet. La différence, c&apos;est que les fragments d&apos;aujourd&apos;hui sont souvent vivants, sonores, conversationnels.</P>
 
-          <EkkoBlock>
-            Une capsule audio répond à cette logique : elle ne cherche pas à tout conserver, mais à isoler quelques fragments qui méritent d&apos;être réécoutés.{" "}
-            <a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>
-              EKKO
-            </a>{" "}
-            peut être compris comme un outil de sélection et de mise à part : une manière de sortir certains messages vocaux du bruit numérique pour les transformer en souvenir vivant, choisi, réécoutable.
-            <br /><br />
-            Ils ne disent pas seulement : &laquo;&nbsp;souviens-toi de ce moment.&nbsp;&raquo;<br />
-            Ils disent : &laquo;&nbsp;souviens-toi de cette manière d&apos;être ensemble.&nbsp;&raquo;
-          </EkkoBlock>
+          <P>Une capsule audio répond à cette logique : elle ne cherche pas à tout conserver, mais à isoler quelques fragments qui méritent d&apos;être réécoutés.{" "}<a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>EKKO</a>{" "}peut être compris comme un outil de sélection et de mise à part : une manière de sortir certains messages vocaux du bruit numérique pour les transformer en souvenir vivant, choisi, réécoutable.</P>
+          <P>Ils ne disent pas seulement : &laquo;&nbsp;souviens-toi de ce moment.&nbsp;&raquo;<br />Ils disent : &laquo;&nbsp;souviens-toi de cette manière d&apos;être ensemble.&nbsp;&raquo;</P>
 
         </motion.div>
       </div>
