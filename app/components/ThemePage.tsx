@@ -149,6 +149,11 @@ export default function ThemePage({ theme }: { theme: string }) {
                   FAQ
                 </NavButton>
               </span>
+              <span className="hidden md:inline-flex">
+                <NavButton onClick={() => router.push("/blog")} accent={config.accent}>
+                  Blog
+                </NavButton>
+              </span>
             </>
           ) : (
             <>
@@ -158,6 +163,11 @@ export default function ThemePage({ theme }: { theme: string }) {
               <span className="hidden md:inline-flex">
                 <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
                   FAQ
+                </NavButton>
+              </span>
+              <span className="hidden md:inline-flex">
+                <NavButton onClick={() => router.push("/blog")} accent={config.accent}>
+                  Blog
                 </NavButton>
               </span>
             </>
