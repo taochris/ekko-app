@@ -10,7 +10,7 @@ interface ThemeCardProps {
 const themeConfig = {
   deuil: {
     title: "Mémoire éternelle",
-    subtitle: "Écho d'eux",
+    subtitle: "Et si leur voix restait près de vous ?",
     description: "Gardez la voix de ceux que vous aimez. Transformez leurs messages en un hommage durable, un souvenir sonore qui traverse le temps.",
     cta: "Créer un hommage",
     bgGradient: "linear-gradient(135deg, #0a1a2e 0%, #0d2a1a 50%, #081525 100%)",
@@ -31,7 +31,7 @@ const themeConfig = {
   },
   amitie: {
     title: "Amitiés & joie",
-    subtitle: "Écho de nous",
+    subtitle: "Et si vos fous rires ne disparaissaient jamais ?",
     description: "Vos vocaux d'amis, vos fous rires, vos aventures collectives. Fusionnez-les en une capsule sonore qui immortalise votre bande.",
     cta: "Partager un souvenir",
     bgGradient: "linear-gradient(135deg, #2a1200 0%, #3d1a00 50%, #241000 100%)",
@@ -53,7 +53,7 @@ const themeConfig = {
   },
   amour: {
     title: "Amour & intimité",
-    subtitle: "Écho de toi",
+    subtitle: "Et si vous lui offriez vos plus beaux instants à réécouter ?",
     description: "Ces mots doux, ces messages du soir, ces aveux murmurés. Créez un coffret sonore de votre histoire, rien que pour vous deux.",
     cta: "Ouvrir le coffret",
     bgGradient: "linear-gradient(135deg, #200a15 0%, #2e0a1a 50%, #180710 100%)",
@@ -151,13 +151,14 @@ export default function ThemeCard({ theme, index }: ThemeCardProps) {
         {/* Text */}
         <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 10, flex: 1, textAlign: "center", alignItems: "center" }}>
           <p style={{
-            fontSize: 22,
-            letterSpacing: "0.08em",
+            fontSize: 16,
+            letterSpacing: "0.02em",
             fontStyle: "italic",
             color: config.accentColor,
             fontFamily: "Georgia, 'Times New Roman', serif",
             fontWeight: 400,
             margin: 0,
+            lineHeight: 1.5,
           }}>
             {config.subtitle}
           </p>
