@@ -10,8 +10,8 @@ interface ThemeCardProps {
 const themeConfig = {
   deuil: {
     title: "Mémoire éternelle",
-    subtitle: "Et si leur voix restait près de vous ?",
-    description: "Gardez la voix de ceux que vous aimez. Transformez leurs messages en un hommage durable, un souvenir sonore qui traverse le temps.",
+    subtitle: "Et si vous pouviez garder sa voix pour toujours ?",
+    description: "Créez une capsule audio avec les messages d'une personne qui compte, pour pouvoir la réécouter quand vous en ressentez le besoin.",
     cta: "Créer un hommage",
     bgGradient: "linear-gradient(135deg, #0a1a2e 0%, #0d2a1a 50%, #081525 100%)",
     glowColor: "rgba(30, 100, 140, 0.35)",
