@@ -271,7 +271,7 @@ export default function HomePage() {
 
       {/* Nav */}
       <nav style={S.nav} className="home-nav">
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain" }} />
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
