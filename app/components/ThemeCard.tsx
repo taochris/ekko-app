@@ -159,6 +159,10 @@ export default function ThemeCard({ theme, index }: ThemeCardProps) {
             fontWeight: 400,
             margin: 0,
             lineHeight: 1.5,
+            minHeight: "3em",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}>
             {config.subtitle}
           </p>
