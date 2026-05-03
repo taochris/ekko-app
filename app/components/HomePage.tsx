@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import BlobBackground from "./BlobBackground";
 import EkkoLogo from "./EkkoLogo";
 import ThemeCard from "./ThemeCard";
@@ -272,7 +271,7 @@ export default function HomePage() {
 
       {/* Nav */}
       <nav style={S.nav} className="home-nav">
-        <Image src="/ekko-logo.png" alt="EKKO" width={140} height={56} style={{ objectFit: "contain" }} priority />
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain" }} />
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
