@@ -32,7 +32,7 @@ const themeConfig = {
   amitie: {
     title: "Amitiés & joie",
     subtitle: "Et si vos fous rires ne disparaissaient jamais ?",
-    description: "Vos vocaux d'amis, vos fous rires, vos aventures collectives. Fusionnez-les en une capsule sonore qui immortalise votre bande.",
+    description: "Gardez vos délires, vos fous rires et vos moments cultes dans une capsule audio à partager entre amis.",
     cta: "Partager un souvenir",
     bgGradient: "linear-gradient(135deg, #2a1200 0%, #3d1a00 50%, #241000 100%)",
     glowColor: "rgba(180, 90, 20, 0.35)",
@@ -54,7 +54,7 @@ const themeConfig = {
   amour: {
     title: "Amour & intimité",
     subtitle: "Et si vous lui offriez vos plus beaux instants à réécouter ?",
-    description: "Ces mots doux, ces messages du soir, ces aveux murmurés. Créez un coffret sonore de votre histoire, rien que pour vous deux.",
+    description: "Ces vocaux qu’on réécoute, ces messages du soir, ces premiers “je t’aime” qu’on n’oublie pas. Créez un souvenir audio de votre histoire, rien que pour vous deux.",
     cta: "Ouvrir le coffret",
     bgGradient: "linear-gradient(135deg, #200a15 0%, #2e0a1a 50%, #180710 100%)",
     glowColor: "rgba(160, 30, 70, 0.35)",
