@@ -66,6 +66,13 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
           .catch((e) => console.error("claim error:", e));
       }
 
+      // Dev bypass : pas de session_id mais NEXT_PUBLIC_DEV_BYPASS actif → court-circuiter le paiement
+      if (!sessionId && data.status === "pending" && !claimedRef.current && process.env.NEXT_PUBLIC_DEV_BYPASS === "true") {
+        claimedRef.current = true;
+        fetch(`/api/capsules/${id}/dev-claim`, { method: "POST" })
+          .catch((e) => console.error("[dev-claim] error:", e));
+      }
+
       if (data.status === "ready" || data.status === "failed") {
         if (pollRef.current) clearInterval(pollRef.current);
         return;
