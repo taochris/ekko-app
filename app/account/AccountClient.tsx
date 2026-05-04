@@ -160,15 +160,8 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
     <div style={{ minHeight: "100vh", background: "#0d0a0f", color: "#f0e8d8", position: "relative", overflow: "hidden" }}>
       <BlobBackground />
 
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "14px 24px",
-          background: "rgba(13,10,15,0.85)", backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(201,169,110,0.1)",
-        }}>
-        <img src="/ekko-logo.png" alt="EKKO" onClick={() => router.push("/")} style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
+      <nav style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 32px" }}>
+        <img src="/ekko-logo.png" alt="EKKO" onClick={() => router.push("/")} style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button
             onClick={() => router.push("/")}
@@ -184,7 +177,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
             Deconnexion
           </button>
         </div>
-      </motion.div>
+      </nav>
 
       <div style={{ maxWidth: 600, margin: "0 auto", padding: "100px 20px 80px", position: "relative", zIndex: 1 }}>
 
