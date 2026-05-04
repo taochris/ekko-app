@@ -20,6 +20,16 @@ type Article = {
 const ARTICLES: Article[] = [
   // ── Inspirations & souvenirs ──────────────────────────────────────────────
   {
+    slug: "flirter-selon-les-generations",
+    tag: "Amour · Séduction",
+    tagColor: "#e8637a",
+    title: "Qu'est-ce que flirter selon les générations ?",
+    excerpt: "Du bal au vocal, chaque époque a ses codes. Baby-boomers, Gen X, millennials, Gen Z — ce qui change, ce qui reste, et pourquoi la voix traverse toutes les générations.",
+    date: "Mai 2026",
+    readTime: "8 min",
+    category: "inspiration",
+  },
+  {
     slug: "conversations-numeriques-memoire-2026",
     tag: "Mémoire · Psychologie",
     tagColor: "#7b9ec9",
