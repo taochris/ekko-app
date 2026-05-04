@@ -111,7 +111,7 @@ export default function ThemePage({ theme }: { theme: string }) {
 
       {/* Nav */}
       <nav className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between px-4 py-4 md:px-14 md:py-7 gap-3 md:gap-0">
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -257,9 +257,10 @@ export default function HomePage() {
     <div style={S.page}>
       <style>{`
         @media (max-width: 700px) {
-          .home-nav { padding: 20px 20px !important; }
-          .home-nav-links { gap: 16px !important; }
+          .home-nav { padding: 20px 20px !important; flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .home-nav-links { gap: 12px !important; flex-wrap: wrap !important; }
           .home-nav-links a { font-size: 10px !important; letter-spacing: 0.1em !important; }
+          .home-nav-links button { font-size: 10px !important; }
           .home-cards-section { padding: 0 16px 48px !important; }
           .home-cards-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
           .home-how-section { padding: 60px 20px !important; }
@@ -270,7 +271,7 @@ export default function HomePage() {
       <BlobBackground variant="home" />
 
       {/* Nav */}
-      <nav style={S.nav} className="home-nav">
+      <nav style={{ ...S.nav, flexWrap: "wrap" }} className="home-nav">
         <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <motion.div
           initial={{ opacity: 0, x: 20 }}

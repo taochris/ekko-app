@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth, EkkoUser } from "../context/AuthContext";
 import BlobBackground from "../components/BlobBackground";
-import EkkoLogo from "../components/EkkoLogo";
 import { updateProfile, updateEmail, getAuth } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -170,7 +169,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           borderBottom: "1px solid rgba(201,169,110,0.1)",
         }}>
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <EkkoLogo size="sm" />
+          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button

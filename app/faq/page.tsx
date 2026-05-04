@@ -296,7 +296,7 @@ export default function FaqPage() {
 
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <button
           onClick={() => router.back()}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
