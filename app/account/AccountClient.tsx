@@ -168,9 +168,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           background: "rgba(13,10,15,0.85)", backdropFilter: "blur(12px)",
           borderBottom: "1px solid rgba(201,169,110,0.1)",
         }}>
-        <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
-        </button>
+        <img src="/ekko-logo.png" alt="EKKO" onClick={() => router.push("/")} style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button
             onClick={() => router.push("/")}
