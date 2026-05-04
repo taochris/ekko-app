@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import EkkoLogo from "../components/EkkoLogo";
 import BlobBackground from "../components/BlobBackground";
 
 const accent = "#c9a96e";
@@ -297,7 +296,7 @@ export default function FaqPage() {
 
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
-        <EkkoLogo size="md" glow={true} />
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <button
           onClick={() => router.back()}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"

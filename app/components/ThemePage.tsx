@@ -110,13 +110,13 @@ export default function ThemePage({ theme }: { theme: string }) {
       <BlobBackground variant={config.blobVariant} />
 
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-4 py-5 md:px-14 md:py-7">
-        <EkkoLogo size="md" glow={true} />
+      <nav className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between px-4 py-4 md:px-14 md:py-7 gap-3 md:gap-0">
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex items-center gap-1 md:gap-3"
+          className="flex items-center flex-wrap gap-1 md:gap-3"
         >
           {step !== "home" && step !== "loading" && (
             <NavButton onClick={() => {
@@ -136,40 +136,30 @@ export default function ThemePage({ theme }: { theme: string }) {
               <NavButton onClick={() => setShowEchos(true)} accent={config.accent}>
                 ✦ Mes échos
               </NavButton>
-              <span className="hidden md:inline-flex">
-                <NavButton onClick={() => router.push("/account")} accent={config.accent}>
-                  <span className="flex items-center gap-2">
-                    Mon compte
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: config.accent, display: "inline-block", opacity: 0.85 }} />
-                  </span>
-                </NavButton>
-              </span>
-              <span className="hidden md:inline-flex">
-                <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
-                  FAQ
-                </NavButton>
-              </span>
-              <span className="hidden md:inline-flex">
-                <NavButton onClick={() => router.push("/blog")} accent={config.accent}>
-                  Blog
-                </NavButton>
-              </span>
+              <NavButton onClick={() => router.push("/account")} accent={config.accent}>
+                <span className="flex items-center gap-2">
+                  Mon compte
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: config.accent, display: "inline-block", opacity: 0.85 }} />
+                </span>
+              </NavButton>
+              <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
+                FAQ
+              </NavButton>
+              <NavButton onClick={() => router.push("/blog")} accent={config.accent}>
+                Blog
+              </NavButton>
             </>
           ) : (
             <>
               <NavButton onClick={() => router.push("/compte")} accent={config.accent}>
                 Connexion
               </NavButton>
-              <span className="hidden md:inline-flex">
-                <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
-                  FAQ
-                </NavButton>
-              </span>
-              <span className="hidden md:inline-flex">
-                <NavButton onClick={() => router.push("/blog")} accent={config.accent}>
-                  Blog
-                </NavButton>
-              </span>
+              <NavButton onClick={() => router.push("/faq")} accent={config.accent}>
+                FAQ
+              </NavButton>
+              <NavButton onClick={() => router.push("/blog")} accent={config.accent}>
+                Blog
+              </NavButton>
             </>
           )}
         </motion.div>

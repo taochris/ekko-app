@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import EkkoLogo from "../../components/EkkoLogo";
 import BlobBackground from "../../components/BlobBackground";
 
 const accent = "#c9a96e";
@@ -89,7 +88,7 @@ export default function ArticleWhatsAppAndroid() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <EkkoLogo size="md" glow={true} />
+          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 56, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
