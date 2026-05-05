@@ -1,7 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
 import BlobBackground from "./BlobBackground";
-import EkkoLogo from "./EkkoLogo";
 import ThemeCard from "./ThemeCard";
 
 const S = {
@@ -396,9 +395,14 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer style={S.footer} className="home-footer">
-        <EkkoLogo size="sm" glow={false} />
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <p style={S.footerPrivacy}>Vos données restent sur votre appareil</p>
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 40, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 20, justifyContent: "flex-end" }}>
+          <a href="/cgv" style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.35)", textDecoration: "none", letterSpacing: "0.1em" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#c9a96e"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(240,232,216,0.35)"; }}>CGV</a>
+          <a href="/rgpd" style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.35)", textDecoration: "none", letterSpacing: "0.1em" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#c9a96e"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(240,232,216,0.35)"; }}>Confidentialité</a>
           <p style={S.footerCopy}>© 2025 EKKO. Tous droits réservés.</p>
           <a href="mailto:vosekko@outlook.com" style={S.footerContact}>Contact</a>
         </div>

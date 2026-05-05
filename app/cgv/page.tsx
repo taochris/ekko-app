@@ -1,6 +1,5 @@
 "use client";
 import { useRouter } from "next/navigation";
-import EkkoLogo from "../components/EkkoLogo";
 import BlobBackground from "../components/BlobBackground";
 
 const accent = "#c9a96e";
@@ -65,7 +64,7 @@ export default function CGVPage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <EkkoLogo size="md" glow={true} />
+          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.back()}
@@ -238,23 +237,74 @@ export default function CGVPage() {
         </Section>
 
         {/* Article 8 */}
-        <Section title="Article 8 — Données personnelles">
+        <Section title="Article 8 — Protection des données personnelles (RGPD)">
           <P>
-            Dans le cadre de l&apos;utilisation du service, VosEkko collecte et traite les données personnelles suivantes :
+            VosEkko s&apos;engage à traiter vos données personnelles dans le strict respect du Règlement Général sur la Protection des Données (RGPD — Règlement UE 2016/679) et de la loi Informatique et Libertés modifiée.
+          </P>
+
+          <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>8.1 — Données collectées et finalités</h3>
+          <Ul>
+            <Li><strong style={{ color: "#f0e8d8" }}>Adresse email</strong> — collectée lors de la création de compte. Utilisée pour : authentification, envoi de la confirmation de commande, accès aux vocapsules. Stockée dans Firebase Authentication (Google Cloud, serveurs UE).</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Fichiers audio importés</strong> — fournis par le client lors de la création d&apos;une vocapsule. Traités uniquement pour l&apos;assemblage audio (fusion, encodage MP3). Stockés temporairement dans Google Cloud Storage (région europe-west) pendant la durée du traitement, puis supprimés automatiquement dès la vocapsule créée.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Fichier vocapsule (MP3 final)</strong> — résultat du traitement. Hébergé dans Google Cloud Storage (région europe-west) pendant la durée de conservation choisie : 7 jours (offre de base), 1 an ou 2 ans (options payantes). Supprimé automatiquement à l&apos;expiration.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Métadonnées de la commande</strong> — identifiant de capsule, thème choisi, date de création, statut. Stockées dans Firestore (Google Cloud, région europe-west). Aucune donnée de carte bancaire n&apos;est conservée par VosEkko — le paiement est géré exclusivement par Stripe.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Identifiant Stripe</strong> — référence technique de la transaction (ex. cs_xxx). Conservé uniquement à des fins de justification comptable et de service client.</Li>
+          </Ul>
+
+          <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>8.2 — Base légale du traitement</h3>
+          <Ul>
+            <Li>Exécution du contrat (art. 6.1.b RGPD) — pour la création du compte, le traitement des audios et la livraison de la vocapsule.</Li>
+            <Li>Obligation légale (art. 6.1.c RGPD) — pour la conservation des données comptables.</Li>
+            <Li>Intérêt légitime (art. 6.1.f RGPD) — pour la sécurité et la prévention des abus.</Li>
+          </Ul>
+
+          <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>8.3 — Durée de conservation</h3>
+          <Ul>
+            <Li><strong style={{ color: "#f0e8d8" }}>Audios bruts importés</strong> : supprimés immédiatement après création de la vocapsule (généralement quelques minutes).</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Vocapsule MP3</strong> : 7 jours (offre de base), 1 an ou 2 ans (options payantes), puis suppression automatique.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Compte utilisateur</strong> : jusqu&apos;à suppression par le client (voir 8.5) ou 3 ans d&apos;inactivité.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Données comptables</strong> : 10 ans, conformément aux obligations légales françaises.</Li>
+          </Ul>
+
+          <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>8.4 — Destinataires des données</h3>
+          <P>Les données sont traitées par les sous-traitants suivants, dans le cadre strict de leur mission :</P>
+          <Ul>
+            <Li><strong style={{ color: "#f0e8d8" }}>Firebase / Google Cloud (UE)</strong> — authentification, base de données, stockage des fichiers audio.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Stripe (UE)</strong> — traitement sécurisé des paiements. Stripe est certifié PCI-DSS.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Resend</strong> — envoi de l&apos;email de confirmation de commande uniquement.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Vercel</strong> — hébergement de l&apos;application web (infrastructure serverless).</Li>
+          </Ul>
+          <P>Aucune donnée n&apos;est vendue, cédée ou partagée à des fins publicitaires ou commerciales.</P>
+
+          <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>8.5 — Vos droits — suppression du compte et des audios</h3>
+          <P>
+            Conformément au RGPD, vous disposez à tout moment des droits suivants :
           </P>
           <Ul>
-            <Li>Adresse email (nécessaire à la création du compte et à l&apos;envoi de la confirmation de commande)</Li>
-            <Li>Fichiers audio fournis par le client (traités uniquement pour la création de la vocapsule)</Li>
-            <Li>Identifiant de paiement Stripe (aucune donnée de carte bancaire n&apos;est conservée par VosEkko)</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Droit d&apos;accès</strong> — obtenir une copie de vos données personnelles détenues par VosEkko.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Droit de rectification</strong> — corriger des informations inexactes.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Droit à l&apos;effacement (« droit à l&apos;oubli »)</strong> — demander la suppression de votre compte et de l&apos;ensemble de vos données, y compris vos vocapsules et audios hébergés, quel que soit l&apos;abonnement en cours (offre 7 jours, 1 an ou 2 ans). La suppression est effective sous 72 heures.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Droit à la portabilité</strong> — recevoir vos données dans un format structuré et lisible.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Droit d&apos;opposition</strong> — vous opposer à certains traitements fondés sur l&apos;intérêt légitime.</Li>
           </Ul>
+
+          <Highlight>
+            <p style={{ fontSize: 14, color: "#f0e8d8", lineHeight: 1.7, fontFamily: "Georgia, serif", marginBottom: 8 }}>
+              <strong>Comment supprimer votre compte et vos audios ?</strong>
+            </p>
+            <p style={{ fontSize: 14, color: "rgba(240,232,216,0.82)", lineHeight: 1.75, fontFamily: "Georgia, serif" }}>
+              Vous pouvez demander la suppression complète de votre compte (données de profil, vocapsules, fichiers audio hébergés) à tout moment et quel que soit votre abonnement en cours, en envoyant un email à{" "}
+              <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>vosekko@outlook.com</a>{" "}
+              avec l&apos;objet <strong>"Suppression de compte"</strong>. La suppression est effective sous 72 heures. Aucun remboursement n&apos;est dû pour la période restante de conservation.
+            </p>
+          </Highlight>
+
           <P>
-            Les fichiers audio temporaires sont supprimés des serveurs dès la création de la vocapsule terminée. La vocapsule finale est conservée selon l&apos;option choisie (7 jours sans conservation, 1 ou 2 ans avec option payante).
-          </P>
-          <P>
-            Conformément au Règlement Général sur la Protection des Données (RGPD), le client dispose d&apos;un droit d&apos;accès, de rectification, de suppression et de portabilité de ses données. Pour exercer ces droits :{" "}
+            Pour exercer l&apos;un de ces droits ou pour toute question relative à la protection de vos données :{" "}
             <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               vosekko@outlook.com
             </a>.
+            Vous disposez également du droit d&apos;introduire une réclamation auprès de la <strong style={{ color: "#f0e8d8" }}>CNIL</strong> (Commission Nationale de l&apos;Informatique et des Libertés — <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>cnil.fr</a>).
           </P>
         </Section>
 
