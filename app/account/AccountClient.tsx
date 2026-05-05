@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth, EkkoUser } from "../context/AuthContext";
 import BlobBackground from "../components/BlobBackground";
-import { updateProfile, updateEmail, getAuth } from "firebase/auth";
+import { updateProfile, updateEmail, getAuth, deleteUser } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
@@ -95,6 +95,9 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
   const [editSaving, setEditSaving] = useState(false);
   const [editMsg, setEditMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const invoices: Invoice[] = echos
     .filter(e => e.createdApprox)
@@ -147,6 +150,27 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
       setEditMsg({ ok: false, text: "Erreur lors de la mise a jour. Reconnectez-vous si necessaire." });
     } finally {
       setEditSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const fbAuth = getAuth();
+      const fbUser = fbAuth.currentUser;
+      if (!fbUser) throw new Error("Non connecte");
+      await deleteUser(fbUser);
+      logout();
+      router.push("/");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      if (msg.includes("requires-recent-login")) {
+        setDeleteError("Pour supprimer votre compte, veuillez vous deconnecter puis vous reconnecter, et reessayer.");
+      } else {
+        setDeleteError("Erreur : " + msg);
+      }
+      setDeleteLoading(false);
     }
   }
 
@@ -355,6 +379,56 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
                   </div>
                 </div>
               ))
+            )}
+          </div>
+
+          {/* ZONE DANGEREUSE */}
+          <SectionLabel accent="#c96e6e">Zone dangereuse</SectionLabel>
+          <div style={{ borderRadius: 20, border: "1px solid rgba(201,110,110,0.18)", background: "rgba(201,110,110,0.03)", padding: "20px 22px" }}>
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.5)", marginBottom: 16, lineHeight: 1.7 }}>
+              La suppression de votre compte est définitive. Toutes vos données (profil, vocapsules, fichiers audio hébergés) seront supprimées, quel que soit votre abonnement en cours.
+            </p>
+            {!deleteConfirm ? (
+              <button
+                onClick={() => { setDeleteConfirm(true); setDeleteError(null); }}
+                className="ekko-serif"
+                style={{ fontSize: 14, color: "#c96e6e", background: "none", border: "1px solid rgba(201,110,110,0.35)", borderRadius: 8, padding: "8px 20px", cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(201,110,110,0.12)"; e.currentTarget.style.borderColor = "rgba(201,110,110,0.6)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.borderColor = "rgba(201,110,110,0.35)"; }}
+              >
+                Supprimer mon compte
+              </button>
+            ) : (
+              <AnimatePresence>
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <p className="ekko-serif" style={{ fontSize: 14, color: "#c96e6e", fontWeight: 400 }}>
+                    Confirmez-vous la suppression définitive de votre compte et de toutes vos données ?
+                  </p>
+                  {deleteError && (
+                    <p className="ekko-serif" style={{ fontSize: 13, color: "#c96e6e", background: "rgba(201,110,110,0.08)", border: "1px solid rgba(201,110,110,0.25)", borderRadius: 8, padding: "10px 14px", margin: 0 }}>
+                      {deleteError}
+                    </p>
+                  )}
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={deleteLoading}
+                      className="ekko-serif"
+                      style={{ fontSize: 14, color: "#fff", background: "#c96e6e", border: "1px solid #c96e6e", borderRadius: 8, padding: "8px 20px", cursor: deleteLoading ? "wait" : "pointer", opacity: deleteLoading ? 0.6 : 1 }}
+                    >
+                      {deleteLoading ? "Suppression..." : "Oui, supprimer définitivement"}
+                    </button>
+                    <button
+                      onClick={() => { setDeleteConfirm(false); setDeleteError(null); }}
+                      disabled={deleteLoading}
+                      className="ekko-serif"
+                      style={{ fontSize: 14, color: "rgba(240,232,216,0.5)", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 20px", cursor: "pointer" }}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
 
