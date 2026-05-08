@@ -435,6 +435,9 @@ function CapsuleScreen({
   const [showAuth, setShowAuth] = useState(false);
   const [storageOption, setStorageOption] = useState<0 | 100 | 200>(0);
   const [consentChecked, setConsentChecked] = useState(false);
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const variant = config.blobVariant ?? theme;
   const texts = capsuleTexts[variant] ?? capsuleTexts.deuil;
@@ -479,6 +482,18 @@ function CapsuleScreen({
         });
         const devData = await devRes.json();
         if (devData.capsuleId) {
+          // Upload photo si sélectionnée
+          if (coverPhoto && devData.capsuleId) {
+            const echoRes = await fetch(`/api/capsules/${devData.capsuleId}`, { cache: "no-store" });
+            const echoData = await echoRes.json();
+            if (echoData.echoId) {
+              const form = new FormData();
+              form.append("file", coverPhoto);
+              form.append("uid", user?.uid ?? "");
+              form.append("echoId", echoData.echoId);
+              await fetch("/api/storage/cover", { method: "POST", body: form });
+            }
+          }
           window.location.href = `/capsule/${devData.capsuleId}`;
           return;
         }
@@ -495,10 +510,23 @@ function CapsuleScreen({
           uid: user?.uid ?? "",
           accentColor: config.accent,
           email: user?.email ?? "",
+          coverPhotoName: coverPhoto?.name ?? null,
         }),
       });
       const data = await res.json();
       if (data.url) {
+        // Stocker la photo en sessionStorage pour l'uploader après paiement
+        if (coverPhoto) {
+          try {
+            const reader = new FileReader();
+            reader.onload = () => {
+              sessionStorage.setItem("ekko_cover_photo", reader.result as string);
+              sessionStorage.setItem("ekko_cover_photo_name", coverPhoto.name);
+              sessionStorage.setItem("ekko_cover_photo_type", coverPhoto.type);
+            };
+            reader.readAsDataURL(coverPhoto);
+          } catch { /* ignore */ }
+        }
         window.location.href = data.url;
       } else {
         setStatus("idle");
@@ -644,6 +672,66 @@ function CapsuleScreen({
             </div>
           </button>
         ))}
+      </motion.div>
+
+      {/* Photo souvenir (optionnel) */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.95 }}
+        style={{ width: "100%" }}
+      >
+        <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.3)", marginBottom: 8 }}>
+          Photo souvenir · optionnel
+        </p>
+        {coverPreview ? (
+          <div style={{ position: "relative", borderRadius: 14, overflow: "hidden" }}>
+            <img src={coverPreview} alt="Photo choisie" style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block", borderRadius: 14 }} />
+            <button
+              onClick={() => { setCoverPhoto(null); setCoverPreview(null); }}
+              style={{
+                position: "absolute", top: 8, right: 8,
+                padding: "5px 10px", borderRadius: 8, cursor: "pointer",
+                background: "rgba(13,10,15,0.8)", border: `1px solid ${config.accent}40`,
+                color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 11,
+              }}
+            >
+              Retirer
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            style={{
+              width: "100%", padding: "18px 0", borderRadius: 14, cursor: "pointer",
+              border: `1.5px dashed ${config.accent}30`, background: `${config.accent}05`,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+              color: `${config.accent}70`, fontFamily: "Georgia, serif", fontSize: 13,
+              transition: "background 0.2s",
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 24, height: 24 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a.75.75 0 00.75-.75V5.25a.75.75 0 00-.75-.75H3.75a.75.75 0 00-.75.75v15c0 .414.336.75.75.75z"/>
+            </svg>
+            <span>Ajouter une photo souvenir</span>
+            <span style={{ fontSize: 11, opacity: 0.5 }}>Visible sur la page de partage</span>
+          </button>
+        )}
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) {
+              setCoverPhoto(f);
+              const url = URL.createObjectURL(f);
+              setCoverPreview(url);
+            }
+            e.target.value = "";
+          }}
+        />
       </motion.div>
 
       {/* Badge promo */}
