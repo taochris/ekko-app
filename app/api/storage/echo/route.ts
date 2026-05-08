@@ -45,11 +45,21 @@ export async function GET(req: NextRequest) {
 
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
 
+    // Chercher une photo de couverture dans le même dossier echoId
+    const folder = file.name.substring(0, file.name.lastIndexOf("/"));
+    const coverFile = allFiles.find(
+      (f) => f.name.startsWith(folder + "/") && /\/cover\.(jpg|jpeg|png|webp)$/.test(f.name)
+    );
+    const coverUrl = coverFile
+      ? `https://storage.googleapis.com/${bucket.name}/${coverFile.name}`
+      : null;
+
     return NextResponse.json({
       audioUrl: publicUrl,
       accentColor: meta.accentColor ?? "#c9a96e",
       theme: meta.theme ?? "deuil",
       expiresAt: meta.expiresAt ?? null,
+      coverUrl,
     });
   } catch (err) {
     console.error("[storage/echo]", err);

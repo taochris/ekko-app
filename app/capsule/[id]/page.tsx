@@ -156,6 +156,7 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
             config={{ accent, accentDim: accent + "60" }}
             echoId={capsule.echoId}
             audioUrl={capsule.audioUrl}
+            uid={capsule.uid}
           />
         )}
       </div>

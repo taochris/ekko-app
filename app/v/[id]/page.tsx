@@ -22,6 +22,7 @@ export default function VocapsulePage() {
   const [theme, setTheme] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function VocapsulePage() {
           if (data.accentColor) setAccent(data.accentColor);
           if (data.theme) setTheme(data.theme);
           if (data.expiresAt) setExpiresAt(data.expiresAt);
+          if (data.coverUrl) setCoverUrl(data.coverUrl);
         } else {
           setNotFound(true);
         }
@@ -144,23 +146,45 @@ export default function VocapsulePage() {
           boxShadow: `0 32px 80px rgba(0,0,0,0.7), 0 0 60px ${accent}06`,
         }}>
 
-          {/* Header avec gradient */}
+          {/* Header avec photo ou gradient */}
           <div style={{
             padding: "32px 28px 24px",
-            background: `linear-gradient(160deg, ${accent}18 0%, ${accent}06 50%, transparent 100%)`,
+            background: coverUrl
+              ? "transparent"
+              : `linear-gradient(160deg, ${accent}18 0%, ${accent}06 50%, transparent 100%)`,
             borderBottom: `1px solid ${accent}12`,
+            position: "relative",
+            overflow: "hidden",
           }}>
-            {theme && (
-              <p style={{ fontSize: 9, letterSpacing: "0.45em", textTransform: "uppercase", color: `${accent}70`, margin: "0 0 10px" }}>
-                {THEME_LABELS[theme] ?? theme}
-              </p>
+            {coverUrl && (
+              <>
+                <img
+                  src={coverUrl}
+                  alt="Photo souvenir"
+                  style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover", display: "block",
+                  }}
+                />
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "linear-gradient(to bottom, rgba(13,10,15,0.55) 0%, rgba(13,10,15,0.75) 100%)",
+                }} />
+              </>
             )}
-            <h1 style={{ fontSize: 24, fontWeight: 300, color: "#f0e8d8", margin: "0 0 6px", lineHeight: 1.2 }}>
-              Écho sonore
-            </h1>
-            <p style={{ fontSize: 13, color: `${accent}60`, margin: 0, fontStyle: "italic" }}>
-              Un souvenir vous attend
-            </p>
+            <div style={{ position: "relative", zIndex: 1 }}>
+              {theme && (
+                <p style={{ fontSize: 9, letterSpacing: "0.45em", textTransform: "uppercase", color: `${accent}70`, margin: "0 0 10px" }}>
+                  {THEME_LABELS[theme] ?? theme}
+                </p>
+              )}
+              <h1 style={{ fontSize: 24, fontWeight: 300, color: "#f0e8d8", margin: "0 0 6px", lineHeight: 1.2 }}>
+                Écho sonore
+              </h1>
+              <p style={{ fontSize: 13, color: `${accent}60`, margin: 0, fontStyle: "italic" }}>
+                Un souvenir vous attend
+              </p>
+            </div>
           </div>
 
           {/* Zone de lecture */}
