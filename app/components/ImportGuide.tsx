@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import JSZip from "jszip";
@@ -13,6 +13,8 @@ interface ImportGuideProps {
     label: string;
   };
   onAudiosImported: (files: File[]) => void;
+  onCoverSelected?: (file: File | null) => void;
+  coverPhoto?: File | null;
 }
 
 const whatsappSteps = {
@@ -131,7 +133,7 @@ const platforms = [
   },
 ];
 
-export default function ImportGuide({ theme, config, onAudiosImported }: ImportGuideProps) {
+export default function ImportGuide({ theme, config, onAudiosImported, onCoverSelected, coverPhoto }: ImportGuideProps) {
   const [os, setOs] = useState<"android" | "iphone">("android");
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
@@ -143,9 +145,20 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
   const [pendingZip, setPendingZip] = useState<File | null>(null);
   const [selectedConvs, setSelectedConvs] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     setIsMobile(typeof window !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
   }, []);
+  useEffect(() => {
+    if (coverPhoto) {
+      const url = URL.createObjectURL(coverPhoto);
+      setCoverPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setCoverPreview(null);
+    }
+  }, [coverPhoto]);
 
 
   const applyConversationSelection = useCallback(async (zip: File, prefixes: Set<string>) => {
@@ -614,6 +627,77 @@ export default function ImportGuide({ theme, config, onAudiosImported }: ImportG
             )}
           </div>
         </div>
+      </div>
+
+      {/* Photo souvenir — Nouveau */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <p className="text-xs tracking-[0.3em] uppercase ekko-serif" style={{ color: "rgba(240,232,216,0.3)" }}>
+            Photo souvenir
+          </p>
+          <span
+            className="ekko-serif"
+            style={{
+              fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase",
+              padding: "2px 8px", borderRadius: 6,
+              background: `${config.accent}25`, color: config.accent,
+              border: `1px solid ${config.accent}40`, fontWeight: 600,
+            }}
+          >
+            Nouveau
+          </span>
+        </div>
+
+        {coverPreview ? (
+          <div
+            className="relative rounded-2xl overflow-hidden"
+            style={{ border: `1px solid ${config.accent}30` }}
+          >
+            <img src={coverPreview} alt="Photo choisie" style={{ width: "100%", maxHeight: 160, objectFit: "cover", display: "block" }} />
+            <button
+              onClick={() => { onCoverSelected?.(null); }}
+              className="ekko-serif"
+              style={{
+                position: "absolute", top: 8, right: 8,
+                padding: "5px 12px", borderRadius: 8, cursor: "pointer",
+                background: "rgba(13,10,15,0.8)", border: `1px solid ${config.accent}40`,
+                color: "#f0e8d8", fontSize: 11,
+              }}
+            >
+              Retirer
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            className="w-full rounded-2xl text-center transition-all duration-200"
+            style={{
+              padding: "16px 0",
+              border: `1.5px dashed ${config.accent}25`,
+              background: `${config.accent}04`,
+              cursor: "pointer",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22, color: `${config.accent}70` }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a.75.75 0 00.75-.75V5.25a.75.75 0 00-.75-.75H3.75a.75.75 0 00-.75.75v15c0 .414.336.75.75.75z"/>
+            </svg>
+            <span className="ekko-serif text-sm" style={{ color: `${config.accent}70` }}>Ajouter une photo souvenir</span>
+            <span className="ekko-serif text-xs" style={{ color: "rgba(240,232,216,0.25)" }}>Optionnel · Visible sur la page de partage</span>
+          </button>
+        )}
+
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onCoverSelected?.(f);
+            e.target.value = "";
+          }}
+        />
       </div>
 
       {/* Demo mode button */}
