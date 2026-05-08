@@ -5,11 +5,8 @@ import { createCapsule } from "../../../lib/capsules";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2026-03-25.dahlia",
-  });
   try {
-    const { theme, uploadId, storage, storageLabel, uid, accentColor, email } = await req.json();
+    const { theme, uploadId, storage, storageLabel, uid, accentColor, email, devBypass } = await req.json();
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
     // 1. Créer la capsule Firestore en statut "pending"
@@ -19,6 +16,16 @@ export async function POST(req: NextRequest) {
       accentColor: accentColor || "#c9a96e",
       storageOption: storage ?? 0,
       uploadId: uploadId || "",
+    });
+
+    // ── Bypass dev : pas de Stripe, on marque paid + on déclenche process ──
+    if (devBypass && process.env.NEXT_PUBLIC_DEV_BYPASS === "true") {
+      await fetch(`${origin}/api/capsules/${capsuleId}/dev-claim`, { method: "POST" });
+      return NextResponse.json({ capsuleId });
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-03-25.dahlia",
     });
 
     // 2. Session Stripe avec capsuleId en metadata (consommé par le webhook)

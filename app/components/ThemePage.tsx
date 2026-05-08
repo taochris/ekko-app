@@ -458,9 +458,32 @@ function CapsuleScreen({
     if (!consentChecked) return;
     setStatus("uploading");
     try {
-      // Upload direct des audios dans temp/ — fusion gérée côté serveur après paiement
       const uploadId = await uploadAudiosToStorage(audios);
       setStatus("redirecting");
+
+      // ── Bypass dev : sauter Stripe et déclencher dev-claim directement ──
+      if (process.env.NEXT_PUBLIC_DEV_BYPASS === "true") {
+        const devRes = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            theme,
+            uploadId,
+            storage: storageOption,
+            storageLabel,
+            uid: user?.uid ?? "",
+            accentColor: config.accent,
+            email: user?.email ?? "",
+            devBypass: true,
+          }),
+        });
+        const devData = await devRes.json();
+        if (devData.capsuleId) {
+          window.location.href = `/capsule/${devData.capsuleId}`;
+          return;
+        }
+      }
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
