@@ -486,17 +486,20 @@ function CapsuleScreen({
         });
         const devData = await devRes.json();
         if (devData.capsuleId) {
-          // Upload photo si sélectionnée
-          if (coverPhoto && devData.capsuleId) {
-            const echoRes = await fetch(`/api/capsules/${devData.capsuleId}`, { cache: "no-store" });
-            const echoData = await echoRes.json();
-            if (echoData.echoId) {
-              const form = new FormData();
-              form.append("file", coverPhoto);
-              form.append("uid", user?.uid ?? "");
-              form.append("echoId", echoData.echoId);
-              await fetch("/api/storage/cover", { method: "POST", body: form });
-            }
+          // Stocker la photo en sessionStorage — elle sera uploadée quand la capsule sera ready
+          if (coverPhoto) {
+            try {
+              const reader = new FileReader();
+              await new Promise<void>((resolve) => {
+                reader.onload = () => {
+                  sessionStorage.setItem("ekko_cover_photo", reader.result as string);
+                  sessionStorage.setItem("ekko_cover_photo_name", coverPhoto.name);
+                  sessionStorage.setItem("ekko_cover_photo_type", coverPhoto.type);
+                  resolve();
+                };
+                reader.readAsDataURL(coverPhoto);
+              });
+            } catch { /* ignore */ }
           }
           window.location.href = `/capsule/${devData.capsuleId}`;
           return;

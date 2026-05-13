@@ -46,6 +46,29 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
       return null;
     }
     const data = (await res.json()) as CapsuleState;
+
+    // Si ready et photo en sessionStorage → uploader AVANT de rendre EchoRevealScreen
+    if (data.status === "ready" && data.echoId && data.uid) {
+      try {
+        const photoData = sessionStorage.getItem("ekko_cover_photo");
+        const photoName = sessionStorage.getItem("ekko_cover_photo_name");
+        const photoType = sessionStorage.getItem("ekko_cover_photo_type");
+        if (photoData && photoName) {
+          const blobRes = await fetch(photoData);
+          const blob = await blobRes.blob();
+          const file = new File([blob], photoName, { type: photoType || "image/jpeg" });
+          const form = new FormData();
+          form.append("file", file);
+          form.append("uid", data.uid);
+          form.append("echoId", data.echoId);
+          await fetch("/api/storage/cover", { method: "POST", body: form });
+          sessionStorage.removeItem("ekko_cover_photo");
+          sessionStorage.removeItem("ekko_cover_photo_name");
+          sessionStorage.removeItem("ekko_cover_photo_type");
+        }
+      } catch (e) { console.error("[cover upload]", e); }
+    }
+
     setCapsule(data);
     return data;
   };
@@ -76,27 +99,6 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
 
       if (data.status === "ready" || data.status === "failed") {
         if (pollRef.current) clearInterval(pollRef.current);
-        // Upload photo depuis sessionStorage si présente (flow Stripe)
-        if (data.status === "ready" && data.echoId && data.uid) {
-          try {
-            const photoData = sessionStorage.getItem("ekko_cover_photo");
-            const photoName = sessionStorage.getItem("ekko_cover_photo_name");
-            const photoType = sessionStorage.getItem("ekko_cover_photo_type");
-            if (photoData && photoName) {
-              const res = await fetch(photoData);
-              const blob = await res.blob();
-              const file = new File([blob], photoName, { type: photoType || "image/jpeg" });
-              const form = new FormData();
-              form.append("file", file);
-              form.append("uid", data.uid);
-              form.append("echoId", data.echoId);
-              await fetch("/api/storage/cover", { method: "POST", body: form });
-              sessionStorage.removeItem("ekko_cover_photo");
-              sessionStorage.removeItem("ekko_cover_photo_name");
-              sessionStorage.removeItem("ekko_cover_photo_type");
-            }
-          } catch (e) { console.error("[cover upload]", e); }
-        }
         return;
       }
     };
