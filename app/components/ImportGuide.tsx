@@ -651,9 +651,9 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
         {coverPreview ? (
           <div
             className="relative rounded-2xl overflow-hidden"
-            style={{ border: `1px solid ${config.accent}30` }}
+            style={{ border: `1px solid ${config.accent}30`, aspectRatio: "16 / 9" }}
           >
-            <img src={coverPreview} alt="Photo choisie" style={{ width: "100%", maxHeight: 160, objectFit: "cover", display: "block" }} />
+            <img src={coverPreview} alt="Photo choisie" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
             <button
               onClick={() => { onCoverSelected?.(null); }}
               className="ekko-serif"

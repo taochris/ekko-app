@@ -1476,7 +1476,7 @@ export function EchoRevealScreen({
 
   useEffect(() => {
     if (!echoId) return;
-    fetch(`/api/storage/echo?echoId=${echoId}`)
+    fetch(`/api/storage/echo?echo_id=${echoId}`)
       .then(r => r.json())
       .then(d => { if (d.coverUrl) setCoverUrl(d.coverUrl); })
       .catch(() => {});
@@ -1635,11 +1635,19 @@ export function EchoRevealScreen({
             <div style={{
               borderRadius: 20, overflow: "hidden",
               border: `1px solid ${config.accent}18`,
+              position: "relative",
+              width: "100%",
+              aspectRatio: "16 / 9",
             }}>
               <img
                 src={coverUrl}
                 alt="Photo souvenir"
-                style={{ width: "100%", objectFit: "cover", maxHeight: 220, display: "block" }}
+                style={{
+                  position: "absolute", inset: 0,
+                  width: "100%", height: "100%",
+                  objectFit: "cover", objectPosition: "center",
+                  display: "block",
+                }}
               />
             </div>
           )}
