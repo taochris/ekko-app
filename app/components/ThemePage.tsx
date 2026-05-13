@@ -467,8 +467,9 @@ function CapsuleScreen({
       const uploadId = await uploadAudiosToStorage(audios);
       setStatus("redirecting");
 
-      // ── Bypass dev : sauter Stripe et déclencher dev-claim directement ──
-      if (process.env.NEXT_PUBLIC_DEV_BYPASS === "true") {
+      // ── Bypass dev : sauter Stripe si c'est le compte dev ──
+      const isDevUser = process.env.NEXT_PUBLIC_DEV_UID && user?.uid === process.env.NEXT_PUBLIC_DEV_UID;
+      if (isDevUser) {
         const devRes = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

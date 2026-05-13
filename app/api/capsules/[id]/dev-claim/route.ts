@@ -11,7 +11,8 @@ export const runtime = "nodejs";
  * Ce fichier n'a aucun effet en production (variable absente sur Netlify).
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (process.env.NEXT_PUBLIC_DEV_BYPASS !== "true") {
+  const devBypassEnabled = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID;
+  if (!devBypassEnabled) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 

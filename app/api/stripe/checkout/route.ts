@@ -18,8 +18,9 @@ export async function POST(req: NextRequest) {
       uploadId: uploadId || "",
     });
 
-    // ── Bypass dev : pas de Stripe, on marque paid + on déclenche process ──
-    if (devBypass && process.env.NEXT_PUBLIC_DEV_BYPASS === "true") {
+    // ── Bypass dev : pas de Stripe si c'est le compte dev ──
+    const devUid = process.env.NEXT_PUBLIC_DEV_UID;
+    if (devBypass && devUid && uid === devUid) {
       await fetch(`${origin}/api/capsules/${capsuleId}/dev-claim`, { method: "POST" });
       return NextResponse.json({ capsuleId });
     }
