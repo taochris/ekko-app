@@ -1470,32 +1470,14 @@ export function EchoRevealScreen({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [coverUploading, setCoverUploading] = useState(false);
-  const [coverError, setCoverError] = useState<string | null>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
-  async function handleCoverUpload(file: File) {
-    if (!uid) return;
-    setCoverUploading(true);
-    setCoverError(null);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("uid", uid);
-      form.append("echoId", echoId);
-      const res = await fetch("/api/storage/cover", { method: "POST", body: form });
-      const data = await res.json();
-      if (data.coverUrl) {
-        setCoverUrl(data.coverUrl);
-      } else {
-        setCoverError(data.error ?? "Erreur lors de l'upload.");
-      }
-    } catch {
-      setCoverError("Erreur réseau.");
-    } finally {
-      setCoverUploading(false);
-    }
-  }
+  useEffect(() => {
+    if (!echoId) return;
+    fetch(`/api/storage/echo?echoId=${echoId}`)
+      .then(r => r.json())
+      .then(d => { if (d.coverUrl) setCoverUrl(d.coverUrl); })
+      .catch(() => {});
+  }, [echoId]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const pageUrl = typeof window !== "undefined" ? `${window.location.origin}/v/${echoId}` : `/v/${echoId}`;
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pageUrl)}&bgcolor=0d0a0f&color=${config.accent.replace("#", "")}&margin=8`;
@@ -1645,82 +1627,16 @@ export function EchoRevealScreen({
             </div>
           </div>
 
-          {/* Photo souvenir */}
-          {uid && (
+          {/* Photo souvenir (affichage uniquement) */}
+          {coverUrl && (
             <div style={{
-              borderRadius: 20, padding: "20px 22px",
-              background: "rgba(255,255,255,0.02)", border: `1px solid ${config.accent}18`,
+              borderRadius: 20, overflow: "hidden",
+              border: `1px solid ${config.accent}18`,
             }}>
-              <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${config.accent}80`, margin: "0 0 14px" }}>
-                Photo souvenir
-              </p>
-
-              {coverUrl ? (
-                <div style={{ position: "relative" }}>
-                  <img
-                    src={coverUrl}
-                    alt="Photo souvenir"
-                    style={{ width: "100%", borderRadius: 14, objectFit: "cover", maxHeight: 220, display: "block" }}
-                  />
-                  <button
-                    onClick={() => coverInputRef.current?.click()}
-                    style={{
-                      position: "absolute", bottom: 10, right: 10,
-                      padding: "6px 12px", borderRadius: 10, cursor: "pointer",
-                      background: "rgba(13,10,15,0.75)", border: `1px solid ${config.accent}40`,
-                      color: config.accent, fontFamily: "Georgia, serif", fontSize: 12,
-                    }}
-                  >
-                    Changer
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => coverInputRef.current?.click()}
-                  disabled={coverUploading}
-                  style={{
-                    width: "100%", padding: "22px 0", borderRadius: 14, cursor: coverUploading ? "wait" : "pointer",
-                    border: `1.5px dashed ${config.accent}35`, background: `${config.accent}06`,
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
-                    color: `${config.accent}80`, fontFamily: "Georgia, serif", fontSize: 14,
-                    transition: "background 0.2s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = `${config.accent}10`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = `${config.accent}06`; }}
-                >
-                  {coverUploading ? (
-                    <>
-                      <div style={{ width: 22, height: 22, borderRadius: "50%", border: `1.5px solid ${config.accent}30`, borderTop: `1.5px solid ${config.accent}`, animation: "spin 1s linear infinite" }} />
-                      <span>Envoi en cours…</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 28, height: 28 }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 18h16.5M7.5 3h9M4.5 21h15a.75.75 0 00.75-.75V6a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v14.25c0 .414.336.75.75.75z"/>
-                      </svg>
-                      <span>Ajouter une photo souvenir</span>
-                      <span style={{ fontSize: 11, opacity: 0.5 }}>Elle apparaîtra sur la page de partage</span>
-                    </>
-                  )}
-                </button>
-              )}
-
-              {coverError && (
-                <p className="ekko-serif" style={{ fontSize: 12, color: "#c96e6e", margin: "10px 0 0", textAlign: "center" }}>
-                  {coverError}
-                </p>
-              )}
-
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleCoverUpload(f);
-                  e.target.value = "";
-                }}
+              <img
+                src={coverUrl}
+                alt="Photo souvenir"
+                style={{ width: "100%", objectFit: "cover", maxHeight: 220, display: "block" }}
               />
             </div>
           )}
