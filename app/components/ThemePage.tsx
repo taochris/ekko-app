@@ -1552,13 +1552,26 @@ export function EchoRevealScreen({
           {/* Lecteur audio */}
           <div style={{
             borderRadius: 20, padding: "20px 22px",
-            background: `linear-gradient(135deg, ${config.accent}0a, rgba(255,255,255,0.03))`,
+            background: coverUrl ? "transparent" : `linear-gradient(135deg, ${config.accent}0a, rgba(255,255,255,0.03))`,
             border: `1px solid ${config.accent}25`,
+            position: "relative", overflow: "hidden",
           }}>
-            <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${config.accent}80`, margin: "0 0 14px" }}>
+            {coverUrl && (
+              <>
+                <img src={coverUrl} alt="Photo souvenir" style={{
+                  position: "absolute", inset: 0, width: "100%", height: "100%",
+                  objectFit: "cover", objectPosition: "center", display: "block",
+                }} />
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "linear-gradient(to bottom, rgba(13,10,15,0.4) 0%, rgba(13,10,15,0.78) 50%, rgba(13,10,15,0.92) 100%)",
+                }} />
+              </>
+            )}
+            <p className="ekko-serif" style={{ position: "relative", zIndex: 1, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${config.accent}80`, margin: "0 0 14px" }}>
               Écho audio
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
+            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
               <motion.button
                 whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
                 onClick={togglePlay}
@@ -1591,7 +1604,7 @@ export function EchoRevealScreen({
             </div>
             {/* Barre de progression */}
             <div
-              style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", cursor: "pointer" }}
+              style={{ position: "relative", zIndex: 1, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", cursor: "pointer" }}
               onClick={(e) => {
                 const a = audioRef.current;
                 if (!a || !duration) return;
@@ -1629,28 +1642,6 @@ export function EchoRevealScreen({
               </button>
             </div>
           </div>
-
-          {/* Photo souvenir (affichage uniquement) */}
-          {coverUrl && (
-            <div style={{
-              borderRadius: 20, overflow: "hidden",
-              border: `1px solid ${config.accent}18`,
-              position: "relative",
-              width: "100%",
-              aspectRatio: "16 / 9",
-            }}>
-              <img
-                src={coverUrl}
-                alt="Photo souvenir"
-                style={{
-                  position: "absolute", inset: 0,
-                  width: "100%", height: "100%",
-                  objectFit: "cover", objectPosition: "center",
-                  display: "block",
-                }}
-              />
-            </div>
-          )}
 
           {/* Téléchargement */}
           <a

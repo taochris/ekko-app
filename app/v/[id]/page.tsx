@@ -144,9 +144,28 @@ export default function VocapsulePage() {
           background: "rgba(255,255,255,0.025)",
           border: `1px solid ${accent}20`,
           boxShadow: `0 32px 80px rgba(0,0,0,0.7), 0 0 60px ${accent}06`,
+          position: "relative",
         }}>
 
-          {/* Header avec photo ou gradient */}
+          {/* Photo souvenir en fond de toute la carte */}
+          {coverUrl && (
+            <>
+              <img
+                src={coverUrl}
+                alt="Photo souvenir"
+                style={{
+                  position: "absolute", inset: 0, width: "100%", height: "100%",
+                  objectFit: "cover", objectPosition: "center", display: "block",
+                }}
+              />
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(to bottom, rgba(13,10,15,0.45) 0%, rgba(13,10,15,0.82) 60%, rgba(13,10,15,0.92) 100%)",
+              }} />
+            </>
+          )}
+
+          {/* Header */}
           <div style={{
             padding: "32px 28px 24px",
             background: coverUrl
@@ -154,24 +173,7 @@ export default function VocapsulePage() {
               : `linear-gradient(160deg, ${accent}18 0%, ${accent}06 50%, transparent 100%)`,
             borderBottom: `1px solid ${accent}12`,
             position: "relative",
-            overflow: "hidden",
           }}>
-            {coverUrl && (
-              <>
-                <img
-                  src={coverUrl}
-                  alt="Photo souvenir"
-                  style={{
-                    position: "absolute", inset: 0, width: "100%", height: "100%",
-                    objectFit: "cover", display: "block",
-                  }}
-                />
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(to bottom, rgba(13,10,15,0.55) 0%, rgba(13,10,15,0.75) 100%)",
-                }} />
-              </>
-            )}
             <div style={{ position: "relative", zIndex: 1 }}>
               {theme && (
                 <p style={{ fontSize: 9, letterSpacing: "0.45em", textTransform: "uppercase", color: `${accent}70`, margin: "0 0 10px" }}>
@@ -188,7 +190,7 @@ export default function VocapsulePage() {
           </div>
 
           {/* Zone de lecture */}
-          <div style={{ padding: "28px 28px 24px" }}>
+          <div style={{ padding: "28px 28px 24px", position: "relative", zIndex: 1 }}>
 
             {/* Bouton play central — grand pour mobile */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, marginBottom: 28 }}>
