@@ -319,11 +319,11 @@ export default function VocapsulePage() {
               <>
                 <img src={coverUrl} alt="Photo souvenir" style={{
                   position: "absolute", inset: 0, width: "100%", height: "100%",
-                  objectFit: "cover", objectPosition: "center", display: "block",
+                  objectFit: "contain", objectPosition: "center", display: "block",
                 }} />
                 <div style={{
                   position: "absolute", inset: 0,
-                  background: "radial-gradient(ellipse at center, rgba(13,10,15,0.35) 0%, rgba(13,10,15,0.75) 100%)",
+                  background: "radial-gradient(ellipse at center, rgba(13,10,15,0.2) 0%, rgba(13,10,15,0.7) 100%)",
                 }} />
               </>
             )}
