@@ -23,6 +23,7 @@ export default function VocapsulePage() {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function VocapsulePage() {
   const togglePlay = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (isPlaying) { a.pause(); } else { a.play(); }
+    if (isPlaying) { a.pause(); } else { a.play(); setFullscreen(true); }
     setIsPlaying(!isPlaying);
   };
 
@@ -306,6 +307,99 @@ export default function VocapsulePage() {
         <p style={{ marginTop: 32, fontSize: 9, color: "rgba(240,232,216,0.1)", letterSpacing: "0.3em", textTransform: "uppercase" }}>
           Ekko · Mémoires Sonores
         </p>
+
+        {/* Mode plein écran immersif */}
+        {fullscreen && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "#0d0a0f",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          }}>
+            {coverUrl && (
+              <>
+                <img src={coverUrl} alt="Photo souvenir" style={{
+                  position: "absolute", inset: 0, width: "100%", height: "100%",
+                  objectFit: "cover", objectPosition: "center", display: "block",
+                }} />
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "radial-gradient(ellipse at center, rgba(13,10,15,0.35) 0%, rgba(13,10,15,0.75) 100%)",
+                }} />
+              </>
+            )}
+
+            {/* Bouton fermer */}
+            <button
+              onClick={() => setFullscreen(false)}
+              style={{
+                position: "absolute", top: 20, right: 20, zIndex: 2,
+                width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
+                background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#f0e8d8",
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}>
+                <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+
+            {/* Contrôles centraux */}
+            <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 32, width: "100%", maxWidth: 360, padding: "0 28px" }}>
+              <p style={{ fontSize: 13, color: "rgba(240,232,216,0.5)", fontStyle: "italic", margin: 0, textAlign: "center", fontFamily: "Georgia, serif" }}>
+                Un souvenir vous attend
+              </p>
+
+              <button
+                onClick={togglePlay}
+                style={{
+                  width: 88, height: 88, borderRadius: "50%", border: "none", cursor: "pointer",
+                  background: `linear-gradient(135deg, ${accent}80, ${accent})`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: `0 8px 40px ${accent}50`,
+                  transition: "transform 0.15s",
+                }}
+              >
+                {isPlaying ? (
+                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 28, height: 28 }}>
+                    <rect x="6" y="4" width="4" height="16" rx="1.5"/>
+                    <rect x="14" y="4" width="4" height="16" rx="1.5"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 28, height: 28, marginLeft: 4 }}>
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                )}
+              </button>
+
+              <div style={{ width: "100%" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: "rgba(240,232,216,0.5)", fontFamily: "Georgia, serif" }}>
+                    {formatTime(duration * progress / 100)}
+                  </span>
+                  <span style={{ fontSize: 12, color: "rgba(240,232,216,0.5)", fontFamily: "Georgia, serif" }}>
+                    {formatTime(duration)}
+                  </span>
+                </div>
+                <div
+                  style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
+                  onClick={(e) => {
+                    const a = audioRef.current;
+                    if (!a || !duration) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+                  }}
+                >
+                  <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${accent}80, ${accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                </div>
+              </div>
+            </div>
+
+            <p style={{ position: "absolute", bottom: 24, fontSize: 9, letterSpacing: "0.4em", color: "rgba(240,232,216,0.15)", textTransform: "uppercase", fontFamily: "Georgia, serif" }}>
+              EKKO · Mémoire sonore
+            </p>
+          </div>
+        )}
 
         <audio
           ref={audioRef}

@@ -1473,6 +1473,7 @@ export function EchoRevealScreen({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     if (!echoId) return;
@@ -1494,7 +1495,7 @@ export function EchoRevealScreen({
   const togglePlay = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (isPlaying) { a.pause(); } else { a.play(); }
+    if (isPlaying) { a.pause(); } else { a.play(); setFullscreen(true); }
     setIsPlaying(!isPlaying);
   };
 
@@ -1549,72 +1550,179 @@ export function EchoRevealScreen({
             </p>
           </div>
 
-          {/* Lecteur audio */}
-          <div style={{
-            borderRadius: 20, padding: "20px 22px",
-            background: coverUrl ? "transparent" : `linear-gradient(135deg, ${config.accent}0a, rgba(255,255,255,0.03))`,
-            border: `1px solid ${config.accent}25`,
-            position: "relative", overflow: "hidden",
-          }}>
+          {/* Lecteur audio — carte avec photo */}
+          <div
+            onClick={togglePlay}
+            style={{
+              borderRadius: 20, overflow: "hidden", cursor: "pointer",
+              border: `1px solid ${config.accent}25`,
+              position: "relative",
+              background: coverUrl ? "#0d0a0f" : `linear-gradient(135deg, ${config.accent}0a, rgba(255,255,255,0.03))`,
+            }}
+          >
             {coverUrl && (
-              <>
-                <img src={coverUrl} alt="Photo souvenir" style={{
-                  position: "absolute", inset: 0, width: "100%", height: "100%",
-                  objectFit: "cover", objectPosition: "center", display: "block",
-                }} />
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(to bottom, rgba(13,10,15,0.4) 0%, rgba(13,10,15,0.78) 50%, rgba(13,10,15,0.92) 100%)",
-                }} />
-              </>
+              <img src={coverUrl} alt="Photo souvenir" style={{
+                width: "100%", display: "block", objectFit: "contain",
+              }} />
             )}
-            <p className="ekko-serif" style={{ position: "relative", zIndex: 1, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${config.accent}80`, margin: "0 0 14px" }}>
-              Écho audio
-            </p>
-            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
-              <motion.button
-                whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
-                onClick={togglePlay}
-                style={{
-                  width: 52, height: 52, borderRadius: "50%", border: "none", cursor: "pointer",
+            {/* Overlay bas avec contrôles */}
+            <div style={{
+              position: coverUrl ? "absolute" : "relative",
+              bottom: 0, left: 0, right: 0,
+              padding: "16px 20px",
+              background: coverUrl ? "linear-gradient(to top, rgba(13,10,15,0.92) 0%, rgba(13,10,15,0.6) 60%, transparent 100%)" : "transparent",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
                   background: `linear-gradient(135deg, ${config.accent}60, ${config.accent}95)`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: `0 4px 20px ${config.accent}40`, flexShrink: 0,
+                  boxShadow: `0 4px 20px ${config.accent}40`,
+                }}>
+                  {isPlaying ? (
+                    <svg viewBox="0 0 24 24" fill="white" style={{ width: 16, height: 16 }}>
+                      <rect x="6" y="4" width="4" height="16" rx="1"/>
+                      <rect x="14" y="4" width="4" height="16" rx="1"/>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="white" style={{ width: 16, height: 16, marginLeft: 2 }}>
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.9)", margin: "0 0 2px" }}>
+                    {isPlaying ? "En cours…" : "Écouter mon écho"}
+                  </p>
+                  <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.4)", margin: 0 }}>
+                    {formatTime(duration * progress / 100)} · {formatTime(duration)}
+                  </p>
+                </div>
+              </div>
+              <div
+                style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const a = audioRef.current;
+                  if (!a || !duration) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
                 }}
               >
-                {isPlaying ? (
-                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 18, height: 18 }}>
-                    <rect x="6" y="4" width="4" height="16" rx="1"/>
-                    <rect x="14" y="4" width="4" height="16" rx="1"/>
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 18, height: 18, marginLeft: 3 }}>
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                )}
-              </motion.button>
-              <div style={{ flex: 1 }}>
-                <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.8)", margin: "0 0 2px" }}>
-                  {isPlaying ? "En cours…" : "Écouter mon écho"}
-                </p>
-                <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.3)", margin: 0 }}>
-                  {formatTime(duration * progress / 100)} · {formatTime(duration)}
-                </p>
+                <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
               </div>
             </div>
-            {/* Barre de progression */}
-            <div
-              style={{ position: "relative", zIndex: 1, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", cursor: "pointer" }}
-              onClick={(e) => {
-                const a = audioRef.current;
-                if (!a || !duration) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+            {!coverUrl && (
+              <div style={{ padding: "24px 20px 20px", textAlign: "center" }}>
+                <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${config.accent}60`, margin: 0 }}>
+                  Appuyez pour écouter
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Mode plein écran immersif */}
+          {fullscreen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              style={{
+                position: "fixed", inset: 0, zIndex: 9999,
+                background: "#0d0a0f",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               }}
             >
-              <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
-            </div>
-          </div>
+              {/* Photo de fond */}
+              {coverUrl && (
+                <>
+                  <img src={coverUrl} alt="Photo souvenir" style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover", objectPosition: "center", display: "block",
+                  }} />
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "radial-gradient(ellipse at center, rgba(13,10,15,0.35) 0%, rgba(13,10,15,0.75) 100%)",
+                  }} />
+                </>
+              )}
+
+              {/* Bouton fermer */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setFullscreen(false); }}
+                style={{
+                  position: "absolute", top: 20, right: 20, zIndex: 2,
+                  width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
+                  background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#f0e8d8",
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}>
+                  <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+
+              {/* Contrôles centraux */}
+              <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 32, width: "100%", maxWidth: 360, padding: "0 28px" }}>
+                <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.5)", fontStyle: "italic", margin: 0, textAlign: "center" }}>
+                  Ces voix vous appartiennent pour toujours.
+                </p>
+
+                {/* Play/Pause */}
+                <motion.button
+                  whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
+                  onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                  style={{
+                    width: 88, height: 88, borderRadius: "50%", border: "none", cursor: "pointer",
+                    background: `linear-gradient(135deg, ${config.accent}80, ${config.accent})`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: `0 8px 40px ${config.accent}50`,
+                  }}
+                >
+                  {isPlaying ? (
+                    <svg viewBox="0 0 24 24" fill="white" style={{ width: 28, height: 28 }}>
+                      <rect x="6" y="4" width="4" height="16" rx="1.5"/>
+                      <rect x="14" y="4" width="4" height="16" rx="1.5"/>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="white" style={{ width: 28, height: 28, marginLeft: 4 }}>
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  )}
+                </motion.button>
+
+                {/* Temps + barre */}
+                <div style={{ width: "100%" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.5)" }}>
+                      {formatTime(duration * progress / 100)}
+                    </span>
+                    <span className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.5)" }}>
+                      {formatTime(duration)}
+                    </span>
+                  </div>
+                  <div
+                    style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const a = audioRef.current;
+                      if (!a || !duration) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+                    }}
+                  >
+                    <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo discret en bas */}
+              <p className="ekko-serif" style={{ position: "absolute", bottom: 24, fontSize: 9, letterSpacing: "0.4em", color: "rgba(240,232,216,0.15)", textTransform: "uppercase" }}>
+                EKKO · Mémoire sonore
+              </p>
+            </motion.div>
+          )}
 
           {/* QR Code + lien */}
           <div style={{
