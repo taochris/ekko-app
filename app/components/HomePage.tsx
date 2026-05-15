@@ -1,5 +1,6 @@
 "use client";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import BlobBackground from "./BlobBackground";
 import ThemeCard from "./ThemeCard";
 
@@ -251,19 +252,52 @@ const steps = [
   },
 ];
 
+const MOBILE_NAV_CATEGORIES = [
+  {
+    label: "Explorer",
+    links: [
+      { text: "Le produit", href: "#produit" },
+      { text: "Comment ça marche", href: "#comment" },
+    ],
+  },
+  {
+    label: "Aide",
+    links: [
+      { text: "FAQ", href: "/faq" },
+      { text: "Blog", href: "/blog" },
+    ],
+  },
+  {
+    label: "Compte",
+    links: [
+      { text: "Mon espace", href: "/compte" },
+    ],
+  },
+];
+
 export default function HomePage() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [openCat, setOpenCat] = useState<number | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   return (
     <div style={S.page}>
       <style>{`
         @media (max-width: 700px) {
-          .home-nav { padding: 20px 20px !important; flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
-          .home-nav-links { gap: 12px !important; flex-wrap: wrap !important; }
-          .home-nav-links a { font-size: 10px !important; letter-spacing: 0.1em !important; }
-          .home-nav-links button { font-size: 10px !important; }
+          .home-nav { padding: 16px 20px !important; align-items: center !important; gap: 12px !important; }
+          .home-nav-links { display: none !important; }
           .home-cards-section { padding: 0 16px 48px !important; }
           .home-cards-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
           .home-how-section { padding: 60px 20px !important; }
           .home-how-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .home-how-step-desc { font-size: 15px !important; color: rgba(240,232,216,0.8) !important; }
+          .home-hero-sub { font-size: 16px !important; color: rgba(240,232,216,0.95) !important; line-height: 1.8 !important; }
           .home-footer { padding: 24px 20px !important; flex-wrap: wrap; gap: 12px; }
         }
       `}</style>
@@ -271,7 +305,7 @@ export default function HomePage() {
 
       {/* Nav */}
       <nav style={{ ...S.nav, flexWrap: "wrap" }} className="home-nav">
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+        <img src="/ekko-logo.png" alt="EKKO" style={{ height: isMobile ? 120 : 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -287,6 +321,69 @@ export default function HomePage() {
         </motion.div>
       </nav>
 
+      {/* Nav mobile — 3 catégories avec déroulant */}
+      {isMobile && (
+        <div style={{
+          position: "relative", zIndex: 10, width: "100%",
+          display: "flex", justifyContent: "center", gap: 6,
+          padding: "0 16px", marginTop: -8,
+        }}>
+          {MOBILE_NAV_CATEGORIES.map((cat, i) => (
+            <div key={cat.label} style={{ position: "relative" }}>
+              <button
+                onClick={() => setOpenCat(openCat === i ? null : i)}
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: 16, fontWeight: 600, letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: openCat === i ? "#c9a96e" : "#f0e8d8",
+                  background: openCat === i ? "rgba(201,169,110,0.12)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${openCat === i ? "rgba(201,169,110,0.4)" : "rgba(255,255,255,0.1)"}`,
+                  borderRadius: 14, padding: "10px 16px",
+                  cursor: "pointer", transition: "all 0.2s",
+                }}
+              >
+                {cat.label}
+              </button>
+              <AnimatePresence>
+                {openCat === i && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scaleY: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                    exit={{ opacity: 0, y: -6, scaleY: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      position: "absolute", top: "calc(100% + 6px)", left: "50%",
+                      transform: "translateX(-50%)", transformOrigin: "top center",
+                      background: "rgba(20,16,24,0.95)", backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(201,169,110,0.25)", borderRadius: 14,
+                      padding: "8px 6px", minWidth: 160, zIndex: 50,
+                      display: "flex", flexDirection: "column", gap: 2,
+                    }}
+                  >
+                    {cat.links.map((link) => (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setOpenCat(null)}
+                        style={{
+                          fontFamily: "Georgia, serif", fontSize: 13,
+                          color: "rgba(240,232,216,0.85)", textDecoration: "none",
+                          padding: "10px 14px", borderRadius: 10,
+                          display: "block", transition: "background 0.15s",
+                        }}
+                      >
+                        {link.text}
+                      </a>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Hero */}
       <section style={S.hero}>
         <motion.div
@@ -301,7 +398,7 @@ export default function HomePage() {
           transition={{ duration: 0.6, delay: 0.4 }}
           style={S.heroTag}
         >
-          Mémoire · Son · Éternité
+          Amour · Mémoire · Amitié
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -317,6 +414,7 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.7 }}
           style={S.heroSub}
+          className="home-hero-sub"
         >
           Transformez vos messages vocaux en vocapsules audio.
           Des instants éphémères devenus objets éternels.
@@ -372,7 +470,7 @@ export default function HomePage() {
                 </div>
                 <div style={S.howDivider} />
                 <h3 style={S.howStepTitle}>{step.title}</h3>
-                <p style={S.howStepDesc}>{step.desc}</p>
+                <p style={S.howStepDesc} className="home-how-step-desc">{step.desc}</p>
               </motion.div>
             ))}
           </div>
