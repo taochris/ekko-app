@@ -8,7 +8,7 @@
  * - iOS     : ArrayBuffer stocké en mémoire, blob URL créée à la volée à chaque lecture
  *             pour contourner l'expiration des blob URLs sur WebKit
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import JSZip from "jszip";
 
@@ -93,6 +93,8 @@ interface MobileImportProps {
   config: { accent: string; accentDim: string };
   onAudiosImported: (files: File[]) => void;
   onClose: () => void;
+  onCoverSelected?: (file: File | null) => void;
+  coverPhoto?: File | null;
 }
 
 const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|3gp|amr|mp4)$/i;
@@ -143,7 +145,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
 }
 
-export default function MobileImport({ config, onAudiosImported, onClose }: MobileImportProps) {
+export default function MobileImport({ config, onAudiosImported, onClose, onCoverSelected, coverPhoto }: MobileImportProps) {
   const [os, setOs] = useState<"android" | "iphone">("android");
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
@@ -158,7 +160,19 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
   const audioCtxRef = useRef<AudioContext | null>(null);
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const currentBlobUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (coverPhoto) {
+      const url = URL.createObjectURL(coverPhoto);
+      setCoverPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setCoverPreview(null);
+    }
+  }, [coverPhoto]);
 
   const log = (msg: string) => {
     console.log("[MobileImport]", msg);
@@ -634,6 +648,66 @@ export default function MobileImport({ config, onAudiosImported, onClose }: Mobi
                   </div>
                 </motion.div>
               ))}
+            </div>
+
+            {/* Photo souvenir */}
+            <div style={{
+              borderRadius: 16, padding: "16px",
+              background: "rgba(255,255,255,0.03)", border: `1px solid ${config.accent}20`,
+              marginBottom: 20,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: config.accent, margin: 0, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                  Photo souvenir
+                </p>
+                <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 6, background: `${config.accent}20`, border: `1px solid ${config.accent}40`, color: config.accent, fontWeight: 600 }}>
+                  Nouveau
+                </span>
+              </div>
+
+              {coverPreview ? (
+                <div style={{ position: "relative", borderRadius: 12, overflow: "hidden" }}>
+                  <img src={coverPreview} alt="Photo choisie" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", objectPosition: "center", display: "block" }} />
+                  <button
+                    onClick={() => onCoverSelected?.(null)}
+                    style={{
+                      position: "absolute", top: 8, right: 8,
+                      padding: "5px 12px", borderRadius: 8, cursor: "pointer",
+                      background: "rgba(13,10,15,0.8)", border: `1px solid ${config.accent}40`,
+                      color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 11,
+                    }}
+                  >
+                    Retirer
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  style={{
+                    width: "100%", padding: "18px 0", borderRadius: 12, cursor: "pointer",
+                    border: `1.5px dashed ${config.accent}40`, background: `${config.accent}08`,
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                    color: config.accent, fontFamily: "Georgia, serif", fontSize: 13,
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 24, height: 24 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 18h16.5M7.5 3h9M4.5 21h15a.75.75 0 00.75-.75V6a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v14.25c0 .414.336.75.75.75z"/>
+                  </svg>
+                  Ajouter une photo
+                </button>
+              )}
+
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onCoverSelected?.(f);
+                  e.target.value = "";
+                }}
+              />
             </div>
 
             {/* Bouton confirmer */}

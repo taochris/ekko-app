@@ -19,9 +19,11 @@ const MobileImport = dynamic(() => import("./MobileImport"), { ssr: false });
 interface MobileLandingProps {
   config: { accent: string; accentDim: string; label: string };
   onAudiosImported: (files: File[]) => void;
+  onCoverSelected?: (file: File | null) => void;
+  coverPhoto?: File | null;
 }
 
-export default function MobileLanding({ config, onAudiosImported }: MobileLandingProps) {
+export default function MobileLanding({ config, onAudiosImported, onCoverSelected, coverPhoto }: MobileLandingProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -33,6 +35,8 @@ export default function MobileLanding({ config, onAudiosImported }: MobileLandin
         config={config}
         onAudiosImported={onAudiosImported}
         onClose={() => {}}
+        onCoverSelected={onCoverSelected}
+        coverPhoto={coverPhoto}
       />
     </motion.div>
   );

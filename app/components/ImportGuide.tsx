@@ -246,7 +246,7 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
 
   // Aiguillage minimal : tout le flux mobile est isolé dans MobileLanding / MobileImport
   if (isMobile) {
-    return <MobileLanding config={config} onAudiosImported={onAudiosImported} />;
+    return <MobileLanding config={config} onAudiosImported={onAudiosImported} onCoverSelected={onCoverSelected} coverPhoto={coverPhoto} />;
   }
 
   return (

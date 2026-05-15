@@ -133,7 +133,7 @@ export default function VocapsulePage() {
 
         {/* Logo */}
         <a href="/" style={{ textDecoration: "none", marginBottom: 36 }}>
-          <p style={{ fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase", color: `${accent}50`, margin: 0 }}>
+          <p style={{ fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase", color: `${accent}90`, margin: 0 }}>
             EKKO
           </p>
         </a>
@@ -177,14 +177,14 @@ export default function VocapsulePage() {
           }}>
             <div style={{ position: "relative", zIndex: 1 }}>
               {theme && (
-                <p style={{ fontSize: 9, letterSpacing: "0.45em", textTransform: "uppercase", color: `${accent}70`, margin: "0 0 10px" }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.45em", textTransform: "uppercase", color: `${accent}`, margin: "0 0 10px" }}>
                   {THEME_LABELS[theme] ?? theme}
                 </p>
               )}
               <h1 style={{ fontSize: 24, fontWeight: 300, color: "#f0e8d8", margin: "0 0 6px", lineHeight: 1.2 }}>
                 Écho sonore
               </h1>
-              <p style={{ fontSize: 13, color: `${accent}60`, margin: 0, fontStyle: "italic" }}>
+              <p style={{ fontSize: 13, color: `${accent}`, margin: 0, fontStyle: "italic" }}>
                 Un souvenir vous attend
               </p>
             </div>
@@ -220,10 +220,10 @@ export default function VocapsulePage() {
               </button>
 
               <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 15, color: isPlaying ? "#f0e8d8" : "rgba(240,232,216,0.6)", margin: "0 0 4px", transition: "color 0.3s" }}>
+                <p style={{ fontSize: 15, color: isPlaying ? "#f0e8d8" : "rgba(240,232,216,0.9)", margin: "0 0 4px", transition: "color 0.3s" }}>
                   {isPlaying ? "En cours de lecture…" : "Appuyer pour écouter"}
                 </p>
-                <p style={{ fontSize: 12, color: "rgba(240,232,216,0.3)", margin: 0 }}>
+                <p style={{ fontSize: 12, color: "rgba(240,232,216,0.7)", margin: 0 }}>
                   {formatTime(duration * progress / 100)} · {formatTime(duration)}
                 </p>
               </div>
@@ -272,7 +272,7 @@ export default function VocapsulePage() {
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   padding: "13px 0", borderRadius: 14, cursor: "pointer",
                   background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
-                  fontSize: 13, color: copied ? "#8ac96e" : "rgba(240,232,216,0.45)",
+                  fontSize: 13, color: copied ? "#8ac96e" : "rgba(240,232,216,0.8)",
                   transition: "color 0.3s, opacity 0.15s",
                 }}
               >
@@ -297,14 +297,14 @@ export default function VocapsulePage() {
               borderTop: `1px solid ${accent}10`,
               background: "rgba(0,0,0,0.15)",
             }}>
-              <p style={{ fontSize: 11, color: daysLeft <= 7 ? "#c96e6e" : "rgba(240,232,216,0.2)", margin: 0, textAlign: "center", letterSpacing: "0.05em" }}>
+              <p style={{ fontSize: 11, color: daysLeft <= 7 ? "#c96e6e" : "rgba(240,232,216,0.7)", margin: 0, textAlign: "center", letterSpacing: "0.05em" }}>
                 {daysLeft === 0 ? "Expire aujourd'hui" : `Disponible encore ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`}
               </p>
             </div>
           )}
         </div>
 
-        <p style={{ marginTop: 32, fontSize: 9, color: "rgba(240,232,216,0.1)", letterSpacing: "0.3em", textTransform: "uppercase" }}>
+        <p style={{ marginTop: 32, fontSize: 9, color: "rgba(240,232,216,0.4)", letterSpacing: "0.3em", textTransform: "uppercase" }}>
           Ekko · Mémoires Sonores
         </p>
 
