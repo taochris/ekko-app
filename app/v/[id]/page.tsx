@@ -61,8 +61,29 @@ export default function VocapsulePage() {
     ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 3600 * 1000)))
     : null;
 
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(window.location.href);
+  const handleShare = async () => {
+    const url = window.location.href;
+    // Sur mobile, utiliser l'API Web Share native
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Écho sonore · EKKO", url });
+        return;
+      } catch { /* annulé par l'utilisateur */ }
+    }
+    // Fallback : copier dans le presse-papier
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback iOS ancien : sélection + copie
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -131,9 +152,13 @@ export default function VocapsulePage() {
         fontFamily: "Georgia, serif",
       }}>
 
-        {/* Logo */}
-        <a href="/" style={{ textDecoration: "none", marginBottom: 36 }}>
-          <p style={{ fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase", color: `${accent}90`, margin: 0 }}>
+        {/* Logo — lien retour site */}
+        <a href="/" style={{
+          textDecoration: "none", marginBottom: 36,
+          padding: "8px 20px", borderRadius: 20,
+          background: `${accent}12`, border: `1px solid ${accent}30`,
+        }}>
+          <p style={{ fontSize: 11, letterSpacing: "0.5em", textTransform: "uppercase", color: accent, margin: 0, fontWeight: 500 }}>
             EKKO
           </p>
         </a>
@@ -255,34 +280,34 @@ export default function VocapsulePage() {
                 download={`echo-ekko-${id.slice(0, 8)}.mp4`}
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  padding: "13px 0", borderRadius: 14, textDecoration: "none",
-                  background: `${accent}14`, border: `1px solid ${accent}30`,
-                  fontSize: 13, color: accent, transition: "opacity 0.15s",
+                  padding: "14px 0", borderRadius: 14, textDecoration: "none",
+                  background: `${accent}25`, border: `1px solid ${accent}50`,
+                  fontSize: 14, fontWeight: 500, color: accent, transition: "opacity 0.15s",
                 }}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 15, height: 15 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
                 Télécharger
               </a>
               <button
                 className="action-btn"
-                onClick={handleCopy}
+                onClick={handleShare}
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  padding: "13px 0", borderRadius: 14, cursor: "pointer",
-                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
-                  fontSize: 13, color: copied ? "#8ac96e" : "rgba(240,232,216,0.8)",
+                  padding: "14px 0", borderRadius: 14, cursor: "pointer",
+                  background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)",
+                  fontSize: 14, fontWeight: 500, color: copied ? "#8ac96e" : "#f0e8d8",
                   transition: "color 0.3s, opacity 0.15s",
                 }}
               >
                 {copied ? (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 15, height: 15 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                   </svg>
                 ) : (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 15, height: 15 }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                   </svg>
                 )}
                 {copied ? "Copié !" : "Partager"}
@@ -333,20 +358,35 @@ export default function VocapsulePage() {
               onClick={() => setFullscreen(false)}
               style={{
                 position: "absolute", top: 20, right: 20, zIndex: 2,
-                width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
-                background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)",
+                width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer",
+                background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: "#f0e8d8",
               }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 20, height: 20 }}>
                 <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12"/>
               </svg>
             </button>
 
+            {/* Lien retour site */}
+            <a
+              href="/"
+              style={{
+                position: "absolute", bottom: 56, zIndex: 2,
+                padding: "10px 24px", borderRadius: 20,
+                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+                backdropFilter: "blur(8px)",
+                color: "#f0e8d8", fontSize: 13, fontFamily: "Georgia, serif",
+                textDecoration: "none", letterSpacing: "0.05em",
+              }}
+            >
+              Découvrir EKKO
+            </a>
+
             {/* Contrôles centraux */}
             <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 32, width: "100%", maxWidth: 360, padding: "0 28px" }}>
-              <p style={{ fontSize: 13, color: "rgba(240,232,216,0.5)", fontStyle: "italic", margin: 0, textAlign: "center", fontFamily: "Georgia, serif" }}>
+              <p style={{ fontSize: 14, color: "rgba(240,232,216,0.85)", fontStyle: "italic", margin: 0, textAlign: "center", fontFamily: "Georgia, serif" }}>
                 Un souvenir vous attend
               </p>
 
@@ -374,10 +414,10 @@ export default function VocapsulePage() {
 
               <div style={{ width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, color: "rgba(240,232,216,0.5)", fontFamily: "Georgia, serif" }}>
+                  <span style={{ fontSize: 12, color: "rgba(240,232,216,0.8)", fontFamily: "Georgia, serif" }}>
                     {formatTime(duration * progress / 100)}
                   </span>
-                  <span style={{ fontSize: 12, color: "rgba(240,232,216,0.5)", fontFamily: "Georgia, serif" }}>
+                  <span style={{ fontSize: 12, color: "rgba(240,232,216,0.8)", fontFamily: "Georgia, serif" }}>
                     {formatTime(duration)}
                   </span>
                 </div>
@@ -395,7 +435,7 @@ export default function VocapsulePage() {
               </div>
             </div>
 
-            <p style={{ position: "absolute", bottom: 24, fontSize: 9, letterSpacing: "0.4em", color: "rgba(240,232,216,0.15)", textTransform: "uppercase", fontFamily: "Georgia, serif" }}>
+            <p style={{ position: "absolute", bottom: 20, fontSize: 9, letterSpacing: "0.4em", color: "rgba(240,232,216,0.4)", textTransform: "uppercase", fontFamily: "Georgia, serif" }}>
               EKKO · Mémoire sonore
             </p>
           </div>
