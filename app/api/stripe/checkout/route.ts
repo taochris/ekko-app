@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       ],
       metadata: { capsuleId, customerEmail: email || "" },
       ...(email ? { customer_email: email } : {}),
+      ...(email ? { payment_intent_data: { receipt_email: email } } : {}),
       success_url: `${origin}/capsule/${capsuleId}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/theme/${theme ?? "deuil"}?payment=cancel`,
       locale: "fr",

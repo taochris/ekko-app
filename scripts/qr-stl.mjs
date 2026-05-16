@@ -23,14 +23,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(__dirname, "..", "qr-output");
 
 // ─── Dimensions (mm) ────────────────────────────────────────────────────
-const PLATE_W = 30;        // largeur plaque
-const PLATE_L = 50;        // longueur plaque
-const PLATE_H = 1;         // épaisseur plaque
+const PLATE_W = 40;        // largeur plaque
+const PLATE_L = 45;        // longueur plaque
+const PLATE_H = 2;         // épaisseur plaque (blanc)
 const CORNER_R = 2;        // rayon bords arrondis
 const CORNER_SEG = 8;      // segments par quart de cercle
 
-const QR_SIZE = 25;        // côté zone QR
-const QR_H = 0.8;          // hauteur des modules au-dessus de la plaque (0.8mm)
+const QR_SIZE = 30;        // côté zone QR (noir)
+const QR_H = 1;            // hauteur des modules au-dessus de la plaque (noir, 1mm)
 
 const BASE_URL = "https://www.vosekko.com/v/";
 
