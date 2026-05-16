@@ -30,38 +30,60 @@ const CORNER_R = 2;        // rayon bords arrondis
 const CORNER_SEG = 8;      // segments par quart de cercle
 
 const QR_SIZE = 25;        // côté zone QR
-const QR_H = 8;            // hauteur des modules au-dessus de la plaque
+const QR_H = 0.8;          // hauteur des modules au-dessus de la plaque (0.8mm)
 
 const BASE_URL = "https://www.vosekko.com/v/";
 
-// ─── Police pixel 5×7 pour EKKO ────────────────────────────────────────
-const FONT = {
+// ─── Glyphes vectoriels style Georgia (unité = 1 = hauteur du caractère) ──
+// Chaque glyphe = liste de polygones convexes [x, y] normalisés dans [0..avance] × [0..1]
+// Origine = bas-gauche du caractère
+const GLYPH_ADVANCE = { E: 0.65, K: 0.68, O: 0.72 };
+const GLYPH_STROKE = 0.10; // épaisseur trait (fraction de la hauteur)
+const S = GLYPH_STROKE;
+const GLYPHS = {
+  // E : fût vertical + 3 bras horizontaux avec empattements
   E: [
-    [1,1,1,1,1],
-    [1,0,0,0,0],
-    [1,0,0,0,0],
-    [1,1,1,1,0],
-    [1,0,0,0,0],
-    [1,0,0,0,0],
-    [1,1,1,1,1],
+    // Fût vertical
+    [[0, 0], [S, 0], [S, 1], [0, 1]],
+    // Bras haut
+    [[0, 1 - S], [0.65, 1 - S], [0.65, 1], [0, 1]],
+    // Bras médian
+    [[0, 0.5 - S/2], [0.50, 0.5 - S/2], [0.50, 0.5 + S/2], [0, 0.5 + S/2]],
+    // Bras bas
+    [[0, 0], [0.65, 0], [0.65, S], [0, S]],
   ],
+  // K : fût vertical + diagonale montante + diagonale descendante
   K: [
-    [1,0,0,0,1],
-    [1,0,0,1,0],
-    [1,0,1,0,0],
-    [1,1,0,0,0],
-    [1,0,1,0,0],
-    [1,0,0,1,0],
-    [1,0,0,0,1],
+    // Fût vertical
+    [[0, 0], [S, 0], [S, 1], [0, 1]],
+    // Branche montante (de mi-hauteur vers haut-droite)
+    [[S, 0.5], [S + 0.02, 0.5], [0.68, 1], [0.68 - S * 0.9, 1]],
+    // Branche descendante (de mi-hauteur vers bas-droite)
+    [[S, 0.5], [0.68 - S * 0.9, 0], [0.68, 0], [S + 0.02, 0.5]],
   ],
+  // O : anneau (approximé par un contour extérieur moins un trou intérieur)
+  // Rendu comme 4 rectangles formant un cadre
   O: [
-    [0,1,1,1,0],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [0,1,1,1,0],
+    // Barre gauche
+    [[0, S * 2], [S, S * 2], [S, 1 - S * 2], [0, 1 - S * 2]],
+    // Barre droite
+    [[0.72 - S, S * 2], [0.72, S * 2], [0.72, 1 - S * 2], [0.72 - S, 1 - S * 2]],
+    // Barre haut
+    [[S * 0.5, 1 - S], [0.72 - S * 0.5, 1 - S], [0.72 - S * 0.5, 1], [S * 0.5, 1]],
+    // Barre bas
+    [[S * 0.5, 0], [0.72 - S * 0.5, 0], [0.72 - S * 0.5, S], [S * 0.5, S]],
+    // Coins arrondis haut-gauche (quart de disque approximé)
+    [[0, 1 - S * 2], [S, 1 - S * 2], [S * 0.5, 1], [0, 1]],
+    [[S * 0.5, 1], [S, 1 - S * 2], [S * 2, 1 - S], [S * 0.5, 1]],
+    // Coins arrondis haut-droite
+    [[0.72 - S, 1 - S * 2], [0.72, 1 - S * 2], [0.72, 1], [0.72 - S * 0.5, 1]],
+    [[0.72 - S * 2, 1 - S], [0.72 - S, 1 - S * 2], [0.72 - S * 0.5, 1], [0.72 - S * 2, 1 - S]],
+    // Coins arrondis bas-gauche
+    [[0, S * 2], [S * 0.5, 0], [S, 0], [S, S * 2]],
+    [[S * 0.5, 0], [S * 2, S], [S, S * 2], [S * 0.5, 0]],
+    // Coins arrondis bas-droite
+    [[0.72 - S, S * 2], [0.72, S * 2], [0.72 - S * 0.5, 0], [0.72 - S, S * 2]],
+    [[0.72 - S * 2, S], [0.72 - S * 0.5, 0], [0.72, S * 2], [0.72 - S * 2, S]],
   ],
 };
 
@@ -229,33 +251,71 @@ for (let row = 0; row < moduleCount; row++) {
   }
 }
 
-// 3. Texte EKKO sous le QR code
+// 3. Texte EKKO sous le QR code — glyphes vectoriels extrudés
 const textWord = "EKKO";
-const charW = 5; // pixels par caractère
-const charH = 7;
-const charGap = 1; // espace entre caractères
-const totalPixelsW = textWord.length * charW + (textWord.length - 1) * charGap;
+const charHeightMM = 4;    // hauteur des caractères en mm
+const charGapMM = 0.8;     // espace entre lettres en mm
 
-// Taille d'un pixel de texte (viser ~18mm de large pour le mot)
-const textTotalW = 18;
-const pixelSize = textTotalW / totalPixelsW;
-const textStartX = (PLATE_W - textTotalW) / 2;
+// Calcul largeur totale du mot
+let totalTextW = 0;
+for (const ch of textWord) {
+  totalTextW += (GLYPH_ADVANCE[ch] ?? 0.6) * charHeightMM;
+}
+totalTextW += (textWord.length - 1) * charGapMM;
+
+const textStartX = (PLATE_W - totalTextW) / 2;
 const textStartY = qrOffsetY + QR_SIZE + 3; // 3mm sous le QR
 
-for (let ci = 0; ci < textWord.length; ci++) {
-  const charData = FONT[textWord[ci]];
-  if (!charData) continue;
-  const charOffX = ci * (charW + charGap) * pixelSize;
+// Fonction : extrude un polygone 2D en solide 3D (faces latérales + dessus/dessous)
+function extrudePolygon(pts2d, xOff, yOff, z0, height) {
+  const z1 = z0 + height;
+  const n = pts2d.length;
+  const world = pts2d.map(([px, py]) => [px + xOff, py + yOff]);
 
-  for (let row = 0; row < charH; row++) {
-    for (let col = 0; col < charW; col++) {
-      if (charData[row][col]) {
-        const px = textStartX + charOffX + col * pixelSize;
-        const py = textStartY + row * pixelSize;
-        stl.addBox(px, py, PLATE_H, pixelSize, pixelSize, QR_H);
-      }
+  // Face dessous
+  for (let i = 1; i < n - 1; i++) {
+    stl.addTriangle(
+      [world[0][0], world[0][1], z0],
+      [world[i + 1][0], world[i + 1][1], z0],
+      [world[i][0], world[i][1], z0],
+    );
+  }
+  // Face dessus
+  for (let i = 1; i < n - 1; i++) {
+    stl.addTriangle(
+      [world[0][0], world[0][1], z1],
+      [world[i][0], world[i][1], z1],
+      [world[i + 1][0], world[i + 1][1], z1],
+    );
+  }
+  // Faces latérales
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    stl.addTriangle(
+      [world[i][0], world[i][1], z0],
+      [world[j][0], world[j][1], z0],
+      [world[j][0], world[j][1], z1],
+    );
+    stl.addTriangle(
+      [world[i][0], world[i][1], z0],
+      [world[j][0], world[j][1], z1],
+      [world[i][0], world[i][1], z1],
+    );
+  }
+}
+
+let cursorX = textStartX;
+for (const ch of textWord) {
+  const glyphPolys = GLYPHS[ch];
+  const advance = (GLYPH_ADVANCE[ch] ?? 0.6) * charHeightMM;
+  if (glyphPolys) {
+    for (const poly of glyphPolys) {
+      // Mise à l'échelle : unité 1 → charHeightMM
+      const scaled = poly.map(([px, py]) => [px * charHeightMM, py * charHeightMM]);
+      extrudePolygon(scaled, cursorX, textStartY, PLATE_H, QR_H);
     }
   }
+  cursorX += advance + charGapMM;
 }
 
 // ─── Export ─────────────────────────────────────────────────────────────
@@ -266,11 +326,11 @@ writeFileSync(filepath, stl.toBinary());
 
 console.log(`✅ STL généré : ${filepath}`);
 console.log(`   Plaque : ${PLATE_W}×${PLATE_L}×${PLATE_H} mm (bords arrondis r=${CORNER_R}mm)`);
-console.log(`   QR     : ${QR_SIZE}×${QR_SIZE}mm, hauteur ${QR_H}mm`);
-console.log(`   EKKO   : centré sous QR, hauteur ${QR_H}mm`);
+console.log(`   QR     : ${QR_SIZE}×${QR_SIZE}mm, hauteur ${QR_H}mm (relief)`);
+console.log(`   EKKO   : centré sous QR, glyphes vectoriels, hauteur ${QR_H}mm`);
 console.log(`   URL    : ${url}`);
 console.log(`   Triangles : ${stl.triangles.length}`);
 console.log(`\n💡 Impression bicolore :`);
-console.log(`   - Plaque = filament blanc (couches 0–1mm)`);
-console.log(`   - QR + EKKO = filament noir (couches 1–9mm)`);
-console.log(`   → Utiliser un changement de couleur à Z=1mm dans votre slicer`);
+console.log(`   - Plaque = filament blanc (couches 0–${PLATE_H}mm)`);
+console.log(`   - QR + EKKO = filament noir (couches ${PLATE_H}–${PLATE_H + QR_H}mm)`);
+console.log(`   → Utiliser un changement de couleur à Z=${PLATE_H}mm dans votre slicer`);
