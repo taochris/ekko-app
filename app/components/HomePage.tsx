@@ -256,8 +256,8 @@ const MOBILE_NAV_CATEGORIES = [
   {
     label: "Explorer",
     links: [
-      { text: "Le produit", href: "#produit" },
-      { text: "Comment ça marche", href: "#comment" },
+      { text: "Le produit", href: "/produit" },
+      { text: "Comment ça marche", href: "/comment-ca-marche" },
     ],
   },
   {
@@ -313,8 +313,8 @@ export default function HomePage() {
           style={S.navLinks}
           className="home-nav-links"
         >
-          <a href="#produit" style={S.navLink}>Le produit</a>
-          <a href="#comment" style={S.navLink}>Comment ça marche</a>
+          <a href="/produit" style={S.navLink}>Le produit</a>
+          <a href="/comment-ca-marche" style={S.navLink}>Comment ça marche</a>
           <a href="/faq" style={S.navLink}>FAQ</a>
           <a href="/blog" style={S.navLink}>Blog</a>
           <a href="/compte" style={S.navButton}>Mon compte</a>
