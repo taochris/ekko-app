@@ -3,45 +3,98 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import BlobBackground from "../components/BlobBackground";
 
+// ─── Types d'objets ──────────────────────────────────────────────────────
+const PRODUCTS = [
+  {
+    id: "porte-clef",
+    name: "Porte-clés",
+    icon: (
+      <svg viewBox="0 0 48 48" fill="none" style={{ width: 32, height: 32 }}>
+        <circle cx="18" cy="18" r="10" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="18" cy="18" r="4" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+        <path d="M26 26 L42 42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M36 36 L40 32" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M39 39 L43 35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+    description: "Compact et discret, votre QR code gravé vous accompagne partout. Il suffit de le scanner pour réécouter vos souvenirs.",
+    specs: ["Format compact", "Anneau inox inclus", "Gravure laser HD", "Résistant aux chocs"],
+    available: true,
+  },
+  {
+    id: "pendentif",
+    name: "Pendentif",
+    icon: (
+      <svg viewBox="0 0 48 48" fill="none" style={{ width: 32, height: 32 }}>
+        <path d="M24 6 L24 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="24" cy="28" r="12" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="18" y="22" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+        <path d="M12 6 Q24 10 36 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.4" />
+      </svg>
+    ),
+    description: "Un bijou-souvenir à porter sur soi. Le QR code est gravé avec finesse sur une pièce légère et élégante.",
+    specs: ["Léger et fin", "Cordon ou chaîne", "Gravure fine", "Unisexe"],
+    available: true,
+  },
+  {
+    id: "support-telephone",
+    name: "Support téléphone",
+    icon: (
+      <svg viewBox="0 0 48 48" fill="none" style={{ width: 32, height: 32 }}>
+        <rect x="14" y="4" width="20" height="36" rx="3" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="18" y="8" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+        <circle cx="24" cy="36" r="2" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+        <path d="M8 44 L40 44 L36 34 L12 34 Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+      </svg>
+    ),
+    description: "Posez votre téléphone et scannez : le QR code est en vue, prêt à lancer votre vocapsule. Idéal sur un bureau ou une table de nuit.",
+    specs: ["Stable et incliné", "Compatible tout smartphone", "QR code face visible", "Décoratif"],
+    available: true,
+  },
+];
+
+// ─── Matériaux ───────────────────────────────────────────────────────────
 const MATERIALS = [
   {
-    id: "bois",
-    name: "Bois naturel",
+    id: "bouleau",
+    name: "Bouleau / Peuplier",
     available: true,
     description:
-      "Gravure laser sur bois de hêtre massif. Le grain naturel du bois rend chaque pièce unique. Le QR code est gravé avec précision pour un rendu élégant et durable.",
-    specs: ["Hêtre massif", "40 × 45 mm", "Épaisseur 3 mm", "Gravure laser HD"],
+      "Bois clair au grain fin, léger et résistant. Le bouleau et le peuplier offrent un rendu épuré avec une gravure nette et précise.",
+    specs: ["Bois clair naturel", "Grain fin", "Léger", "Gravure laser HD"],
     price: "à venir",
-    image: null, // TODO: remplacer par le chemin vers la photo du produit fini
+    image: null,
     accent: "#c9a96e",
+  },
+  {
+    id: "bambou",
+    name: "Bambou",
+    available: true,
+    description:
+      "Matériau écologique et solide. Le bambou offre une texture chaleureuse et un contraste naturel idéal pour la gravure laser.",
+    specs: ["Éco-responsable", "Très résistant", "Teinte chaude", "Gravure contrastée"],
+    price: "à venir",
+    image: null,
+    accent: "#a8b060",
   },
   {
     id: "plexi",
     name: "Plexiglas",
     available: false,
     description:
-      "Découpe et gravure sur plexiglas transparent ou teinté. Un rendu moderne et épuré, parfait pour un intérieur contemporain.",
-    specs: ["Plexiglas 3mm", "Format carte", "Gravure + découpe", "Plusieurs teintes"],
+      "Découpe et gravure sur plexiglas transparent ou teinté. Un rendu moderne et épuré, idéal pour un intérieur contemporain.",
+    specs: ["Transparent ou teinté", "Très léger", "Moderne", "Gravure + découpe"],
     price: "bientôt",
     image: null,
     accent: "#7eb8d8",
   },
-  {
-    id: "metal",
-    name: "Métal brossé",
-    available: false,
-    description:
-      "Gravure sur plaque d'aluminium anodisé. L'option premium pour un objet indestructible qui traversera les décennies.",
-    specs: ["Aluminium anodisé", "Format carte", "Gravure profonde", "Résistant à l'eau"],
-    price: "bientôt",
-    image: null,
-    accent: "#b0b8c0",
-  },
 ];
 
 export default function ProduitPage() {
-  const [selected, setSelected] = useState("bois");
-  const current = MATERIALS.find((m) => m.id === selected) ?? MATERIALS[0];
+  const [selectedProduct, setSelectedProduct] = useState("porte-clef");
+  const [selectedMaterial, setSelectedMaterial] = useState("bouleau");
+  const currentProduct = PRODUCTS.find((p) => p.id === selectedProduct) ?? PRODUCTS[0];
+  const currentMaterial = MATERIALS.find((m) => m.id === selectedMaterial) ?? MATERIALS[0];
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden" }}>
@@ -99,46 +152,91 @@ export default function ProduitPage() {
           </p>
         </motion.div>
 
-        {/* Sélecteur de matériau */}
-        <div style={{
-          display: "flex", justifyContent: "center", gap: 12, marginBottom: 48, flexWrap: "wrap",
-        }}>
-          {MATERIALS.map((mat) => (
-            <button
-              key={mat.id}
-              onClick={() => mat.available && setSelected(mat.id)}
-              style={{
-                fontFamily: "Georgia, serif", fontSize: 13, letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                padding: "12px 24px", borderRadius: 50, cursor: mat.available ? "pointer" : "default",
-                background: selected === mat.id ? `${mat.accent}20` : "rgba(255,255,255,0.03)",
-                border: `1px solid ${selected === mat.id ? `${mat.accent}50` : "rgba(255,255,255,0.08)"}`,
-                color: selected === mat.id ? mat.accent : mat.available ? "rgba(240,232,216,0.5)" : "rgba(240,232,216,0.2)",
-                transition: "all 0.2s",
-                opacity: mat.available ? 1 : 0.5,
-              }}
-            >
-              {mat.name}
-              {!mat.available && (
+        {/* ── 1. Sélecteur d'objet ── */}
+        <div style={{ marginBottom: 40 }}>
+          <p style={{
+            fontFamily: "Georgia, serif", fontSize: 12, letterSpacing: "0.3em",
+            textTransform: "uppercase", color: "rgba(201,169,110,0.5)", marginBottom: 16,
+          }}>
+            Choisissez la forme
+          </p>
+          <div style={{
+            display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap",
+          }}>
+            {PRODUCTS.map((prod) => (
+              <button
+                key={prod.id}
+                onClick={() => prod.available && setSelectedProduct(prod.id)}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                  padding: "16px 24px", borderRadius: 20, cursor: prod.available ? "pointer" : "default",
+                  background: selectedProduct === prod.id ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${selectedProduct === prod.id ? "rgba(201,169,110,0.4)" : "rgba(255,255,255,0.06)"}`,
+                  color: selectedProduct === prod.id ? "#c9a96e" : "rgba(240,232,216,0.5)",
+                  transition: "all 0.2s", minWidth: 120,
+                  opacity: prod.available ? 1 : 0.5,
+                }}
+              >
+                <span style={{ color: "inherit" }}>{prod.icon}</span>
                 <span style={{
-                  marginLeft: 8, fontSize: 9, padding: "2px 8px", borderRadius: 8,
-                  background: "rgba(255,255,255,0.06)", color: "rgba(240,232,216,0.4)",
+                  fontFamily: "Georgia, serif", fontSize: 12, letterSpacing: "0.05em",
+                  fontWeight: selectedProduct === prod.id ? 600 : 400,
                 }}>
-                  Bientôt
+                  {prod.name}
                 </span>
-              )}
-            </button>
-          ))}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 2. Sélecteur de matériau ── */}
+        <div style={{ marginBottom: 48 }}>
+          <p style={{
+            fontFamily: "Georgia, serif", fontSize: 12, letterSpacing: "0.3em",
+            textTransform: "uppercase", color: "rgba(201,169,110,0.5)", marginBottom: 16,
+          }}>
+            Choisissez le matériau
+          </p>
+          <div style={{
+            display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap",
+          }}>
+            {MATERIALS.map((mat) => (
+              <button
+                key={mat.id}
+                onClick={() => mat.available && setSelectedMaterial(mat.id)}
+                style={{
+                  fontFamily: "Georgia, serif", fontSize: 13, letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  padding: "12px 24px", borderRadius: 50, cursor: mat.available ? "pointer" : "default",
+                  background: selectedMaterial === mat.id ? `${mat.accent}20` : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${selectedMaterial === mat.id ? `${mat.accent}50` : "rgba(255,255,255,0.08)"}`,
+                  color: selectedMaterial === mat.id ? mat.accent : mat.available ? "rgba(240,232,216,0.5)" : "rgba(240,232,216,0.2)",
+                  transition: "all 0.2s",
+                  opacity: mat.available ? 1 : 0.5,
+                }}
+              >
+                {mat.name}
+                {!mat.available && (
+                  <span style={{
+                    marginLeft: 8, fontSize: 9, padding: "2px 8px", borderRadius: 8,
+                    background: "rgba(255,255,255,0.06)", color: "rgba(240,232,216,0.4)",
+                  }}>
+                    Bientôt
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Détail du matériau sélectionné */}
+      {/* Détail de la sélection : objet + matériau */}
       <section style={{
         position: "relative", zIndex: 10,
         maxWidth: 900, margin: "0 auto", padding: "0 24px 80px",
       }}>
         <motion.div
-          key={current.id}
+          key={`${currentProduct.id}-${currentMaterial.id}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -146,41 +244,38 @@ export default function ProduitPage() {
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40,
             alignItems: "center",
           }}
+          className="produit-detail-grid"
         >
           {/* Visuel produit */}
           <div style={{
             aspectRatio: "1", borderRadius: 24,
             background: `linear-gradient(135deg, rgba(20,16,24,0.8), rgba(30,24,36,0.6))`,
-            border: `1px solid ${current.accent}20`,
+            border: `1px solid ${currentMaterial.accent}20`,
             display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden",
           }}>
-            {current.image ? (
-              <img src={current.image} alt={current.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {currentMaterial.image ? (
+              <img src={currentMaterial.image} alt={`${currentProduct.name} en ${currentMaterial.name}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <div style={{ textAlign: "center", padding: 40 }}>
-                {/* Placeholder SVG — représentation schématique du produit */}
                 <svg viewBox="0 0 120 140" fill="none" style={{ width: 120, height: 140, marginBottom: 16 }}>
-                  {/* Plaque */}
-                  <rect x="10" y="10" width="100" height="120" rx="6" fill={`${current.accent}10`} stroke={`${current.accent}40`} strokeWidth="1.5" />
-                  {/* QR Code simplifié */}
-                  <rect x="25" y="20" width="70" height="70" rx="2" fill="none" stroke={`${current.accent}60`} strokeWidth="1" />
+                  <rect x="10" y="10" width="100" height="120" rx="6" fill={`${currentMaterial.accent}10`} stroke={`${currentMaterial.accent}40`} strokeWidth="1.5" />
+                  <rect x="25" y="20" width="70" height="70" rx="2" fill="none" stroke={`${currentMaterial.accent}60`} strokeWidth="1" />
                   {[0,1,2,3,4,5,6].map((row) =>
                     [0,1,2,3,4,5,6].map((col) => {
                       const on = (row + col) % 3 !== 0;
                       return on ? (
-                        <rect key={`${row}-${col}`} x={28 + col * 9.2} y={23 + row * 9.2} width={8} height={8} rx="1" fill={`${current.accent}50`} />
+                        <rect key={`${row}-${col}`} x={28 + col * 9.2} y={23 + row * 9.2} width={8} height={8} rx="1" fill={`${currentMaterial.accent}50`} />
                       ) : null;
                     })
                   )}
-                  {/* EKKO text */}
-                  <text x="60" y="110" textAnchor="middle" fill={current.accent} fontFamily="Georgia, serif" fontSize="10" letterSpacing="3" opacity="0.7">
+                  <text x="60" y="110" textAnchor="middle" fill={currentMaterial.accent} fontFamily="Georgia, serif" fontSize="10" letterSpacing="3" opacity="0.7">
                     EKKO
                   </text>
                 </svg>
                 <p style={{
                   fontFamily: "Georgia, serif", fontSize: 12, fontStyle: "italic",
-                  color: `${current.accent}60`,
+                  color: `${currentMaterial.accent}60`,
                 }}>
                   Photo du produit fini à venir
                 </p>
@@ -188,31 +283,63 @@ export default function ProduitPage() {
             )}
           </div>
 
-          {/* Infos */}
+          {/* Infos combinées */}
           <div>
             <h2 style={{
-              fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 28,
-              color: "#f0e8d8", marginBottom: 16,
+              fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 26,
+              color: "#f0e8d8", marginBottom: 8,
             }}>
-              {current.name}
+              {currentProduct.name}
             </h2>
             <p style={{
-              fontFamily: "Georgia, serif", fontSize: 15, lineHeight: 1.8,
-              color: "rgba(240,232,216,0.6)", marginBottom: 28,
+              fontFamily: "Georgia, serif", fontSize: 13, fontStyle: "italic",
+              color: currentMaterial.accent, marginBottom: 16, letterSpacing: "0.05em",
             }}>
-              {current.description}
+              en {currentMaterial.name}
+            </p>
+            <p style={{
+              fontFamily: "Georgia, serif", fontSize: 14, lineHeight: 1.8,
+              color: "rgba(240,232,216,0.6)", marginBottom: 24,
+            }}>
+              {currentProduct.description}
             </p>
 
-            {/* Specs */}
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 28,
+            {/* Specs objet */}
+            <p style={{
+              fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em",
+              textTransform: "uppercase", color: "rgba(201,169,110,0.5)", marginBottom: 8,
             }}>
-              {current.specs.map((spec) => (
+              Caractéristiques objet
+            </p>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20,
+            }}>
+              {currentProduct.specs.map((spec: string) => (
                 <div key={spec} style={{
-                  padding: "10px 14px", borderRadius: 12,
-                  background: `${current.accent}08`, border: `1px solid ${current.accent}15`,
-                  fontFamily: "Georgia, serif", fontSize: 12, color: current.accent,
-                  letterSpacing: "0.05em",
+                  padding: "8px 12px", borderRadius: 10,
+                  background: "rgba(201,169,110,0.05)", border: "1px solid rgba(201,169,110,0.12)",
+                  fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.6)",
+                }}>
+                  {spec}
+                </div>
+              ))}
+            </div>
+
+            {/* Specs matériau */}
+            <p style={{
+              fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em",
+              textTransform: "uppercase", color: `${currentMaterial.accent}80`, marginBottom: 8,
+            }}>
+              Caractéristiques matériau
+            </p>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24,
+            }}>
+              {currentMaterial.specs.map((spec: string) => (
+                <div key={spec} style={{
+                  padding: "8px 12px", borderRadius: 10,
+                  background: `${currentMaterial.accent}08`, border: `1px solid ${currentMaterial.accent}15`,
+                  fontFamily: "Georgia, serif", fontSize: 11, color: currentMaterial.accent,
                 }}>
                   {spec}
                 </div>
@@ -222,7 +349,7 @@ export default function ProduitPage() {
             {/* Prix */}
             <div style={{
               padding: "16px 20px", borderRadius: 16,
-              background: "rgba(255,255,255,0.03)", border: `1px solid ${current.accent}20`,
+              background: "rgba(255,255,255,0.03)", border: `1px solid ${currentMaterial.accent}20`,
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
               <span style={{
@@ -233,9 +360,9 @@ export default function ProduitPage() {
               </span>
               <span style={{
                 fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 300,
-                color: current.available ? current.accent : "rgba(240,232,216,0.3)",
+                color: currentMaterial.available ? currentMaterial.accent : "rgba(240,232,216,0.3)",
               }}>
-                {current.price}
+                {currentMaterial.price}
               </span>
             </div>
           </div>
@@ -327,7 +454,7 @@ export default function ProduitPage() {
 
       <style>{`
         @media (max-width: 700px) {
-          section > div[style*="grid-template-columns: 1fr 1fr"] {
+          .produit-detail-grid {
             grid-template-columns: 1fr !important;
           }
         }
