@@ -336,12 +336,12 @@ export default function HomePage() {
       {/* Nav mobile — 3 catégories avec déroulant */}
       {isMobile && (
         <div style={{
-          position: "relative", zIndex: 10, width: "100%",
+          position: "relative", zIndex: 200, width: "100%",
           display: "flex", justifyContent: "center", gap: 16,
           padding: "0 16px", marginTop: 4,
         }}>
           {MOBILE_NAV_CATEGORIES.map((cat, i) => (
-            <div key={cat.label} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div key={cat.label} style={{ position: "relative" }}>
               <button
                 onClick={() => setOpenCat(openCat === i ? null : i)}
                 style={{
@@ -353,43 +353,49 @@ export default function HomePage() {
                   border: "none",
                   padding: "8px 12px",
                   cursor: "pointer", transition: "color 0.2s",
+                  display: "block",
                 }}
               >
                 {cat.label}
               </button>
               <AnimatePresence>
                 {openCat === i && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scaleY: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                    exit={{ opacity: 0, y: -6, scaleY: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                      position: "absolute", top: "100%",
-                      left: "50%", transform: "translateX(-50%)",
-                      transformOrigin: "top center",
-                      background: "rgba(20,16,24,0.95)", backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(201,169,110,0.25)", borderRadius: 14,
-                      padding: "8px 6px", minWidth: 160, zIndex: 50,
-                      display: "flex", flexDirection: "column", gap: 2,
-                    }}
-                  >
-                    {cat.links.map((link) => (
-                      <a
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setOpenCat(null)}
-                        style={{
-                          fontFamily: "Georgia, serif", fontSize: 13,
-                          color: "rgba(240,232,216,0.85)", textDecoration: "none",
-                          padding: "10px 14px", borderRadius: 10,
-                          display: "block", transition: "background 0.15s",
-                        }}
-                      >
-                        {link.text}
-                      </a>
-                    ))}
-                  </motion.div>
+                  <div style={{
+                    position: "absolute", top: "100%", left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 200,
+                  }}>
+                    <motion.div
+                      initial={{ opacity: 0, scaleY: 0.9 }}
+                      animate={{ opacity: 1, scaleY: 1 }}
+                      exit={{ opacity: 0, scaleY: 0.9 }}
+                      transition={{ duration: 0.18 }}
+                      style={{
+                        transformOrigin: "top center",
+                        background: "rgb(18,14,22)",
+                        border: "1px solid rgba(201,169,110,0.3)", borderRadius: 14,
+                        padding: "8px 6px", minWidth: 170,
+                        display: "flex", flexDirection: "column", gap: 2,
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+                      }}
+                    >
+                      {cat.links.map((link) => (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setOpenCat(null)}
+                          style={{
+                            fontFamily: "Georgia, serif", fontSize: 14,
+                            color: "rgba(240,232,216,0.9)", textDecoration: "none",
+                            padding: "12px 16px", borderRadius: 10,
+                            display: "block",
+                          }}
+                        >
+                          {link.text}
+                        </a>
+                      ))}
+                    </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
