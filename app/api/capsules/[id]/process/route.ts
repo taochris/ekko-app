@@ -56,20 +56,8 @@ function expiresAt(storageOption: number): Date {
   return new Date(now + 7 * 24 * 3600 * 1000);
 }
 
-function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: string): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    const listPath = path.join(tmpDir, "list.txt");
-    const listContent = inputPaths.map((p) => `file '${p.replace(/\\/g, "/")}'`).join("\n");
-    await fs.writeFile(listPath, listContent, "utf8");
-
-    // Pour les OGG/opus, -c copy peut échouer si les headers diffèrent (Telegram vs WhatsApp)
-    // On re-encode en libopus pour garantir la compatibilité
-    const isOgg = outputPath.endsWith(".ogg") || outputPath.endsWith(".opus");
-    const codecArgs = isOgg
-      ? ["-c:a", "libopus", "-b:a", "64k"]
-      : ["-c", "copy", "-strict", "-2"];
-    const args = ["-y", "-f", "concat", "-safe", "0", "-i", listPath, ...codecArgs, outputPath];
-    const bin = resolveFfmpegPath();
+function spawnFfmpeg(bin: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
     const proc = spawn(bin, args);
     let stderr = "";
     proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
@@ -79,6 +67,36 @@ function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: strin
     });
     proc.on("error", reject);
   });
+}
+
+async function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: string): Promise<void> {
+  const bin = resolveFfmpegPath();
+  const isOgg = outputPath.endsWith(".ogg") || outputPath.endsWith(".opus");
+
+  // Étape 1 : pré-convertir chaque fichier en WAV PCM 48kHz mono
+  // → tolère les headers opus/ogg corrompus (Telegram, WhatsApp, etc.)
+  const wavPaths: string[] = [];
+  for (let i = 0; i < inputPaths.length; i++) {
+    const wavPath = path.join(tmpDir, `pre_${i}.wav`);
+    await spawnFfmpeg(bin, [
+      "-y", "-err_detect", "ignore_err",
+      "-i", inputPaths[i],
+      "-ar", "48000", "-ac", "1",
+      wavPath,
+    ]);
+    wavPaths.push(wavPath);
+  }
+
+  // Étape 2 : concaténer les WAV (format PCM, toujours compatible concat)
+  const listPath = path.join(tmpDir, "list.txt");
+  const listContent = wavPaths.map((p) => `file '${p.replace(/\\/g, "/")}'`).join("\n");
+  await fs.writeFile(listPath, listContent, "utf8");
+
+  // Étape 3 : encoder vers le format de sortie attendu
+  const codecArgs = isOgg
+    ? ["-c:a", "libopus", "-b:a", "64k"]
+    : ["-c:a", "aac", "-b:a", "128k"];
+  await spawnFfmpeg(bin, ["-y", "-f", "concat", "-safe", "0", "-i", listPath, ...codecArgs, outputPath]);
 }
 
 /**
