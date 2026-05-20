@@ -24,7 +24,15 @@ export default function VocapsulePage() {
   const [copied, setCopied] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const resetHideTimer = () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    setShowControls(true);
+    hideTimerRef.current = setTimeout(() => setShowControls(false), 2000);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -47,7 +55,15 @@ export default function VocapsulePage() {
   const togglePlay = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (isPlaying) { a.pause(); } else { a.play(); setFullscreen(true); }
+    if (isPlaying) {
+      a.pause();
+      setShowControls(true);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    } else {
+      a.play();
+      setFullscreen(true);
+      resetHideTimer();
+    }
     setIsPlaying(!isPlaying);
   };
 
@@ -335,11 +351,15 @@ export default function VocapsulePage() {
 
         {/* Mode plein écran immersif */}
         {fullscreen && (
-          <div style={{
-            position: "fixed", inset: 0, zIndex: 9999,
-            background: "#0d0a0f",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          }}>
+          <div
+            onClick={togglePlay}
+            style={{
+              position: "fixed", inset: 0, zIndex: 9999,
+              background: "#0d0a0f",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
             {coverUrl && (
               <>
                 <img src={coverUrl} alt="Photo souvenir" style={{
@@ -355,7 +375,7 @@ export default function VocapsulePage() {
 
             {/* Bouton fermer */}
             <button
-              onClick={() => setFullscreen(false)}
+              onClick={(e) => { e.stopPropagation(); setFullscreen(false); }}
               style={{
                 position: "absolute", top: 20, right: 20, zIndex: 2,
                 width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer",
@@ -384,33 +404,30 @@ export default function VocapsulePage() {
               Découvrir EKKO
             </a>
 
-            {/* Contrôles centraux */}
-            <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 32, width: "100%", maxWidth: 360, padding: "0 28px" }}>
-              <p style={{ fontSize: 14, color: "rgba(240,232,216,0.85)", fontStyle: "italic", margin: 0, textAlign: "center", fontFamily: "Georgia, serif" }}>
-                Un souvenir vous attend
-              </p>
-
-              <button
-                onClick={togglePlay}
-                style={{
-                  width: 88, height: 88, borderRadius: "50%", border: "none", cursor: "pointer",
-                  background: `linear-gradient(135deg, ${accent}80, ${accent})`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: `0 8px 40px ${accent}50`,
-                  transition: "transform 0.15s",
-                }}
-              >
+            {/* Contrôles — masqués après 2s, réapparaissent au toucher */}
+            <div
+              style={{
+                position: "relative", zIndex: 1,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 32,
+                width: "100%", maxWidth: 360, padding: "0 28px",
+                opacity: showControls ? 1 : 0,
+                transition: "opacity 0.4s ease",
+                pointerEvents: showControls ? "auto" : "none",
+              }}
+            >
+              {/* Icône play/pause — sans fond ni contour */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {isPlaying ? (
-                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 28, height: 28 }}>
+                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 56, height: 56, filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.8))" }}>
                     <rect x="6" y="4" width="4" height="16" rx="1.5"/>
                     <rect x="14" y="4" width="4" height="16" rx="1.5"/>
                   </svg>
                 ) : (
-                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 28, height: 28, marginLeft: 4 }}>
+                  <svg viewBox="0 0 24 24" fill="white" style={{ width: 56, height: 56, marginLeft: 6, filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.8))" }}>
                     <path d="M8 5v14l11-7z"/>
                   </svg>
                 )}
-              </button>
+              </div>
 
               <div style={{ width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
@@ -424,10 +441,12 @@ export default function VocapsulePage() {
                 <div
                   style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
                   onClick={(e) => {
+                    e.stopPropagation();
                     const a = audioRef.current;
                     if (!a || !duration) return;
                     const rect = e.currentTarget.getBoundingClientRect();
                     a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+                    resetHideTimer();
                   }}
                 >
                   <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${accent}80, ${accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
