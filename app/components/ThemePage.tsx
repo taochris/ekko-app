@@ -77,7 +77,7 @@ function NavButton({ onClick, accent, children }: { onClick: () => void; accent:
   );
 }
 
-export default function ThemePage({ theme }: { theme: string }) {
+export default function ThemePage({ theme, hideImageUpload }: { theme: string; hideImageUpload?: boolean }) {
   const router = useRouter();
   const { user, isLoading, logout } = useAuth();
   const config = themeConfig[theme] ?? themeConfig.deuil;
@@ -186,6 +186,7 @@ export default function ThemePage({ theme }: { theme: string }) {
             onAudiosImported={handleAudiosImported}
             onCoverSelected={(f) => setCoverPhoto(f)}
             coverPhoto={coverPhoto}
+            hideImageUpload={hideImageUpload}
           />
         )}
         {step === "select" && (

@@ -6,6 +6,36 @@ import BlobBackground from "../components/BlobBackground";
 // ─── Formats de porte-clés ──────────────────────────────────────────────
 const FORMATS = [
   {
+    id: "etiquette-rect",
+    name: "Étiquette rectangulaire",
+    icon: (
+      <svg viewBox="0 0 48 56" fill="none" style={{ width: 32, height: 36 }}>
+        <rect x="6" y="6" width="36" height="46" rx="4" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="13" y="16" width="22" height="22" rx="2" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+        <circle cx="24" cy="2" r="2.5" stroke="currentColor" strokeWidth="1" />
+      </svg>
+    ),
+    dimensions: "90 × 30 mm",
+    description: "Grand format rectangulaire aux coins arrondis. Surface généreuse pour un QR code lisible et un prénom gravé en dessous.",
+    image: "/images/produit/etiquette%20rectangulaire.png",
+    outOfStock: false,
+  },
+  {
+    id: "etiquette-arrondie",
+    name: "Étiquette arrondie",
+    icon: (
+      <svg viewBox="0 0 40 56" fill="none" style={{ width: 28, height: 36 }}>
+        <rect x="4" y="8" width="32" height="42" rx="16" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="11" y="18" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+        <circle cx="20" cy="2" r="2.5" stroke="currentColor" strokeWidth="1" />
+      </svg>
+    ),
+    dimensions: "50,8 × 31,8 mm",
+    description: "Format compact aux extrémités en demi-cercle. Élégant et doux en main, idéal comme bijou du quotidien.",
+    image: "/images/produit/etiquette_dimension.png",
+    outOfStock: false,
+  },
+  {
     id: "carre",
     name: "Carré",
     icon: (
@@ -17,33 +47,8 @@ const FORMATS = [
     ),
     dimensions: "40 × 40 mm",
     description: "Format classique et épuré. Surface maximale pour un QR code lisible au premier coup d'œil.",
-  },
-  {
-    id: "etiquette",
-    name: "Étiquette",
-    icon: (
-      <svg viewBox="0 0 48 48" fill="none" style={{ width: 36, height: 36 }}>
-        <rect x="10" y="6" width="28" height="38" rx="4" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="15" y="12" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
-        <circle cx="24" cy="38" r="2" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
-        <circle cx="24" cy="2" r="2.5" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-    dimensions: "30 × 50 mm",
-    description: "Format allongé avec espace sous le QR pour un mot, une date ou un prénom gravé.",
-  },
-  {
-    id: "rond",
-    name: "Rond",
-    icon: (
-      <svg viewBox="0 0 48 48" fill="none" style={{ width: 36, height: 36 }}>
-        <circle cx="24" cy="26" r="18" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="15" y="17" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
-        <circle cx="24" cy="4" r="2.5" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-    dimensions: "Ø 45 mm",
-    description: "Doux et élégant, le format rond apporte une touche organique. Idéal comme bijou ou médaillon.",
+    image: undefined,
+    outOfStock: true,
   },
 ];
 
@@ -66,7 +71,7 @@ const MATERIALS = [
 ];
 
 export default function ProduitPage() {
-  const [selectedFormat, setSelectedFormat] = useState("carre");
+  const [selectedFormat, setSelectedFormat] = useState("etiquette-rect");
   const [selectedMaterial, setSelectedMaterial] = useState("bois");
   const currentFormat = FORMATS.find((f) => f.id === selectedFormat) ?? FORMATS[0];
   const currentMaterial = MATERIALS.find((m) => m.id === selectedMaterial) ?? MATERIALS[0];
@@ -120,12 +125,51 @@ export default function ProduitPage() {
           <p style={{
             fontFamily: "Georgia, serif", fontStyle: "italic",
             fontSize: 16, lineHeight: 1.8,
-            color: "rgba(240,232,216,0.65)", maxWidth: 560, margin: "0 auto 48px",
+            color: "rgba(240,232,216,0.65)", maxWidth: 560, margin: "0 auto 32px",
           }}>
             Un porte-clés en bois gravé au laser avec votre QR code unique.
             Scannez-le, et la voix de ceux que vous aimez reprend vie.
           </p>
         </motion.div>
+
+        {/* ── Étapes ── */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap", marginBottom: 56 }}>
+          {[
+            { num: "01", label: "Choisissez le format", desc: "Rectangulaire ou arrondie — trouvez votre étiquette" },
+            { num: "02", label: "Créez votre vocapsule", desc: "Importez vos audios et assemblez-les sur le site" },
+            { num: "03", label: "Recevez votre objet", desc: "Gravure laser, anneau inox, expédié chez vous" },
+          ].map((s) => (
+            <div key={s.num} style={{
+              flex: "1 1 200px", maxWidth: 220,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: "50%",
+                background: "rgba(201,169,110,0.08)", border: "1px solid rgba(201,169,110,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "Georgia, serif", fontSize: 16, color: "#c9a96e",
+              }}>
+                {s.num}
+              </div>
+              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#f0e8d8" }}>
+                {s.label}
+              </h3>
+              <p style={{
+                fontFamily: "Georgia, serif", fontSize: 12, lineHeight: 1.7,
+                color: "rgba(240,232,216,0.45)", maxWidth: 200,
+              }}>
+                {s.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Séparateur décoratif ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48, justifyContent: "center" }}>
+          <div style={{ width: 60, height: 1, background: "linear-gradient(to right, transparent, rgba(201,169,110,0.3))" }} />
+          <span style={{ color: "rgba(201,169,110,0.4)", fontSize: 10 }}>✦</span>
+          <div style={{ width: 60, height: 1, background: "linear-gradient(to left, transparent, rgba(201,169,110,0.3))" }} />
+        </div>
 
         {/* ── Sélecteur de format ── */}
         <div style={{ marginBottom: 48 }}>
@@ -136,19 +180,21 @@ export default function ProduitPage() {
             Choisissez le format
           </p>
           <div style={{
-            display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap",
+            display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap",
           }}>
             {FORMATS.map((fmt) => (
               <button
                 key={fmt.id}
-                onClick={() => setSelectedFormat(fmt.id)}
+                onClick={() => !fmt.outOfStock && setSelectedFormat(fmt.id)}
                 style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
-                  padding: "20px 28px", borderRadius: 20, cursor: "pointer",
+                  padding: "24px 32px", borderRadius: 20,
+                  cursor: fmt.outOfStock ? "not-allowed" : "pointer",
                   background: selectedFormat === fmt.id ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.02)",
-                  border: `1px solid ${selectedFormat === fmt.id ? "rgba(201,169,110,0.4)" : "rgba(255,255,255,0.06)"}`,
-                  color: selectedFormat === fmt.id ? "#c9a96e" : "rgba(240,232,216,0.5)",
-                  transition: "all 0.2s", minWidth: 130,
+                  border: `1px solid ${selectedFormat === fmt.id ? "rgba(201,169,110,0.4)" : fmt.outOfStock ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.06)"}`,
+                  color: fmt.outOfStock ? "rgba(240,232,216,0.25)" : selectedFormat === fmt.id ? "#c9a96e" : "rgba(240,232,216,0.5)",
+                  opacity: fmt.outOfStock ? 0.55 : 1,
+                  transition: "all 0.2s", minWidth: 130, position: "relative",
                 }}
               >
                 <span style={{ color: "inherit" }}>{fmt.icon}</span>
@@ -163,6 +209,15 @@ export default function ProduitPage() {
                 }}>
                   {fmt.dimensions}
                 </span>
+                {fmt.outOfStock && (
+                  <span style={{
+                    fontSize: 9, padding: "2px 8px", borderRadius: 8,
+                    background: "rgba(255,100,80,0.12)", color: "rgba(255,140,120,0.7)",
+                    fontFamily: "Georgia, serif", letterSpacing: "0.05em",
+                  }}>
+                    Rupture de stock
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -214,7 +269,8 @@ export default function ProduitPage() {
       {/* Détail du format sélectionné */}
       <section style={{
         position: "relative", zIndex: 10,
-        maxWidth: 900, margin: "0 auto", padding: "0 24px 80px",
+        maxWidth: 900, margin: "0 auto", padding: "20px 24px 80px",
+        borderTop: "1px solid rgba(201,169,110,0.08)",
       }}>
         <motion.div
           key={`${currentFormat.id}-${currentMaterial.id}`}
@@ -235,8 +291,8 @@ export default function ProduitPage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden",
           }}>
-            {currentMaterial.image ? (
-              <img src={currentMaterial.image} alt={`Porte-clés ${currentFormat.name} en ${currentMaterial.name}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {(currentFormat.image || currentMaterial.image) ? (
+              <img src={(currentFormat.image || currentMaterial.image)!} alt={`Porte-clés ${currentFormat.name} en ${currentMaterial.name}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <div style={{ textAlign: "center", padding: 40 }}>
                 {/* Placeholder SVG adapté au format */}
@@ -247,16 +303,16 @@ export default function ProduitPage() {
                       <circle cx="60" cy="12" r="5" stroke={`${currentMaterial.accent}40`} strokeWidth="1" fill="none" />
                     </>
                   )}
-                  {currentFormat.id === "etiquette" && (
+                  {currentFormat.id === "etiquette-rect" && (
                     <>
-                      <rect x="25" y="10" width="70" height="110" rx="8" fill={`${currentMaterial.accent}08`} stroke={`${currentMaterial.accent}40`} strokeWidth="1.5" />
+                      <rect x="25" y="10" width="70" height="110" rx="6" fill={`${currentMaterial.accent}08`} stroke={`${currentMaterial.accent}40`} strokeWidth="1.5" />
                       <circle cx="60" cy="4" r="5" stroke={`${currentMaterial.accent}40`} strokeWidth="1" fill="none" />
                     </>
                   )}
-                  {currentFormat.id === "rond" && (
+                  {currentFormat.id === "etiquette-arrondie" && (
                     <>
-                      <circle cx="60" cy="75" r="50" fill={`${currentMaterial.accent}08`} stroke={`${currentMaterial.accent}40`} strokeWidth="1.5" />
-                      <circle cx="60" cy="18" r="5" stroke={`${currentMaterial.accent}40`} strokeWidth="1" fill="none" />
+                      <rect x="25" y="10" width="70" height="110" rx="35" fill={`${currentMaterial.accent}08`} stroke={`${currentMaterial.accent}40`} strokeWidth="1.5" />
+                      <circle cx="60" cy="4" r="5" stroke={`${currentMaterial.accent}40`} strokeWidth="1" fill="none" />
                     </>
                   )}
                   {/* QR code simplifié */}
@@ -368,57 +424,6 @@ export default function ProduitPage() {
         </motion.div>
       </section>
 
-      {/* Section processus résumé */}
-      <section style={{
-        position: "relative", zIndex: 10,
-        maxWidth: 800, margin: "0 auto", padding: "0 24px 80px", textAlign: "center",
-      }}>
-        <h2 style={{
-          fontFamily: "Georgia, serif", fontWeight: 300, fontSize: 24,
-          color: "#f0e8d8", marginBottom: 12,
-        }}>
-          Du numérique au physique
-        </h2>
-        <p style={{
-          fontFamily: "Georgia, serif", fontSize: 14, fontStyle: "italic",
-          color: "rgba(240,232,216,0.5)", marginBottom: 40,
-        }}>
-          Votre vocapsule est d&apos;abord créée en ligne, puis gravée sur le support de votre choix.
-        </p>
-
-        <div style={{ display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap" }}>
-          {[
-            { num: "01", label: "Créez votre vocapsule", desc: "Importez vos audios et assemblez-les sur le site" },
-            { num: "02", label: "Choisissez le format", desc: "Carré, étiquette ou rond — trouvez le vôtre" },
-            { num: "03", label: "Recevez votre objet", desc: "Gravure laser, anneau inox, expédié chez vous" },
-          ].map((s) => (
-            <div key={s.num} style={{
-              flex: "1 1 200px", maxWidth: 220,
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-            }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: "50%",
-                background: "rgba(201,169,110,0.08)", border: "1px solid rgba(201,169,110,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "Georgia, serif", fontSize: 16, color: "#c9a96e",
-              }}>
-                {s.num}
-              </div>
-              <h3 style={{
-                fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#f0e8d8",
-              }}>
-                {s.label}
-              </h3>
-              <p style={{
-                fontFamily: "Georgia, serif", fontSize: 12, lineHeight: 1.7,
-                color: "rgba(240,232,216,0.45)", maxWidth: 200,
-              }}>
-                {s.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* CTA */}
       <section style={{
@@ -426,7 +431,7 @@ export default function ProduitPage() {
         textAlign: "center", padding: "0 24px 80px",
       }}>
         <a
-          href="/"
+          href="/produit/themes"
           style={{
             display: "inline-block", padding: "16px 40px", borderRadius: 50,
             background: "linear-gradient(135deg, rgba(201,169,110,0.3), rgba(201,169,110,0.5))",

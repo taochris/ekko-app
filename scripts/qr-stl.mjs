@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Génère un QR code en STL pour impression 3D bicolore.
+ * Génère un QR code en STL — mode NÉGATIF (gravure en creux).
  *
  * Résultat :
- *   - Plaque de base : 30mm × 50mm × 1mm, bords arrondis (blanc à l'impression)
- *   - Modules QR : zone 25mm × 25mm centrée, épaisseur 8mm au-dessus de la plaque (noir)
- *   - Texte "EKKO" centré sous le QR code, même épaisseur 8mm (noir)
+ *   - Plaque pleine : 40mm × 45mm × 8mm, bords arrondis
+ *   - Modules QR : zone 25mm × 25mm, gravés en creux (3mm de profondeur)
+ *   - Texte "EKKO" centré sous le QR, creux identique (3mm)
+ *   - Traits de police épaissis pour bonne lisibilité en gravure
  *
  * Usage :
  *   node scripts/qr-stl.mjs <echoId>
@@ -25,65 +26,52 @@ const OUTPUT_DIR = join(__dirname, "..", "qr-output");
 // ─── Dimensions (mm) ────────────────────────────────────────────────────
 const PLATE_W = 40;        // largeur plaque
 const PLATE_L = 45;        // longueur plaque
-const PLATE_H = 2;         // épaisseur plaque (blanc)
+const PLATE_H = 8;         // épaisseur plaque
 const CORNER_R = 2;        // rayon bords arrondis
 const CORNER_SEG = 8;      // segments par quart de cercle
 
-const QR_SIZE = 30;        // côté zone QR (noir)
-const QR_H = 1;            // hauteur des modules au-dessus de la plaque (noir, 1mm)
+const QR_SIZE = 25;        // côté zone QR
+const ENGRAVE_DEPTH = 3;   // profondeur de gravure (négatif = creux depuis le dessus)
 
 const BASE_URL = "https://www.vosekko.com/v/";
 
 // ─── Glyphes vectoriels style Georgia (unité = 1 = hauteur du caractère) ──
 // Chaque glyphe = liste de polygones convexes [x, y] normalisés dans [0..avance] × [0..1]
 // Origine = bas-gauche du caractère
-const GLYPH_ADVANCE = { E: 0.65, K: 0.68, O: 0.72 };
-const GLYPH_STROKE = 0.10; // épaisseur trait (fraction de la hauteur)
+const GLYPH_ADVANCE = { E: 0.65, K: 0.72, O: 0.72 };
+const GLYPH_STROKE = 0.16; // épaisseur trait (plus large pour lisibilité en creux)
 const S = GLYPH_STROKE;
 const GLYPHS = {
-  // E : fût vertical + 3 bras horizontaux avec empattements
+  // E : fût vertical + 3 bras horizontaux
   E: [
     // Fût vertical
     [[0, 0], [S, 0], [S, 1], [0, 1]],
     // Bras haut
-    [[0, 1 - S], [0.65, 1 - S], [0.65, 1], [0, 1]],
+    [[0, 1 - S], [0.60, 1 - S], [0.60, 1], [0, 1]],
     // Bras médian
-    [[0, 0.5 - S/2], [0.50, 0.5 - S/2], [0.50, 0.5 + S/2], [0, 0.5 + S/2]],
+    [[0, 0.5 - S/2], [0.48, 0.5 - S/2], [0.48, 0.5 + S/2], [0, 0.5 + S/2]],
     // Bras bas
-    [[0, 0], [0.65, 0], [0.65, S], [0, S]],
+    [[0, 0], [0.60, 0], [0.60, S], [0, S]],
   ],
-  // K : fût vertical + diagonale montante + diagonale descendante
+  // K : fût vertical + diagonales ÉPAISSES
   K: [
     // Fût vertical
     [[0, 0], [S, 0], [S, 1], [0, 1]],
-    // Branche montante (de mi-hauteur vers haut-droite)
-    [[S, 0.5], [S + 0.02, 0.5], [0.68, 1], [0.68 - S * 0.9, 1]],
-    // Branche descendante (de mi-hauteur vers bas-droite)
-    [[S, 0.5], [0.68 - S * 0.9, 0], [0.68, 0], [S + 0.02, 0.5]],
+    // Branche montante (de mi-hauteur vers haut-droite) — épaissie
+    [[S, 0.45], [S, 0.55], [0.62, 1], [0.72, 1]],
+    // Branche descendante (de mi-hauteur vers bas-droite) — épaissie
+    [[S, 0.45], [0.72, 0], [0.62, 0], [S, 0.55]],
   ],
-  // O : anneau (approximé par un contour extérieur moins un trou intérieur)
-  // Rendu comme 4 rectangles formant un cadre
+  // O : cadre rectangulaire avec traits épais
   O: [
     // Barre gauche
-    [[0, S * 2], [S, S * 2], [S, 1 - S * 2], [0, 1 - S * 2]],
+    [[0, S], [S, S], [S, 1 - S], [0, 1 - S]],
     // Barre droite
-    [[0.72 - S, S * 2], [0.72, S * 2], [0.72, 1 - S * 2], [0.72 - S, 1 - S * 2]],
+    [[0.72 - S, S], [0.72, S], [0.72, 1 - S], [0.72 - S, 1 - S]],
     // Barre haut
-    [[S * 0.5, 1 - S], [0.72 - S * 0.5, 1 - S], [0.72 - S * 0.5, 1], [S * 0.5, 1]],
+    [[0, 1 - S], [0.72, 1 - S], [0.72, 1], [0, 1]],
     // Barre bas
-    [[S * 0.5, 0], [0.72 - S * 0.5, 0], [0.72 - S * 0.5, S], [S * 0.5, S]],
-    // Coins arrondis haut-gauche (quart de disque approximé)
-    [[0, 1 - S * 2], [S, 1 - S * 2], [S * 0.5, 1], [0, 1]],
-    [[S * 0.5, 1], [S, 1 - S * 2], [S * 2, 1 - S], [S * 0.5, 1]],
-    // Coins arrondis haut-droite
-    [[0.72 - S, 1 - S * 2], [0.72, 1 - S * 2], [0.72, 1], [0.72 - S * 0.5, 1]],
-    [[0.72 - S * 2, 1 - S], [0.72 - S, 1 - S * 2], [0.72 - S * 0.5, 1], [0.72 - S * 2, 1 - S]],
-    // Coins arrondis bas-gauche
-    [[0, S * 2], [S * 0.5, 0], [S, 0], [S, S * 2]],
-    [[S * 0.5, 0], [S * 2, S], [S, S * 2], [S * 0.5, 0]],
-    // Coins arrondis bas-droite
-    [[0.72 - S, S * 2], [0.72, S * 2], [0.72 - S * 0.5, 0], [0.72 - S, S * 2]],
-    [[0.72 - S * 2, S], [0.72 - S * 0.5, 0], [0.72, S * 2], [0.72 - S * 2, S]],
+    [[0, 0], [0.72, 0], [0.72, S], [0, S]],
   ],
 };
 
@@ -155,6 +143,29 @@ class STLWriter {
     // Face dessus (z = z2)
     this.addTriangle([x, y, z2], [x2, y, z2], [x2, y2, z2]);
     this.addTriangle([x, y, z2], [x2, y2, z2], [x, y2, z2]);
+  }
+
+  // Ajoute un trou (boîte avec normales inversées — creux dans un solide)
+  addHole(x, y, z, w, d, h) {
+    const x2 = x + w, y2 = y + d, z2 = z + h;
+    // Face avant (y = y) — normale inversée (vers +Y au lieu de -Y)
+    this.addTriangle([x, y, z], [x2, y, z2], [x2, y, z]);
+    this.addTriangle([x, y, z], [x, y, z2], [x2, y, z2]);
+    // Face arrière (y = y2) — normale inversée
+    this.addTriangle([x2, y2, z], [x, y2, z2], [x, y2, z]);
+    this.addTriangle([x2, y2, z], [x2, y2, z2], [x, y2, z2]);
+    // Face gauche (x = x) — normale inversée
+    this.addTriangle([x, y2, z], [x, y, z2], [x, y, z]);
+    this.addTriangle([x, y2, z], [x, y2, z2], [x, y, z2]);
+    // Face droite (x = x2) — normale inversée
+    this.addTriangle([x2, y, z], [x2, y2, z2], [x2, y2, z]);
+    this.addTriangle([x2, y, z], [x2, y, z2], [x2, y2, z2]);
+    // Face dessous (z = z) — normale inversée (vers +Z)
+    this.addTriangle([x, y, z], [x2, y2, z], [x, y2, z]);
+    this.addTriangle([x, y, z], [x2, y, z], [x2, y2, z]);
+    // Face dessus (z = z2) — normale inversée (vers -Z)
+    this.addTriangle([x, y, z2], [x2, y2, z2], [x2, y, z2]);
+    this.addTriangle([x, y, z2], [x, y2, z2], [x2, y2, z2]);
   }
 
   // Plaque avec bords arrondis (extrudée en Z)
@@ -240,13 +251,16 @@ const plateCX = PLATE_W / 2;
 const plateCY = PLATE_L / 2;
 stl.addRoundedPlate(plateCX, plateCY, PLATE_W, PLATE_L, PLATE_H, CORNER_R, CORNER_SEG);
 
-// 2. Modules QR
+// 2. Modules QR — NÉGATIF (creux depuis le dessus)
+// On creuse les modules noirs : un trou de ENGRAVE_DEPTH partant du sommet
+const engraveTop = PLATE_H;           // surface du dessus
+const engraveBottom = PLATE_H - ENGRAVE_DEPTH; // fond du creux
 for (let row = 0; row < moduleCount; row++) {
   for (let col = 0; col < moduleCount; col++) {
     if (modules.get(col, row)) {
       const mx = qrOffsetX + col * moduleSize;
       const my = qrOffsetY + row * moduleSize;
-      stl.addBox(mx, my, PLATE_H, moduleSize, moduleSize, QR_H);
+      stl.addHole(mx, my, engraveBottom, moduleSize, moduleSize, ENGRAVE_DEPTH);
     }
   }
 }
@@ -266,40 +280,40 @@ totalTextW += (textWord.length - 1) * charGapMM;
 const textStartX = (PLATE_W - totalTextW) / 2;
 const textStartY = qrOffsetY + QR_SIZE + 3; // 3mm sous le QR
 
-// Fonction : extrude un polygone 2D en solide 3D (faces latérales + dessus/dessous)
-function extrudePolygon(pts2d, xOff, yOff, z0, height) {
+// Fonction : extrude un polygone 2D en creux (normales inversées)
+function extrudeHolePolygon(pts2d, xOff, yOff, z0, height) {
   const z1 = z0 + height;
   const n = pts2d.length;
   const world = pts2d.map(([px, py]) => [px + xOff, py + yOff]);
 
-  // Face dessous
+  // Face dessous — normale vers +Z (inversée)
   for (let i = 1; i < n - 1; i++) {
     stl.addTriangle(
       [world[0][0], world[0][1], z0],
-      [world[i + 1][0], world[i + 1][1], z0],
       [world[i][0], world[i][1], z0],
+      [world[i + 1][0], world[i + 1][1], z0],
     );
   }
-  // Face dessus
+  // Face dessus — normale vers -Z (inversée)
   for (let i = 1; i < n - 1; i++) {
     stl.addTriangle(
       [world[0][0], world[0][1], z1],
-      [world[i][0], world[i][1], z1],
       [world[i + 1][0], world[i + 1][1], z1],
+      [world[i][0], world[i][1], z1],
     );
   }
-  // Faces latérales
+  // Faces latérales — normales inversées
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n;
     stl.addTriangle(
       [world[i][0], world[i][1], z0],
-      [world[j][0], world[j][1], z0],
       [world[j][0], world[j][1], z1],
+      [world[j][0], world[j][1], z0],
     );
     stl.addTriangle(
       [world[i][0], world[i][1], z0],
-      [world[j][0], world[j][1], z1],
       [world[i][0], world[i][1], z1],
+      [world[j][0], world[j][1], z1],
     );
   }
 }
@@ -312,7 +326,7 @@ for (const ch of textWord) {
     for (const poly of glyphPolys) {
       // Mise à l'échelle : unité 1 → charHeightMM
       const scaled = poly.map(([px, py]) => [px * charHeightMM, py * charHeightMM]);
-      extrudePolygon(scaled, cursorX, textStartY, PLATE_H, QR_H);
+      extrudeHolePolygon(scaled, cursorX, textStartY, engraveBottom, ENGRAVE_DEPTH);
     }
   }
   cursorX += advance + charGapMM;
@@ -326,11 +340,12 @@ writeFileSync(filepath, stl.toBinary());
 
 console.log(`✅ STL généré : ${filepath}`);
 console.log(`   Plaque : ${PLATE_W}×${PLATE_L}×${PLATE_H} mm (bords arrondis r=${CORNER_R}mm)`);
-console.log(`   QR     : ${QR_SIZE}×${QR_SIZE}mm, hauteur ${QR_H}mm (relief)`);
-console.log(`   EKKO   : centré sous QR, glyphes vectoriels, hauteur ${QR_H}mm`);
+console.log(`   QR     : ${QR_SIZE}×${QR_SIZE}mm, gravure en creux ${ENGRAVE_DEPTH}mm`);
+console.log(`   EKKO   : centré sous QR, creux ${ENGRAVE_DEPTH}mm, traits épais`);
 console.log(`   URL    : ${url}`);
 console.log(`   Triangles : ${stl.triangles.length}`);
-console.log(`\n💡 Impression bicolore :`);
-console.log(`   - Plaque = filament blanc (couches 0–${PLATE_H}mm)`);
-console.log(`   - QR + EKKO = filament noir (couches ${PLATE_H}–${PLATE_H + QR_H}mm)`);
-console.log(`   → Utiliser un changement de couleur à Z=${PLATE_H}mm dans votre slicer`);
+console.log(`\n💡 Mode négatif :`);
+console.log(`   - Plaque pleine de ${PLATE_H}mm`);
+console.log(`   - QR + EKKO gravés en creux (${ENGRAVE_DEPTH}mm de profondeur depuis le dessus)`);
+console.log(`   - Fond des creux à Z=${PLATE_H - ENGRAVE_DEPTH}mm`);
+console.log(`   → Pour bicolore : remplir les creux d'encre/résine noire`);

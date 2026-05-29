@@ -15,6 +15,7 @@ interface ImportGuideProps {
   onAudiosImported: (files: File[]) => void;
   onCoverSelected?: (file: File | null) => void;
   coverPhoto?: File | null;
+  hideImageUpload?: boolean;
 }
 
 const whatsappSteps = {
@@ -133,7 +134,7 @@ const platforms = [
   },
 ];
 
-export default function ImportGuide({ theme, config, onAudiosImported, onCoverSelected, coverPhoto }: ImportGuideProps) {
+export default function ImportGuide({ theme, config, onAudiosImported, onCoverSelected, coverPhoto, hideImageUpload }: ImportGuideProps) {
   const [os, setOs] = useState<"android" | "iphone">("android");
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
@@ -630,7 +631,7 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
       </div>
 
       {/* Photo souvenir — Nouveau */}
-      <div className="mb-6">
+      {!hideImageUpload && <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <p className="text-xs tracking-[0.3em] uppercase ekko-serif" style={{ color: "rgba(240,232,216,0.3)" }}>
             Photo souvenir
@@ -698,7 +699,7 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
             e.target.value = "";
           }}
         />
-      </div>
+      </div>}
 
       {/* Demo mode button */}
       {importedFiles.length === 0 && (

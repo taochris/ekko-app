@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 
 interface ThemeCardProps {
   theme: "deuil" | "amitie" | "amour";
@@ -73,7 +72,6 @@ const themeConfig = {
 };
 
 export default function ThemeCard({ theme, index }: ThemeCardProps) {
-  const router = useRouter();
   const config = themeConfig[theme];
 
   return (
@@ -81,11 +79,8 @@ export default function ThemeCard({ theme, index }: ThemeCardProps) {
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, delay: index * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ scale: 1.03, y: -6 }}
-      onClick={() => router.push(`/theme/${theme}`)}
       style={{
         position: "relative",
-        cursor: "pointer",
         height: "100%",
       }}
     >
@@ -187,29 +182,6 @@ export default function ThemeCard({ theme, index }: ThemeCardProps) {
           </p>
         </div>
 
-        {/* CTA */}
-        <motion.button
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
-          style={{
-            position: "relative",
-            width: "100%",
-            padding: "14px 0",
-            borderRadius: 16,
-            border: "none",
-            background: config.ctaGradient,
-            color: "#fff",
-            fontFamily: "Georgia, serif",
-            fontSize: 13,
-            fontWeight: 500,
-            letterSpacing: "0.05em",
-            cursor: "pointer",
-            marginTop: "auto",
-            flexShrink: 0,
-          }}
-        >
-          {config.cta}
-        </motion.button>
       </div>
     </motion.div>
   );
