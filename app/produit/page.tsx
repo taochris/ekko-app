@@ -7,7 +7,8 @@ import BlobBackground from "../components/BlobBackground";
 const FORMATS = [
   {
     id: "etiquette-rect",
-    name: "Étiquette rectangulaire",
+    name: "Rectangulaire",
+    tagline: "Élégant, fin et vertical.",
     icon: (
       <svg viewBox="0 0 48 56" fill="none" style={{ width: 32, height: 36 }}>
         <rect x="6" y="6" width="36" height="46" rx="4" stroke="currentColor" strokeWidth="1.5" />
@@ -18,11 +19,15 @@ const FORMATS = [
     dimensions: "90 × 30 mm",
     description: "Grand format rectangulaire aux coins arrondis. Surface généreuse pour un QR code lisible et un prénom gravé en dessous.",
     image: "/images/produit/etiquette%20rectangulaire.png",
+    carousel: [
+      "/images/produit/etiquette rectangulaire.png",
+    ],
     outOfStock: false,
   },
   {
     id: "etiquette-arrondie",
-    name: "Étiquette arrondie",
+    name: "Arrondie",
+    tagline: "Doux, discret et symbolique.",
     icon: (
       <svg viewBox="0 0 40 56" fill="none" style={{ width: 28, height: 36 }}>
         <rect x="4" y="8" width="32" height="42" rx="16" stroke="currentColor" strokeWidth="1.5" />
@@ -33,11 +38,17 @@ const FORMATS = [
     dimensions: "50,8 × 31,8 mm",
     description: "Format compact aux extrémités en demi-cercle. Élégant et doux en main, idéal comme bijou du quotidien.",
     image: "/images/produit/etiquette_dimension.png",
+    carousel: [
+      "/images/produit/porteclef_format_arrondie/ChatGPT Image 30 mai 2026, 12_43_04 (1).png",
+      "/images/produit/porteclef_format_arrondie/ChatGPT Image 30 mai 2026, 12_43_05 (2).png",
+      "/images/produit/porteclef_format_arrondie/ChatGPT Image 30 mai 2026, 12_43_05 (3).png",
+    ],
     outOfStock: false,
   },
   {
     id: "carre",
     name: "Carré",
+    tagline: "Sobre, compact et lisible.",
     icon: (
       <svg viewBox="0 0 48 48" fill="none" style={{ width: 36, height: 36 }}>
         <rect x="8" y="8" width="32" height="32" rx="4" stroke="currentColor" strokeWidth="1.5" />
@@ -47,8 +58,14 @@ const FORMATS = [
     ),
     dimensions: "40 × 40 mm",
     description: "Format classique et épuré. Surface maximale pour un QR code lisible au premier coup d'œil.",
-    image: undefined,
-    outOfStock: true,
+    image: "/images/produit/etiquette%20carre.png",
+    carousel: [
+      "/images/produit/porteclef_format_carré/etiquette carre.png",
+      "/images/produit/porteclef_format_carré/ChatGPT Image 30 mai 2026, 12_36_56 (1).png",
+      "/images/produit/porteclef_format_carré/ChatGPT Image 30 mai 2026, 12_36_56 (2).png",
+      "/images/produit/porteclef_format_carré/ChatGPT Image 30 mai 2026, 12_36_57 (3).png",
+    ],
+    outOfStock: false,
   },
 ];
 
@@ -73,8 +90,17 @@ const MATERIALS = [
 export default function ProduitPage() {
   const [selectedFormat, setSelectedFormat] = useState("etiquette-rect");
   const [selectedMaterial, setSelectedMaterial] = useState("bois");
+  const [imgIndex, setImgIndex] = useState(0);
   const currentFormat = FORMATS.find((f) => f.id === selectedFormat) ?? FORMATS[0];
   const currentMaterial = MATERIALS.find((m) => m.id === selectedMaterial) ?? MATERIALS[0];
+  const carouselImages = currentFormat.carousel ?? [];
+
+  const chooseFormat = (id: string) => {
+    setSelectedFormat(id);
+    setImgIndex(0);
+  };
+  const nextImage = () => setImgIndex((i) => (i + 1) % carouselImages.length);
+  const prevImage = () => setImgIndex((i) => (i - 1 + carouselImages.length) % carouselImages.length);
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden" }}>
@@ -179,47 +205,77 @@ export default function ProduitPage() {
           }}>
             Choisissez le format
           </p>
+          {/* Holder full-bleed : fond pleine largeur écran couleur de l'image */}
           <div style={{
-            display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap",
+            position: "relative",
+            width: "100vw", left: "50%", right: "50%", marginLeft: "-50vw", marginRight: "-50vw",
+            background: "#120b09",
+            overflow: "hidden",
           }}>
-            {FORMATS.map((fmt) => (
-              <button
+            {/* Image comparative 16/9 centrée */}
+            <div style={{ position: "relative", width: "100%", maxWidth: 900, margin: "0 auto", aspectRatio: "16/9" }}>
+              <img
+                src="/images/produit/formats_differents.png"
+                alt="Comparatif des formats"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+              {/* Overlay sombre général */}
+              <div style={{ position: "absolute", inset: 0, background: "rgba(10,8,12,0.3)", pointerEvents: "none" }} />
+              {/* Dégradés latéraux : l'image fond dans le fond pleine largeur */}
+              <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "20%", background: "linear-gradient(to right, #120b09 0%, transparent 100%)", zIndex: 2, pointerEvents: "none" }} />
+              <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "20%", background: "linear-gradient(to left, #120b09 0%, transparent 100%)", zIndex: 2, pointerEvents: "none" }} />
+            </div>
+          </div>
+
+          {/* Conteneur boutons full-bleed — même couleur que l'image, dégradé vers le fond de page */}
+          <div style={{
+            position: "relative",
+            width: "100vw", left: "50%", marginLeft: "-50vw",
+            background: "linear-gradient(to bottom, #120b09 0%, #0d0909 40%, #0a0608 70%, transparent 100%)",
+            padding: "24px 0 56px",
+          }}>
+            {/* Zone centrée alignée sur l'image (maxWidth 900) — boutons remontés de 30px */}
+            <div style={{
+              maxWidth: 900, margin: "0 auto",
+              display: "flex", justifyContent: "center", gap: 16, padding: "0 24px",
+            }}>
+            {(["carre", "etiquette-rect", "etiquette-arrondie"] as const).map((id) => {
+              const fmt = FORMATS.find(f => f.id === id)!;
+              return (
+              <motion.button
                 key={fmt.id}
-                onClick={() => !fmt.outOfStock && setSelectedFormat(fmt.id)}
+                onClick={() => chooseFormat(fmt.id)}
+                whileHover={{ scale: 1.08, boxShadow: "0 12px 40px rgba(201,169,110,0.25), 0 0 0 1px rgba(201,169,110,0.35)" }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
-                  padding: "24px 32px", borderRadius: 20,
-                  cursor: fmt.outOfStock ? "not-allowed" : "pointer",
-                  background: selectedFormat === fmt.id ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.02)",
-                  border: `1px solid ${selectedFormat === fmt.id ? "rgba(201,169,110,0.4)" : fmt.outOfStock ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.06)"}`,
-                  color: fmt.outOfStock ? "rgba(240,232,216,0.25)" : selectedFormat === fmt.id ? "#c9a96e" : "rgba(240,232,216,0.5)",
-                  opacity: fmt.outOfStock ? 0.55 : 1,
-                  transition: "all 0.2s", minWidth: 130, position: "relative",
+                  flex: "1 1 0", maxWidth: 220,
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                  padding: "16px 20px", borderRadius: 16,
+                  cursor: "pointer",
+                  background: selectedFormat === fmt.id ? "rgba(201,169,110,0.12)" : "rgba(10,8,12,0.6)",
+                  border: `1px solid ${selectedFormat === fmt.id ? "rgba(201,169,110,0.5)" : "rgba(255,255,255,0.08)"}`,
+                  color: selectedFormat === fmt.id ? "#c9a96e" : "rgba(240,232,216,0.55)",
+                  backdropFilter: "blur(8px)",
                 }}
               >
-                <span style={{ color: "inherit" }}>{fmt.icon}</span>
                 <span style={{
-                  fontFamily: "Georgia, serif", fontSize: 13, letterSpacing: "0.05em",
+                  fontFamily: "Georgia, serif", fontSize: 14, letterSpacing: "0.05em",
                   fontWeight: selectedFormat === fmt.id ? 600 : 400,
                 }}>
                   {fmt.name}
                 </span>
                 <span style={{
-                  fontFamily: "Georgia, serif", fontSize: 10, color: "rgba(240,232,216,0.35)",
+                  fontFamily: "Georgia, serif", fontSize: 12, fontStyle: "italic",
+                  color: selectedFormat === fmt.id ? "rgba(201,169,110,0.85)" : "rgba(240,232,216,0.4)",
+                  letterSpacing: "0.03em",
                 }}>
-                  {fmt.dimensions}
+                  {fmt.tagline}
                 </span>
-                {fmt.outOfStock && (
-                  <span style={{
-                    fontSize: 9, padding: "2px 8px", borderRadius: 8,
-                    background: "rgba(255,100,80,0.12)", color: "rgba(255,140,120,0.7)",
-                    fontFamily: "Georgia, serif", letterSpacing: "0.05em",
-                  }}>
-                    Rupture de stock
-                  </span>
-                )}
-              </button>
-            ))}
+              </motion.button>
+              );
+            })}
+            </div>
           </div>
         </div>
 
@@ -291,8 +347,41 @@ export default function ProduitPage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden",
           }}>
-            {(currentFormat.image || currentMaterial.image) ? (
-              <img src={(currentFormat.image || currentMaterial.image)!} alt={`Porte-clés ${currentFormat.name} en ${currentMaterial.name}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {carouselImages.length > 0 ? (
+              <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                <img
+                  src={encodeURI(carouselImages[imgIndex] ?? carouselImages[0])}
+                  alt={`Porte-clés ${currentFormat.name} en ${currentMaterial.name}`}
+                  onClick={carouselImages.length > 1 ? nextImage : undefined}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", cursor: carouselImages.length > 1 ? "pointer" : "default", display: "block" }}
+                />
+                {carouselImages.length > 1 && (
+                  <>
+                    <button onClick={prevImage} aria-label="Image précédente" style={{
+                      position: "absolute", top: "50%", left: 12, transform: "translateY(-50%)", zIndex: 3,
+                      width: 38, height: 38, borderRadius: "50%", cursor: "pointer",
+                      background: "rgba(10,8,12,0.6)", border: "1px solid rgba(201,169,110,0.3)",
+                      color: "#c9a96e", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                      backdropFilter: "blur(6px)",
+                    }}>‹</button>
+                    <button onClick={nextImage} aria-label="Image suivante" style={{
+                      position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)", zIndex: 3,
+                      width: 38, height: 38, borderRadius: "50%", cursor: "pointer",
+                      background: "rgba(10,8,12,0.6)", border: "1px solid rgba(201,169,110,0.3)",
+                      color: "#c9a96e", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                      backdropFilter: "blur(6px)",
+                    }}>›</button>
+                    <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, zIndex: 3, display: "flex", justifyContent: "center", gap: 8 }}>
+                      {carouselImages.map((_, i) => (
+                        <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} style={{
+                          width: 8, height: 8, borderRadius: "50%", cursor: "pointer", border: "none", padding: 0,
+                          background: i === imgIndex ? "#c9a96e" : "rgba(240,232,216,0.3)",
+                        }} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             ) : (
               <div style={{ textAlign: "center", padding: 40 }}>
                 {/* Placeholder SVG adapté au format */}

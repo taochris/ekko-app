@@ -135,7 +135,7 @@ const STEPS_NUMERIQUE = [
     number: "3",
     title: "Recevez instantanément votre fichier",
     desc: "Écoutez. Téléchargez. Partagez. Offrez. Votre souvenir sonore est prêt.",
-    img: "",
+    img: "/images/steps/step3-numérique.png",
   },
 ];
 
