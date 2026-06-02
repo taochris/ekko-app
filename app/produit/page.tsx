@@ -20,7 +20,10 @@ const FORMATS = [
     description: "Grand format rectangulaire aux coins arrondis. Surface généreuse pour un QR code lisible et un prénom gravé en dessous.",
     image: "/images/produit/etiquette%20rectangulaire.png",
     carousel: [
-      "/images/produit/etiquette rectangulaire.png",
+      "/images/produit/porteclef_format_rectangulaire/etiquette rectangulaire.png",
+      "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 31 mai 2026, 11_59_03 (1).png",
+      "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 31 mai 2026, 11_59_04 (2).png",
+      "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 31 mai 2026, 11_59_04 (3).png",
     ],
     outOfStock: false,
   },
@@ -39,6 +42,7 @@ const FORMATS = [
     description: "Format compact aux extrémités en demi-cercle. Élégant et doux en main, idéal comme bijou du quotidien.",
     image: "/images/produit/etiquette_dimension.png",
     carousel: [
+      "/images/produit/porteclef_format_arrondie/etiquette_dimension.png",
       "/images/produit/porteclef_format_arrondie/ChatGPT Image 30 mai 2026, 12_43_04 (1).png",
       "/images/produit/porteclef_format_arrondie/ChatGPT Image 30 mai 2026, 12_43_05 (2).png",
       "/images/produit/porteclef_format_arrondie/ChatGPT Image 30 mai 2026, 12_43_05 (3).png",
@@ -78,7 +82,7 @@ const MATERIALS = [
     description:
       "Bois clair découpé et gravé au laser. Rendu chaleureux, toucher naturel, léger et résistant.",
     specs: ["Bois naturel", "Gravure laser", "Léger", "Toucher doux"],
-    price: "à venir",
+    price: "24,90 €",
     image: null,
     accent: "#c9a96e",
   },
@@ -507,6 +511,12 @@ export default function ProduitPage() {
                 color: currentMaterial.accent,
               }}>
                 {currentMaterial.price}
+              </span>
+              <span style={{
+                fontFamily: "Georgia, serif", fontSize: 11, fontStyle: "italic",
+                color: "rgba(240,232,216,0.4)", letterSpacing: "0.05em",
+              }}>
+                Expédition gratuite
               </span>
             </div>
           </div>

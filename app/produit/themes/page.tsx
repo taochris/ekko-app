@@ -63,6 +63,48 @@ const THEMES = [
   },
 ];
 
+const SCENES = [
+  {
+    id: "joie",
+    eyebrow: "La joie",
+    hook: "Vos fous rires ne s’effacent jamais.",
+    desc: "Un concentré de vos meilleurs moments — les vannes, les délires, les voix qu’on aime. Toujours dans votre poche, prêts à être réécoutés.",
+    points: [
+      "Vos messages les plus drôles réunis",
+      "Un cadeau complice entre amis",
+      "À réécouter quand le moral flanche",
+    ],
+    accent: "#f0a855",
+    media: { type: "image", src: "/images/themes/theme_amitie.png" },
+  },
+  {
+    id: "deuil",
+    eyebrow: "La mémoire",
+    hook: "Ne plus jamais appeler son répondeur juste pour entendre sa voix.",
+    desc: "Garder la voix de l’être disparu tout près de soi, sur ses clés. Choisissez les audios qui comptent — ils restent accessibles à tout moment, pour toujours.",
+    points: [
+      "Sa voix, sur vous, en permanence",
+      "Vous choisissez les enregistrements",
+      "Accessible d’un simple scan, à vie",
+    ],
+    accent: "#4db8c8",
+    media: { type: "video", src: "" },
+  },
+  {
+    id: "offrir",
+    eyebrow: "Offrir",
+    hook: "Une lettre, mais dite. Et qu’on n’égare jamais.",
+    desc: "Enregistrez un message rien que pour elle, pour lui. Gravé dans le bois, il devient un objet qu’on garde — bien plus qu’un audio perdu dans un téléphone.",
+    points: [
+      "Votre message, dit avec vos mots",
+      "Gravé dans le bois pour durer",
+      "Toujours là, toujours accessible",
+    ],
+    accent: "#e05580",
+    media: { type: "image", src: "/images/themes/theme_couple.png" },
+  },
+];
+
 export default function ProduitThemesPage() {
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden" }}>
