@@ -358,7 +358,7 @@ export default function HomePage() {
       <div style={{ position: "relative", zIndex: 10, overflow: "hidden", background: "rgb(10,8,12)" }}>
         {/* Image de fond — droite, décalage léger */}
         <img
-          src="/images/hero/ChatGPT Image 26 mai 2026, 12_51_29.png"
+          src="/images/hero/hero-ekko-porteclef.jpg"
           alt=""
           aria-hidden="true"
           style={{
