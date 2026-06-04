@@ -190,14 +190,14 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           <button
             onClick={() => router.push("/")}
             className="ekko-serif"
-            style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14, transition: "all 0.2s" }}
+            style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: "rgba(243,227,190,0.88)", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = accent + "15"; e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent + "60"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = accent + "80"; e.currentTarget.style.borderColor = accent + "30"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(243,227,190,0.88)"; e.currentTarget.style.borderColor = accent + "30"; }}
           >
             ← Retour
           </button>
           <button onClick={logout} className="ekko-serif"
-            style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: accent + "80", cursor: "pointer", fontSize: 14 }}>
+            style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: "rgba(243,227,190,0.88)", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase" }}>
             Deconnexion
           </button>
         </div>

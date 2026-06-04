@@ -68,8 +68,12 @@ function NavButton({ onClick, accent, children }: { onClick: () => void; accent:
       style={{
         background: hovered ? `${accent}18` : "rgba(255,255,255,0.05)",
         border: `1px solid ${hovered ? accent + "45" : "rgba(255,255,255,0.08)"}`,
-        color: hovered ? `${accent}` : "rgba(240,232,216,0.5)",
+        color: hovered ? `${accent}` : "rgba(243,227,190,0.88)",
         transform: hovered ? "scale(1.03)" : "scale(1)",
+        fontSize: 12,
+        fontWeight: 600,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
       }}
     >
       {children}

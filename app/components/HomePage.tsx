@@ -436,14 +436,14 @@ export default function HomePage() {
                 >
                   {PRODUITS_DROPDOWN.map((item) => (
                     <a key={item.href} href={item.href} style={{
-                      fontFamily: font, fontSize: 12, letterSpacing: "0.12em",
-                      textTransform: "uppercase", color: "rgba(240,232,216,0.7)",
+                      fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
+                      textTransform: "uppercase", color: "rgba(243,227,190,0.88)",
                       textDecoration: "none", padding: "10px 16px", borderRadius: 8,
                       transition: "background 0.15s, color 0.15s",
                       display: "block",
                     }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "rgba(201,169,110,0.08)"; (e.target as HTMLElement).style.color = "#c9a96e"; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; (e.target as HTMLElement).style.color = "rgba(240,232,216,0.7)"; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; (e.target as HTMLElement).style.color = "rgba(243,227,190,0.88)"; }}
                     >{item.text}</a>
                   ))}
                 </motion.div>

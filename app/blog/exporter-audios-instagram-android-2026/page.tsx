@@ -83,9 +83,9 @@ export default function ArticleInstagramAndroid() {
         <button
           onClick={() => router.push("/blog")}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(240,232,216,0.5)", cursor: "pointer" }}
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(243,227,190,0.88)", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase" }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(201,169,110,0.12)"; e.currentTarget.style.color = "rgba(201,169,110,0.9)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(240,232,216,0.5)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(243,227,190,0.88)"; }}
         >
           ← Blog
         </button>
