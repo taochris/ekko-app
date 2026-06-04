@@ -377,6 +377,9 @@ export default function FaqPage() {
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 10 }}>
               Si vous souhaitez conserver le lien et le QR code actifs plus longtemps, vous pouvez choisir une conservation d'<span style={{ color: accent }}>1 an (10,99 €)</span> ou <span style={{ color: accent }}>2 ans (11,99 €)</span> au moment de la création.
             </p>
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 10 }}>
+              Si vous commandez un <span style={{ color: accent }}>porte-clé physique</span>, le stockage est automatiquement étendu à <span style={{ color: accent }}>20 ans</span> — aucune action supplémentaire requise.
+            </p>
           </Accordion>
 
           <Accordion title="Puis-je prolonger la durée de stockage après coup ?">
@@ -440,7 +443,60 @@ export default function FaqPage() {
 
           </SectionAccordion>
 
-          {/* ── Section 5 : Importer mes audios ── */}
+          {/* ── Section 5 : Le support physique ── */}
+          <SectionAccordion title="📦 Le support physique (porte-clé)" marginTop={8}>
+
+          <Accordion title="Qu'est-ce que le porte-clé EKKO ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Le porte-clé EKKO est un objet en bois gravé au laser. Il contient un <span style={{ color: accent }}>QR code unique</span> et une <span style={{ color: accent }}>puce NFC intégrée</span>, tous deux liés à votre vocapsule. Il suffit de le scanner ou de l'approcher d'un téléphone pour que vos souvenirs audio s'ouvrent immédiatement.
+            </p>
+          </Accordion>
+
+          <Accordion title="Comment associer ma vocapsule au porte-clé ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Au moment de la commande du porte-clé, vous indiquez le lien de votre vocapsule. Ce lien est ensuite encodé dans le QR code gravé et dans la puce NFC. Le porte-clé est fabriqué et expédié avec votre vocapsule déjà liée.
+            </p>
+          </Accordion>
+
+          <Accordion title="Combien de temps le lien audio reste-t-il actif avec un porte-clé ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              L'achat d'un porte-clé inclut automatiquement un stockage de votre fichier audio pendant <span style={{ color: accent }}>20 ans</span>. Votre vocapsule reste accessible via le QR code et la NFC pendant toute cette durée, sans action supplémentaire de votre part.
+            </p>
+          </Accordion>
+
+          <Accordion title="Que se passe-t-il si ma vocapsule expire — le porte-clé cesse-t-il de fonctionner ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Non, si vous avez commandé un porte-clé. Le stockage de <span style={{ color: accent }}>20 ans</span> est inclus avec le support physique — votre vocapsule reste accessible pendant toute cette durée. C'est uniquement la version numérique seule (sans porte-clé) qui est soumise à une durée de 7 jours, 1 an ou 2 ans.
+            </p>
+          </Accordion>
+
+          <Accordion title="La puce NFC fonctionne-t-elle sur tous les téléphones ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              La NFC fonctionne sur la grande majorité des smartphones récents : <span style={{ color: accent }}>iPhone 7 et versions ultérieures</span> (sans app), et la plupart des Android depuis 2015. Il suffit d'approcher le téléphone du porte-clé sans avoir à ouvrir une application. Si votre téléphone ne supporte pas la NFC, le <span style={{ color: accent }}>QR code</span> fonctionne sur tous les appareils équipés d'un appareil photo.
+            </p>
+          </Accordion>
+
+          <Accordion title="Puis-je commander le porte-clé sans avoir encore créé ma vocapsule ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Non. La vocapsule doit exister avant la commande du porte-clé, car c'est son lien qui est gravé sur l'objet. Créez d'abord votre vocapsule, puis commandez le support physique.
+            </p>
+          </Accordion>
+
+          <Accordion title="Puis-je changer la vocapsule liée au porte-clé après réception ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Non. Le QR code est gravé dans le bois de façon permanente — il ne peut pas être modifié après fabrication. La puce NFC, en revanche, pourrait techniquement être réécrite, mais ce n'est pas une fonctionnalité proposée actuellement.
+            </p>
+          </Accordion>
+
+          <Accordion title="Quel est le délai de livraison ?">
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Comptez <span style={{ color: accent }}>5 à 7 jours ouvrés</span> entre la commande et la réception : 2 à 3 jours pour la fabrication (gravure laser, intégration NFC) et 2 à 4 jours pour l'expédition. L'expédition est <span style={{ color: accent }}>gratuite</span>.
+            </p>
+          </Accordion>
+
+          </SectionAccordion>
+
+          {/* ── Section 6 : Importer mes audios ── */}
           <SectionAccordion title="📥 Importer mes audios" marginTop={8}>
 
           <Accordion title="Puis-je importer autre chose que des audios ?">

@@ -271,7 +271,7 @@ export default function HomePage() {
           .hp-nav-links { display: none !important; }
           .hp-hero-inner { flex-direction: column !important; text-align: center !important; padding: 40px 20px !important; }
           .hp-hero-text { align-items: center !important; }
-          .hp-hero-visual { display: none !important; }
+          .hp-hero-visual { justify-content: center !important; }
           .hp-features-bar { flex-wrap: wrap !important; gap: 24px !important; padding: 40px 20px !important; }
           .hp-features-bar > div { flex: 1 1 140px !important; }
           .hp-steps-grid { flex-direction: column !important; gap: 32px !important; padding: 0 20px !important; }
@@ -355,23 +355,23 @@ export default function HomePage() {
       <BlobBackground variant="home" />
 
       {/* ═══ BLOC UNIFIÉ : nav + hero + features sur même fond ═══ */}
-      <div style={{ position: "relative", zIndex: 10, overflow: "hidden" }}>
-        {/* Image de fond commune */}
+      <div style={{ position: "relative", zIndex: 10, overflow: "hidden", background: "rgb(10,8,12)" }}>
+        {/* Image de fond — droite, décalage léger */}
         <img
           src="/images/hero/ChatGPT Image 26 mai 2026, 12_51_29.png"
           alt=""
           aria-hidden="true"
           style={{
-            position: "absolute", inset: 0,
-            width: "100%", height: "100%",
-            objectFit: "cover", objectPosition: "center center",
+            position: "absolute", top: 0, right: 0, bottom: 0,
+            width: "72%", height: "100%",
+            objectFit: "cover", objectPosition: "left center",
             zIndex: 0,
           }}
         />
-        {/* Fondu gauche */}
+        {/* Fondu de transition gauche → image droite */}
         <div style={{
           position: "absolute", inset: 0, zIndex: 1,
-          background: "linear-gradient(90deg, rgba(10,8,12,1) 0%, rgba(10,8,12,0.92) 12%, rgba(10,8,12,0.6) 42%, rgba(10,8,12,0.05) 72%, transparent 100%)",
+          background: "linear-gradient(90deg, rgba(10,8,12,1) 0%, rgba(10,8,12,1) 28%, rgba(10,8,12,0.82) 44%, rgba(10,8,12,0.2) 65%, transparent 100%)",
         }} />
         {/* Fondu bas */}
         <div style={{
@@ -385,14 +385,19 @@ export default function HomePage() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "20px 48px", boxSizing: "border-box",
       }} className="hp-nav">
-        <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-          <span style={{
-            fontFamily: "Georgia, serif", fontSize: isMobile ? 22 : 28,
-            fontWeight: 400, letterSpacing: "0.12em", textTransform: "uppercase",
-            color: "#c9a96e", lineHeight: 1,
-          }}>VOS</span>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: isMobile ? 50 : 70, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
-        </a>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+            <span style={{
+              fontFamily: "Georgia, serif", fontSize: isMobile ? 22 : 28,
+              fontWeight: 400, letterSpacing: "0.12em", textTransform: "uppercase",
+              color: "#c9a96e", lineHeight: 1,
+            }}>VOS</span>
+            <img src="/ekko-logo.png" alt="EKKO" style={{ height: isMobile ? 50 : 70, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          </a>
+          <p style={{ fontFamily: font, fontSize: 9, letterSpacing: "0.38em", textTransform: "uppercase", color: "rgba(201,169,110,0.55)", margin: 0, paddingLeft: 4 }}>
+            Vos émotions, à portée de main.
+          </p>
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 28 }} className="hp-nav-links">
           {/* Dropdown Produits */}
           <div
@@ -535,49 +540,69 @@ export default function HomePage() {
         display: "flex", alignItems: "center",
       }}>
 
-        {/* Conteneur centré pour grands écrans */}
-        <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9 }}
-            style={{
-              maxWidth: 560, padding: "80px 56px",
-              display: "flex", flexDirection: "column", gap: 24,
-              textAlign: "center", alignItems: "center",
-            }}
-            className="hp-hero-text"
-          >
-            <p style={{
-              fontFamily: font, fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase",
-              color: "rgba(201,169,110,0.7)", margin: 0,
-            }}>
-              Vos émotions, à portée de main.
-            </p>
-            <h1 style={{
-              fontFamily: font, fontWeight: 300,
-              fontSize: "clamp(2.2rem, 5vw, 3.6rem)", lineHeight: 1.1,
-              color: cream, margin: 0,
-            }}>
-              La voix<br />
-              qu&apos;on garde<br />
-              <em style={{ fontStyle: "italic", color: gold }}>sur soi.</em>
-            </h1>
-            <p style={{
-              fontFamily: font, fontSize: 14, lineHeight: 1.8,
-              color: "rgba(240,232,216,0.65)", maxWidth: 420, margin: 0,
-            }}>
-              Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
-              <span className="voca-wrap">
-                vocapsule
-                <span className="voca-sup">*</span>
-                <span className="voca-tooltip">
-                  Fichier audio unique créé à partir des messages vocaux que vous avez choisis.
-                </span>
-              </span>
-              {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Conteneur héro */}
+        <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px", alignItems: "flex-end" }} className="hp-hero-inner">
+            {/* Ligne 1 : vidéo + texte côte à côte, même taille */}
+            <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
+              {/* Vidéo */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.9 }}
+                className="hp-hero-visual"
+                style={{ flexShrink: 0 }}
+              >
+                <div style={{
+                  width: 240, height: 290, borderRadius: 20, overflow: "hidden",
+                  border: "1px solid rgba(201,169,110,0.22)",
+                  boxShadow: "0 0 40px rgba(201,169,110,0.08)",
+                }}>
+                  <video
+                    autoPlay muted loop playsInline preload="metadata"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  >
+                    <source src="/images/video/Replace_name_on_smartphone_screen_202606022004.mp4" type="video/mp4" />
+                  </video>
+                </div>
+              </motion.div>
+              {/* Texte — même largeur et hauteur que le conteneur vidéo, fond transparent sans bordure */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.9 }}
+                className="hp-hero-text"
+                style={{ flexShrink: 0 }}
+              >
+                <div style={{
+                  width: 240, height: 290,
+                  display: "flex", alignItems: "center", padding: "0 8px",
+                  boxSizing: "border-box",
+                }}>
+                  <p style={{
+                    fontFamily: font, fontSize: 14, lineHeight: 1.8,
+                    color: "rgba(240,232,216,0.65)", margin: 0,
+                  }}>
+                    Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
+                    <span className="voca-wrap">
+                      vocapsule
+                      <span className="voca-sup">*</span>
+                      <span className="voca-tooltip">
+                        Découvrez ce qu&apos;est une vocapsule dans la page &laquo;&nbsp;Comment ça marche&nbsp;&raquo;.
+                      </span>
+                    </span>
+                    {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+            {/* Ligne 2 : boutons centrés sous les deux conteneurs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.2 }}
+              style={{ display: "flex", flexDirection: "column", gap: 12, width: 504, alignItems: "stretch" }}
+            >
               <a href="/produit" className="hp-hero-btn-primary">
                 Créer mon porte-clé
               </a>
@@ -585,7 +610,7 @@ export default function HomePage() {
                 Créer mon fichier numérique
               </a>
               <a href="/comment-ca-marche" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
+                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
                 fontFamily: font, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase",
                 color: "rgba(240,232,216,0.5)", textDecoration: "none", marginTop: 4,
               }}>
@@ -595,8 +620,8 @@ export default function HomePage() {
                 }}>+</span>
                 Découvrir comment ça marche
               </a>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
 
         {/* Note bas droite */}
@@ -657,10 +682,19 @@ export default function HomePage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
+          style={{ marginBottom: 48 }}
         >
+          <h2 style={{
+            fontFamily: font, fontWeight: 300,
+            fontSize: "clamp(2.2rem, 5vw, 3.2rem)", lineHeight: 1.15,
+            color: cream, margin: "0 0 12px",
+          }}>
+            La voix qu&apos;on garde{" "}
+            <em style={{ fontStyle: "italic", color: gold }}>sur soi.</em>
+          </h2>
           <p style={{
             fontFamily: font, fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase",
-            color: "rgba(201,169,110,0.5)", marginBottom: 16,
+            color: "rgba(201,169,110,0.5)", marginBottom: 0,
           }}>Vos univers. Vos émotions.</p>
         </motion.div>
 

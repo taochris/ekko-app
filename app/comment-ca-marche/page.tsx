@@ -127,12 +127,12 @@ export default function CommentCamarchePage() {
         <h2 style={{ fontFamily: font, fontWeight: 300, fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: cream, marginBottom: 48, textAlign: "center", lineHeight: 1.3 }}>
           Avant, il fallait chercher.{" "}<em style={{ fontStyle: "italic", color: gold }}>Maintenant, il suffit d'écouter.</em>
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start", marginBottom: 32 }} className="avant-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "stretch", marginBottom: 32 }} className="avant-grid">
           <div style={{ background: "rgba(28,24,24,0.85)", border: "2px solid rgba(220,60,60,0.45)", borderRadius: 20, padding: "24px 20px" }}>
             <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(252,157,157,0.85)", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avant Ekko</p>
             {["Chercher dans plusieurs applications", "Faire défiler des années de messages", "Devoir écouter les audios 1 par 1", "Ouvrir des audios inutiles", "Dépendre d'un ancien téléphone", "Risque de perte ou de suppression"].map((item) => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12, fontFamily: font, fontSize: 13, color: "rgb(252,157,157)", lineHeight: 1.5 }}>
-                <span style={{ flexShrink: 0, marginTop: 3, color: "rgba(252,157,157,0.45)" }}>—</span>{item}
+                <span style={{ flexShrink: 0, minWidth: 14, marginTop: 3, color: "rgba(252,157,157,0.45)", display: "inline-block" }}>—</span>{item}
               </div>
             ))}
           </div>
@@ -140,7 +140,7 @@ export default function CommentCamarchePage() {
             <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "#4ee6d1", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avec Ekko</p>
             {["Les bons audios sont réunis", "Le souvenir reste toujours au même endroit", "Le QR code ouvre directement l'écoute", "La puce NFC fonctionne en approchant le téléphone", "Toujours avec soi, partout où vous allez", "Une seconde suffit"].map((item, idx) => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12, fontFamily: font, fontSize: 13, color: "#c8ffe9", lineHeight: 1.5 }}>
-                <span style={{ width: 5, height: 5, borderRadius: "50%", background: idx === 4 ? "#ff9f7a" : "#4ee6d1", display: "inline-block", flexShrink: 0, marginTop: 4 }} />{item}
+                <span style={{ minWidth: 14, display: "inline-flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, marginTop: 4 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: idx === 4 ? "#ff9f7a" : "#4ee6d1", display: "inline-block" }} /></span>{item}
               </div>
             ))}
           </div>
