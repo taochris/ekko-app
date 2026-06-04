@@ -548,7 +548,7 @@ export default function HomePage() {
 
         {/* Conteneur héro */}
         <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px", alignItems: "flex-end" }} className="hp-hero-inner">
+          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px", alignItems: "flex-start" }} className="hp-hero-inner">
             {/* Ligne 1 : vidéo + texte côte à côte, même taille */}
             <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
               {/* Vidéo */}
