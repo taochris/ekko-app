@@ -406,8 +406,8 @@ export default function HomePage() {
             onMouseLeave={() => setOpenProduits(false)}
           >
             <button style={{
-              fontFamily: font, fontSize: 15, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase",
-              color: openProduits ? "#e8c98a" : "#f3ead6",
+              fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
+              color: openProduits ? "#e8c98a" : "rgba(243,227,190,0.88)",
               background: "none", border: "none", cursor: "pointer",
               padding: 0, transition: "color 0.2s", display: "flex", alignItems: "center", gap: 5,
             }}>
@@ -452,19 +452,19 @@ export default function HomePage() {
           </div>
           {NAV_LINKS.map((l) => (
             <a key={l.href} href={l.href} style={{
-              fontFamily: font, fontSize: 15, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase",
-              color: "#f3ead6", textDecoration: "none", transition: "color 0.2s",
+              fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
+              color: "rgba(243,227,190,0.88)", textDecoration: "none", transition: "color 0.2s",
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#e8c98a"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#f3ead6"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(243,227,190,0.88)"; }}
             >{l.text}</a>
           ))}
           <a href="/compte" style={{
-            fontFamily: font, fontSize: 15, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase",
-            color: "#f3ead6", textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
+            fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
+            color: "rgba(243,227,190,0.88)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#e8c98a"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "#f3ead6"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(243,227,190,0.88)"; }}
           >
             <svg viewBox="0 0 20 20" fill="none" style={{ width: 14, height: 14 }}>
               <circle cx="10" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />

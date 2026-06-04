@@ -20,7 +20,7 @@ export default function CommentCamarchePage() {
         </a>
         <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "flex-end" }} className="nav-links">
           {[{ label: "La vocapsule", href: "/comment-ca-marche" }, { label: "L'objet", href: "/produit" }, { label: "Les usages", href: "/produit/themes" }, { label: "Créer", href: "/" }].map(({ label, href }) => (
-            <a key={href} href={href} style={{ fontFamily: font, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(240,232,216,0.45)", textDecoration: "none" }}>{label}</a>
+            <a key={href} href={href} style={{ fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(243,227,190,0.88)", textDecoration: "none" }}>{label}</a>
           ))}
         </div>
       </nav>
