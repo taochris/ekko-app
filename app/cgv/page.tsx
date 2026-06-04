@@ -72,7 +72,7 @@ export default function CGVPage() {
           style={{
             background: "rgba(255,255,255,0.05)",
             border: "1px solid rgba(255,255,255,0.08)",
-            color: "rgba(243,227,190,0.88)",
+            color: "rgba(187,178,156,0.88)",
             cursor: "pointer",
             fontSize: 12,
             fontWeight: 600,
@@ -85,7 +85,7 @@ export default function CGVPage() {
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            e.currentTarget.style.color = "rgba(243,227,190,0.88)";
+            e.currentTarget.style.color = "rgba(187,178,156,0.88)";
           }}
         >
           ← Retour

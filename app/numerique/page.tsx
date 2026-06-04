@@ -79,7 +79,7 @@ export default function NumeriquePage() {
         </a>
         <a href="/" style={{
           fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
-          textTransform: "uppercase", color: "rgba(243,227,190,0.88)",
+          textTransform: "uppercase", color: "rgba(187,178,156,0.88)",
           textDecoration: "none",
         }}>
           ← Retour à l&apos;accueil

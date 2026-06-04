@@ -407,7 +407,7 @@ export default function HomePage() {
           >
             <button style={{
               fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
-              color: openProduits ? "#e8c98a" : "rgba(243,227,190,0.88)",
+              color: openProduits ? "#e8c98a" : "rgba(187,178,156,0.88)",
               background: "none", border: "none", cursor: "pointer",
               padding: 0, transition: "color 0.2s", display: "flex", alignItems: "center", gap: 5,
             }}>
@@ -437,13 +437,13 @@ export default function HomePage() {
                   {PRODUITS_DROPDOWN.map((item) => (
                     <a key={item.href} href={item.href} style={{
                       fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
-                      textTransform: "uppercase", color: "rgba(243,227,190,0.88)",
+                      textTransform: "uppercase", color: "rgba(187,178,156,0.88)",
                       textDecoration: "none", padding: "10px 16px", borderRadius: 8,
                       transition: "background 0.15s, color 0.15s",
                       display: "block",
                     }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "rgba(201,169,110,0.08)"; (e.target as HTMLElement).style.color = "#c9a96e"; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; (e.target as HTMLElement).style.color = "rgba(243,227,190,0.88)"; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; (e.target as HTMLElement).style.color = "rgba(187,178,156,0.88)"; }}
                     >{item.text}</a>
                   ))}
                 </motion.div>
@@ -453,18 +453,18 @@ export default function HomePage() {
           {NAV_LINKS.map((l) => (
             <a key={l.href} href={l.href} style={{
               fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
-              color: "rgba(243,227,190,0.88)", textDecoration: "none", transition: "color 0.2s",
+              color: "rgba(187,178,156,0.88)", textDecoration: "none", transition: "color 0.2s",
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#e8c98a"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(243,227,190,0.88)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(187,178,156,0.88)"; }}
             >{l.text}</a>
           ))}
           <a href="/compte" style={{
             fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
-            color: "rgba(243,227,190,0.88)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
+            color: "rgba(187,178,156,0.88)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#e8c98a"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(243,227,190,0.88)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(187,178,156,0.88)"; }}
           >
             <svg viewBox="0 0 20 20" fill="none" style={{ width: 14, height: 14 }}>
               <circle cx="10" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />

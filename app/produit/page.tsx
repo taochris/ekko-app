@@ -121,7 +121,7 @@ export default function ProduitPage() {
         </a>
         <a href="/" style={{
           fontFamily: "Georgia, serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
-          textTransform: "uppercase", color: "rgba(243,227,190,0.88)",
+          textTransform: "uppercase", color: "rgba(187,178,156,0.88)",
           textDecoration: "none", transition: "color 0.2s",
         }}>
           ← Retour à l&apos;accueil
