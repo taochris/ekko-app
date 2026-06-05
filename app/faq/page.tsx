@@ -300,7 +300,7 @@ export default function FaqPage() {
         <button
           onClick={() => router.back()}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(240,232,216,0.5)" }}
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(187,178,156,0.88)", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase" }}
         >
           ← Retour
         </button>

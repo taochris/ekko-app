@@ -71,8 +71,12 @@ export default function ComptePage() {
           style={{
             background: "rgba(255,255,255,0.05)",
             border: "1px solid rgba(255,255,255,0.08)",
-            color: "rgba(240,232,216,0.5)",
+            color: "rgba(187,178,156,0.88)",
             cursor: "pointer",
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "rgba(201,169,110,0.12)";
@@ -82,7 +86,7 @@ export default function ComptePage() {
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "rgba(255,255,255,0.05)";
             e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-            e.currentTarget.style.color = "rgba(240,232,216,0.5)";
+            e.currentTarget.style.color = "rgba(187,178,156,0.88)";
           }}
         >
           ← Retour

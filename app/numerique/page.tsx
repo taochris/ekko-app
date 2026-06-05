@@ -78,8 +78,8 @@ export default function NumeriquePage() {
           <img src="/ekko-logo.png" alt="EKKO" style={{ height: 60, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </a>
         <a href="/" style={{
-          fontFamily: font, fontSize: 12, letterSpacing: "0.2em",
-          textTransform: "uppercase", color: "rgba(240,232,216,0.5)",
+          fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
+          textTransform: "uppercase", color: "rgba(187,178,156,0.88)",
           textDecoration: "none",
         }}>
           ← Retour à l&apos;accueil

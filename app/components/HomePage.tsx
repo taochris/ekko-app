@@ -358,7 +358,7 @@ export default function HomePage() {
       <div style={{ position: "relative", zIndex: 10, overflow: "hidden", background: "rgb(10,8,12)" }}>
         {/* Image de fond — droite, décalage léger */}
         <img
-          src="/images/hero/ChatGPT Image 26 mai 2026, 12_51_29.png"
+          src="/images/hero/hero-ekko-porteclef.jpg"
           alt=""
           aria-hidden="true"
           style={{
@@ -406,8 +406,8 @@ export default function HomePage() {
             onMouseLeave={() => setOpenProduits(false)}
           >
             <button style={{
-              fontFamily: font, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-              color: openProduits ? "rgba(201,169,110,0.9)" : "rgba(240,232,216,0.45)",
+              fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
+              color: openProduits ? "#e8c98a" : "rgba(187,178,156,0.88)",
               background: "none", border: "none", cursor: "pointer",
               padding: 0, transition: "color 0.2s", display: "flex", alignItems: "center", gap: 5,
             }}>
@@ -436,14 +436,14 @@ export default function HomePage() {
                 >
                   {PRODUITS_DROPDOWN.map((item) => (
                     <a key={item.href} href={item.href} style={{
-                      fontFamily: font, fontSize: 12, letterSpacing: "0.12em",
-                      textTransform: "uppercase", color: "rgba(240,232,216,0.7)",
+                      fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
+                      textTransform: "uppercase", color: "rgba(187,178,156,0.88)",
                       textDecoration: "none", padding: "10px 16px", borderRadius: 8,
                       transition: "background 0.15s, color 0.15s",
                       display: "block",
                     }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "rgba(201,169,110,0.08)"; (e.target as HTMLElement).style.color = "#c9a96e"; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; (e.target as HTMLElement).style.color = "rgba(240,232,216,0.7)"; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; (e.target as HTMLElement).style.color = "rgba(187,178,156,0.88)"; }}
                     >{item.text}</a>
                   ))}
                 </motion.div>
@@ -452,14 +452,20 @@ export default function HomePage() {
           </div>
           {NAV_LINKS.map((l) => (
             <a key={l.href} href={l.href} style={{
-              fontFamily: font, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-              color: "rgba(240,232,216,0.45)", textDecoration: "none", transition: "color 0.2s",
-            }}>{l.text}</a>
+              fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
+              color: "rgba(187,178,156,0.88)", textDecoration: "none", transition: "color 0.2s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#e8c98a"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(187,178,156,0.88)"; }}
+            >{l.text}</a>
           ))}
           <a href="/compte" style={{
-            fontFamily: font, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-            color: "rgba(240,232,216,0.45)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
-          }}>
+            fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase",
+            color: "rgba(187,178,156,0.88)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#e8c98a"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(187,178,156,0.88)"; }}
+          >
             <svg viewBox="0 0 20 20" fill="none" style={{ width: 14, height: 14 }}>
               <circle cx="10" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
               <path d="M2 18 C2 14 6 12 10 12 C14 12 18 14 18 18" stroke="currentColor" strokeWidth="1.5" />
@@ -542,7 +548,7 @@ export default function HomePage() {
 
         {/* Conteneur héro */}
         <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px", alignItems: "flex-end" }} className="hp-hero-inner">
+          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px", alignItems: "flex-start" }} className="hp-hero-inner">
             {/* Ligne 1 : vidéo + texte côte à côte, même taille */}
             <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
               {/* Vidéo */}
