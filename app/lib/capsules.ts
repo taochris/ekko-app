@@ -19,6 +19,15 @@ export interface Capsule {
   accentColor: string;
   storageOption: number;
   uploadId: string;
+  productType?: "numerique" | "porteClef";
+  engraveName?: string;
+  format?: string;
+  material?: string;
+  shippingStatus?: "pending" | "to_engrave" | "shipped";
+  shippingName?: string;
+  shippingAddress?: string;
+  customerPhone?: string;
+  customerEmail?: string;
   sessionId?: string;
   echoId?: string;
   audioUrl?: string;
@@ -39,9 +48,15 @@ export async function createCapsule(data: {
   accentColor: string;
   storageOption: number;
   uploadId: string;
+  productType?: "numerique" | "porteClef";
+  engraveName?: string;
+  format?: string;
+  material?: string;
+  customerEmail?: string;
 }): Promise<string> {
   const db = getAdminFirestore();
   const ref = db.collection(COLLECTION).doc();
+  const isPorteClef = data.productType === "porteClef";
   await ref.set({
     status: "pending" as CapsuleStatus,
     uid: data.uid,
@@ -49,6 +64,14 @@ export async function createCapsule(data: {
     accentColor: data.accentColor,
     storageOption: data.storageOption,
     uploadId: data.uploadId,
+    productType: data.productType ?? "numerique",
+    ...(isPorteClef ? {
+      engraveName: data.engraveName ?? "",
+      format: data.format ?? "",
+      material: data.material ?? "bois",
+      shippingStatus: "pending" as const,
+    } : {}),
+    ...(data.customerEmail ? { customerEmail: data.customerEmail } : {}),
     createdAt: FieldValue.serverTimestamp(),
   });
   return ref.id;
@@ -74,6 +97,14 @@ export async function getCapsule(id: string): Promise<Capsule | null> {
     accentColor: String(raw.accentColor ?? "#c9a96e"),
     storageOption: Number(raw.storageOption ?? 0),
     uploadId: String(raw.uploadId ?? ""),
+    productType: raw.productType,
+    engraveName: raw.engraveName,
+    format: raw.format,
+    material: raw.material,
+    shippingStatus: raw.shippingStatus,
+    shippingName: raw.shippingName,
+    shippingAddress: raw.shippingAddress,
+    customerPhone: raw.customerPhone,
     sessionId: raw.sessionId,
     echoId: raw.echoId,
     audioUrl: raw.audioUrl,

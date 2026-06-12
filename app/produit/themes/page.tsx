@@ -1,5 +1,7 @@
 "use client";
+import { Suspense } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import BlobBackground from "../../components/BlobBackground";
 
 const font = "Georgia, serif";
@@ -105,7 +107,10 @@ const SCENES = [
   },
 ];
 
-export default function ProduitThemesPage() {
+function ProduitThemesContent() {
+  const searchParams = useSearchParams();
+  const format = searchParams.get("format");
+  const formatQuery = format ? `?format=${format}` : "";
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden" }}>
       <BlobBackground variant="home" />
@@ -174,7 +179,7 @@ export default function ProduitThemesPage() {
           {THEMES.map((theme, i) => (
             <motion.a
               key={theme.id}
-              href={`/theme-porteClef/${theme.id}`}
+              href={`/theme-porteClef/${theme.id}${formatQuery}`}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: i * 0.12 }}
@@ -317,5 +322,13 @@ export default function ProduitThemesPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function ProduitThemesPage() {
+  return (
+    <Suspense>
+      <ProduitThemesContent />
+    </Suspense>
   );
 }

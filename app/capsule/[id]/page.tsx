@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, use } from "react";
+import { useEffect, useRef, useState, useMemo, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import BlobBackground from "../../components/BlobBackground";
@@ -19,6 +19,10 @@ interface CapsuleState {
   expiresAt: string | null;
   error: string | null;
   uid: string;
+  productType?: "numerique" | "porteClef";
+  engraveName?: string | null;
+  format?: string | null;
+  shippingStatus?: string | null;
 }
 
 const themeVariants: Record<string, "deuil" | "amitie" | "amour" | "home"> = {
@@ -78,6 +82,7 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
     let cancelled = false;
 
     const loop = async () => {
+      if (cancelled) return;
       const data = await fetchStatus();
       if (cancelled) return;
       if (!data) return;
@@ -90,7 +95,7 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
       }
 
       // Dev bypass : pas de session_id mais compte dev → court-circuiter le paiement
-      const isDevBypass = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID;
+      const isDevBypass = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID || process.env.NODE_ENV === "development";
       if (!sessionId && data.status === "pending" && !claimedRef.current && isDevBypass) {
         claimedRef.current = true;
         fetch(`/api/capsules/${id}/dev-claim`, { method: "POST" })
@@ -98,13 +103,24 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
       }
 
       if (data.status === "ready" || data.status === "failed") {
+        cancelled = true;
+        if (pollRef.current) clearInterval(pollRef.current);
+        return;
+      }
+      // Pour un porte-clé : arrêter dès que statut != pending
+      // OU dès que session_id est présent (Stripe redirect = paiement confirmé)
+      if (data.productType === "porteClef" && (data.status !== "pending" || !!sessionId)) {
+        cancelled = true;
         if (pollRef.current) clearInterval(pollRef.current);
         return;
       }
     };
 
-    loop();
-    pollRef.current = setInterval(loop, 2500);
+    loop().then(() => {
+      if (!cancelled) {
+        pollRef.current = setInterval(loop, 2500);
+      }
+    });
     return () => {
       cancelled = true;
       if (pollRef.current) clearInterval(pollRef.current);
@@ -162,8 +178,25 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
           </p>
         )}
 
-        {capsule && (capsule.status === "pending" || capsule.status === "paid" || capsule.status === "processing") && (
+        {/* ── Porte-clé : succès dès que paid OU session_id présent (Stripe redirect) ── */}
+        {capsule && capsule.productType === "porteClef" && capsule.status === "pending" && !sessionId && (
           <ProcessingScreen status={capsule.status} accent={accent} />
+        )}
+        {capsule && capsule.productType === "porteClef" && (capsule.status !== "pending" || !!sessionId) && capsule.status !== "failed" && (
+          <KeychainSuccessScreen capsule={capsule} accent={accent} />
+        )}
+
+        {/* ── Numérique : flux processing / ready / failed ── */}
+        {capsule && capsule.productType !== "porteClef" && (capsule.status === "pending" || capsule.status === "paid" || capsule.status === "processing") && (
+          <ProcessingScreen status={capsule.status} accent={accent} />
+        )}
+        {capsule && capsule.productType !== "porteClef" && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
+          <EchoRevealScreen
+            config={{ accent, accentDim: accent + "60" }}
+            echoId={capsule.echoId}
+            audioUrl={capsule.audioUrl}
+            uid={capsule.uid}
+          />
         )}
 
         {capsule && capsule.status === "failed" && (
@@ -174,17 +207,136 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
             retrying={retrying}
           />
         )}
-
-        {capsule && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
-          <EchoRevealScreen
-            config={{ accent, accentDim: accent + "60" }}
-            echoId={capsule.echoId}
-            audioUrl={capsule.audioUrl}
-            uid={capsule.uid}
-          />
-        )}
       </div>
     </div>
+  );
+}
+
+// ─── Confetti ────────────────────────────────────────────────────────────────
+function ConfettiRain({ accent }: { accent: string }) {
+  const particles = useMemo(() => {
+    const colors = [accent, "#f0e8d8", "#c9a96e", "#e8d5a8", "#ffffff", "#f5c518"];
+    return Array.from({ length: 55 }, (_, i) => ({
+      id: i,
+      left: `${(i * 37 + 3) % 100}%`,
+      delay: (i * 0.09) % 2.2,
+      duration: 2.4 + (i * 0.08) % 1.8,
+      color: colors[i % colors.length],
+      w: 5 + (i % 6),
+      h: 3 + (i % 4),
+      dx: ((i % 18) - 9) * 10,
+    }));
+  }, [accent]);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 200, overflow: "hidden" }}>
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          initial={{ y: -24, x: 0, opacity: 1, rotate: 0 }}
+          animate={{ y: "110vh", x: p.dx, opacity: 0, rotate: 540 }}
+          transition={{ duration: p.duration, delay: p.delay, ease: "linear" }}
+          style={{
+            position: "absolute", left: p.left, top: 0,
+            width: p.w, height: p.h,
+            background: p.color, borderRadius: 2,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Page succès porte-clé ───────────────────────────────────────────────────
+function KeychainSuccessScreen({ capsule, accent }: { capsule: CapsuleState; accent: string }) {
+  const [showConfetti, setShowConfetti] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowConfetti(false), 5500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const formatLabel: Record<string, string> = {
+    "etiquette-rect":     "Rectangulaire · 50×30 mm",
+    "etiquette-arrondie": "Arrondie · 50,8×31,8 mm",
+    "carre":              "Carré · 40×40 mm",
+  };
+
+  return (
+    <>
+      {showConfetti && <ConfettiRain accent={accent} />}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+        style={{ textAlign: "center", padding: "12px 0 32px" }}
+      >
+        {/* Checkmark animé */}
+        <motion.div
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.25 }}
+          style={{
+            width: 76, height: 76, borderRadius: "50%",
+            background: `linear-gradient(135deg, ${accent}25, ${accent}45)`,
+            border: `2px solid ${accent}70`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 24px",
+          }}
+        >
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.2">
+            <motion.path
+              strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"
+              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            />
+          </svg>
+        </motion.div>
+
+        <p style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.4em", textTransform: "uppercase", color: `${accent}90`, marginBottom: 8 }}>
+          Commande confirmée
+        </p>
+        <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 300, fontSize: 27, color: "#f0e8d8", marginBottom: 10, lineHeight: 1.3 }}>
+          Merci pour votre commande ✦
+        </h2>
+        <p style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "rgba(240,232,216,0.5)", marginBottom: 32, maxWidth: 340, margin: "0 auto 32px", lineHeight: 1.75, fontStyle: "italic" }}>
+          Votre porte-clé est en cours de fabrication. Un email de confirmation vous a été envoyé.
+        </p>
+
+        {/* Récap commande */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          style={{
+            maxWidth: 380, margin: "0 auto 28px",
+            background: `${accent}08`, border: `1px solid ${accent}22`,
+            borderRadius: 16, padding: "22px 24px",
+            display: "flex", flexDirection: "column", gap: 12, textAlign: "left",
+          }}
+        >
+          {[
+            ["Prénom gravé",  (capsule.engraveName ?? "—").toUpperCase()],
+            ["Format",        formatLabel[capsule.format ?? ""] ?? capsule.format ?? "—"],
+            ["Matière",       "Bois naturel · Gravure laser"],
+            ["Livraison",     "5–7 jours ouvrés · Gratuite"],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.4)", flexShrink: 0 }}>{label}</span>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#f0e8d8", textAlign: "right" }}>{value}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: `1px solid ${accent}18`, paddingTop: 12, marginTop: 2 }}>
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 10, color: `${accent}55`, margin: "0 0 4px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Référence commande</p>
+            <p style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "rgba(240,232,216,0.38)", margin: 0 }}>{capsule.id}</p>
+          </div>
+        </motion.div>
+
+        <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.25)", fontStyle: "italic", marginTop: 8 }}>
+          Vous recevrez un second email lors de l&apos;expédition.
+        </p>
+      </motion.div>
+    </>
   );
 }
 

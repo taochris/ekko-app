@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCapsule, markCapsulePaid } from "../../../../lib/capsules";
+import { sendKeychainOrderEmails } from "../../../../lib/order-emails";
 
 export const runtime = "nodejs";
 
@@ -11,7 +12,7 @@ export const runtime = "nodejs";
  * Ce fichier n'a aucun effet en production (variable absente sur Netlify).
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const devBypassEnabled = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID;
+  const devBypassEnabled = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID || process.env.NODE_ENV === "development";
   if (!devBypassEnabled) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
@@ -35,6 +36,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     method: "POST",
     headers: { "x-internal-trigger": "dev-claim" },
   }).catch((e) => console.error("[dev-claim] trigger process failed:", e));
+
+  // Emails pour porteClef (même logique que le webhook Stripe)
+  if (capsule.productType === "porteClef" && capsule.engraveName) {
+    const qrUrl = `${origin}/capsule/${capsuleId}`;
+    await sendKeychainOrderEmails({
+      capsuleId,
+      engraveName: capsule.engraveName,
+      format: capsule.format ?? "etiquette-rect",
+      qrUrl,
+      shippingName: capsule.shippingName ?? "[dev-test]",
+      shippingAddress: capsule.shippingAddress ?? "",
+      customerPhone: capsule.customerPhone ?? "",
+      customerEmail: capsule.customerEmail ?? "",
+      amount: 2490,
+    }).catch((e) => console.error("[dev-claim] sendKeychainOrderEmails:", e));
+  }
 
   return NextResponse.json({ status: "paid", triggered: true });
 }

@@ -113,9 +113,11 @@ function MobileAudioPlayer({ url, accent }: { url: string; accent: string }) {
 export default function AudioSelector({
   audios, config, onSelect, onVocapsule, onLivre, ctaVocapsule, ctaLivre, showLivre = true,
 }: AudioSelectorProps) {
-  const [selected, setSelected] = useState<Set<number>>(
-    new Set(Array.from({ length: audios.length }, (_, i) => i))
+  const [orderedSelected, setOrderedSelected] = useState<number[]>(
+    Array.from({ length: audios.length }, (_, i) => i)
   );
+  const selectedSet = useMemo(() => new Set(orderedSelected), [orderedSelected]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [filterSource, setFilterSource] = useState("all");
 
   useEffect(() => {
@@ -177,26 +179,27 @@ export default function AudioSelector({
   }, [audios, filterSource]);
 
   const toggleSelect = (index: number) => {
-    const next = new Set(selected);
-    next.has(index) ? next.delete(index) : next.add(index);
-    setSelected(next);
-    onSelect(Array.from(next).map((i) => audios[i]));
+    const next = selectedSet.has(index)
+      ? orderedSelected.filter((i) => i !== index)
+      : [...orderedSelected, index];
+    setOrderedSelected(next);
+    onSelect(next.map((i) => audios[i]));
   };
 
   const selectAll = () => {
-    const all = new Set(audios.map((_, i) => i).filter(i =>
+    const next = audios.map((_, i) => i).filter((i) =>
       filterSource === "all" || inferSource(audios[i].name) === filterSource
-    ));
-    setSelected(all);
-    onSelect(Array.from(all).map((i) => audios[i]));
+    );
+    setOrderedSelected(next);
+    onSelect(next.map((i) => audios[i]));
   };
 
-  const deselectAll = () => { setSelected(new Set()); onSelect([]); };
+  const deselectAll = () => { setOrderedSelected([]); onSelect([]); };
 
   const MAX_DURATION = 3600; // 1h
   const WARN_DURATION = 3000; // 50 min
 
-  const totalDuration = Array.from(selected).reduce((s, i) => s + (durations[i] ?? 0), 0);
+  const totalDuration = orderedSelected.reduce((s, i) => s + (durations[i] ?? 0), 0);
   const durationPercent = Math.min((totalDuration / MAX_DURATION) * 100, 100);
   const isOverLimit = totalDuration > MAX_DURATION;
   const isNearLimit = !isOverLimit && totalDuration >= WARN_DURATION;
@@ -230,7 +233,7 @@ export default function AudioSelector({
         Choisissez vos souvenirs
       </h2>
       <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.4)", marginBottom: 24 }}>
-        {audios.length} audio{audios.length > 1 ? "s" : ""} · {selected.size} sélectionné{selected.size > 1 ? "s" : ""}
+        {audios.length} audio{audios.length > 1 ? "s" : ""} · {orderedSelected.length} sélectionné{orderedSelected.length > 1 ? "s" : ""}
         {totalDuration > 0 && ` · ${formatDuration(totalDuration)} au total`}
       </p>
 
@@ -290,7 +293,7 @@ export default function AudioSelector({
             {/* Cards grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
               {items.map(({ file, index }, ci) => {
-                const isSelected = selected.has(index);
+                const isSelected = selectedSet.has(index);
                 const source = inferSource(file.name);
                 const srcColor = sourceColors[source] ?? config.accent;
                 const ext = file.name.split(".").pop()?.toUpperCase() ?? "";
@@ -328,9 +331,9 @@ export default function AudioSelector({
                         }}
                       >
                         {isSelected && (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" style={{ width: 9, height: 9 }}>
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "#0d0a0f", fontFamily: "Georgia, serif", lineHeight: 1 }}>
+                            {orderedSelected.indexOf(index) + 1}
+                          </span>
                         )}
                       </button>
 
@@ -388,6 +391,96 @@ export default function AudioSelector({
         ))}
       </div>
 
+      {/* Ordre de lecture */}
+      {orderedSelected.length >= 2 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.06)" }} />
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${config.accent}90` }}>
+              Ordre de lecture
+            </span>
+            <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.06)" }} />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 260, overflowY: "auto" }}>
+            {orderedSelected.map((audioIdx, pos) => {
+              const file = audios[audioIdx];
+              const cleanName = file.name.replace(/\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|webm|3gp|amr|mp4|mpeg)$/i, "");
+              const dur = durations[audioIdx];
+              const isDragging = dragIdx === pos;
+              return (
+                <div
+                  key={audioIdx}
+                  draggable
+                  onDragStart={() => setDragIdx(pos)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragIdx === null || dragIdx === pos) return;
+                    const next = [...orderedSelected];
+                    const [item] = next.splice(dragIdx, 1);
+                    next.splice(pos, 0, item);
+                    setOrderedSelected(next);
+                    setDragIdx(pos);
+                    onSelect(next.map((i) => audios[i]));
+                  }}
+                  onDragEnd={() => setDragIdx(null)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "7px 12px", borderRadius: 10,
+                    background: isDragging ? `${config.accent}15` : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${isDragging ? config.accent + "40" : "rgba(255,255,255,0.07)"}`,
+                    cursor: "grab", userSelect: "none",
+                    opacity: isDragging ? 0.55 : 1,
+                    transition: "background 0.15s, opacity 0.15s",
+                  }}
+                >
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: config.accent, minWidth: 16, textAlign: "center", fontWeight: 700, flexShrink: 0 }}>
+                    {pos + 1}
+                  </span>
+                  <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 11, height: 11, color: "rgba(240,232,216,0.18)", flexShrink: 0 }}>
+                    <rect x="2" y="3" width="12" height="1.5" rx="0.5"/>
+                    <rect x="2" y="7" width="12" height="1.5" rx="0.5"/>
+                    <rect x="2" y="11" width="12" height="1.5" rx="0.5"/>
+                  </svg>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.6)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {cleanName}
+                  </span>
+                  {dur !== undefined && dur > 0 && (
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: "rgba(240,232,216,0.25)", flexShrink: 0 }}>
+                      {formatDuration(dur)}
+                    </span>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 0, flexShrink: 0 }}>
+                    <button
+                      onClick={() => {
+                        if (pos === 0) return;
+                        const next = [...orderedSelected];
+                        [next[pos - 1], next[pos]] = [next[pos], next[pos - 1]];
+                        setOrderedSelected(next);
+                        onSelect(next.map((i) => audios[i]));
+                      }}
+                      style={{ background: "none", border: "none", cursor: pos === 0 ? "default" : "pointer", padding: "2px 4px", fontSize: 7, color: pos === 0 ? "rgba(255,255,255,0.1)" : "rgba(240,232,216,0.45)", lineHeight: 1 }}
+                    >▲</button>
+                    <button
+                      onClick={() => {
+                        if (pos === orderedSelected.length - 1) return;
+                        const next = [...orderedSelected];
+                        [next[pos], next[pos + 1]] = [next[pos + 1], next[pos]];
+                        setOrderedSelected(next);
+                        onSelect(next.map((i) => audios[i]));
+                      }}
+                      style={{ background: "none", border: "none", cursor: pos === orderedSelected.length - 1 ? "default" : "pointer", padding: "2px 4px", fontSize: 7, color: pos === orderedSelected.length - 1 ? "rgba(255,255,255,0.1)" : "rgba(240,232,216,0.45)", lineHeight: 1 }}
+                    >▼</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p style={{ fontFamily: "Georgia, serif", fontSize: 10, color: "rgba(240,232,216,0.18)", marginTop: 6, fontStyle: "italic" }}>
+            Glissez-déposez ou utilisez ▲▼ pour réorganiser
+          </p>
+        </div>
+      )}
+
       {/* Duration bar */}
       <div style={{ marginBottom: 24 }}>
         <div style={{
@@ -395,7 +488,7 @@ export default function AudioSelector({
           marginBottom: 8,
         }}>
           <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.4)" }}>
-            {selected.size} audio{selected.size > 1 ? "s" : ""} sélectionné{selected.size > 1 ? "s" : ""}
+            {orderedSelected.length} audio{orderedSelected.length > 1 ? "s" : ""} sélectionné{orderedSelected.length > 1 ? "s" : ""}
           </span>
           <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: durationBarColor, transition: "color 0.3s" }}>
             {totalDuration > 0 ? formatDurationLong(totalDuration) : "calcul en cours…"}
@@ -436,13 +529,13 @@ export default function AudioSelector({
         <motion.button
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => { onSelect(Array.from(selected).map(i => audios[i])); onVocapsule(); }}
-          disabled={selected.size === 0 || isOverLimit}
+          onClick={() => { onSelect(orderedSelected.map((i) => audios[i])); onVocapsule(); }}
+          disabled={orderedSelected.length === 0 || isOverLimit}
           style={{
-            padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: selected.size === 0 || isOverLimit ? "not-allowed" : "pointer",
+            padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: orderedSelected.length === 0 || isOverLimit ? "not-allowed" : "pointer",
             background: `linear-gradient(135deg, ${config.accent}20, ${config.accent}40)`,
             border: `1px solid ${config.accent}40`,
-            opacity: selected.size === 0 || isOverLimit ? 0.5 : 1,
+            opacity: orderedSelected.length === 0 || isOverLimit ? 0.5 : 1,
             boxShadow: `0 8px 30px ${config.accent}15`,
           } as React.CSSProperties}
         >
@@ -457,13 +550,13 @@ export default function AudioSelector({
           <motion.button
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => { onSelect(Array.from(selected).map(i => audios[i])); onLivre(); }}
-            disabled={selected.size === 0}
+            onClick={() => { onSelect(orderedSelected.map((i) => audios[i])); onLivre(); }}
+            disabled={orderedSelected.length === 0}
             style={{
-              padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: selected.size === 0 ? "not-allowed" : "pointer",
+              padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: orderedSelected.length === 0 ? "not-allowed" : "pointer",
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.1)",
-              opacity: selected.size === 0 ? 0.5 : 1,
+              opacity: orderedSelected.length === 0 ? 0.5 : 1,
             } as React.CSSProperties}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 22, height: 22, color: "rgba(240,232,216,0.6)", display: "block", marginBottom: 8 }}>

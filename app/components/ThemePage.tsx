@@ -6,6 +6,7 @@ import BlobBackground from "./BlobBackground";
 import EkkoLogo from "./EkkoLogo";
 import ImportGuide from "./ImportGuide";
 import AudioSelector from "./AudioSelector";
+import PorteClefFinalize from "./PorteClefFinalize";
 import AuthModal from "./AuthModal";
 import { SealedCapsule, RevealCapsule } from "./CapsuleAnimations";
 import { useAuth } from "../context/AuthContext";
@@ -55,7 +56,7 @@ const themeConfig: Record<string, {
   },
 };
 
-type Step = "home" | "import" | "select" | "loading" | "capsule" | "livre";
+type Step = "home" | "import" | "select" | "loading" | "capsule" | "livre" | "porteclef";
 
 function NavButton({ onClick, accent, children }: { onClick: () => void; accent: string; children: React.ReactNode }) {
   const [hovered, setHovered] = useState(false);
@@ -81,7 +82,7 @@ function NavButton({ onClick, accent, children }: { onClick: () => void; accent:
   );
 }
 
-export default function ThemePage({ theme, hideImageUpload }: { theme: string; hideImageUpload?: boolean }) {
+export default function ThemePage({ theme, hideImageUpload, variant = "numerique", initialFormat }: { theme: string; hideImageUpload?: boolean; variant?: "numerique" | "porteClef"; initialFormat?: string }) {
   const router = useRouter();
   const { user, isLoading, logout } = useAuth();
   const config = themeConfig[theme] ?? themeConfig.deuil;
@@ -128,6 +129,7 @@ export default function ThemePage({ theme, hideImageUpload }: { theme: string; h
               if (step === "select") setStep("import");
               else if (step === "import") setStep("home");
               else if (step === "capsule") setStep("select");
+              else if (step === "porteclef") setStep("select");
               else if (step === "livre") setStep("select");
             }} accent={config.accent}>
               ← Retour
@@ -200,7 +202,7 @@ export default function ThemePage({ theme, hideImageUpload }: { theme: string; h
             onSelect={(files: File[]) => setSelectedAudios(files)}
             onVocapsule={() => {
               setSelectedAudios(selectedAudios);
-              setStep("loading");
+              setStep(variant === "porteClef" ? "porteclef" : "loading");
             }}
             onLivre={() => {
               setSelectedAudios(selectedAudios);
@@ -224,6 +226,15 @@ export default function ThemePage({ theme, hideImageUpload }: { theme: string; h
             theme={theme}
             coverPhoto={coverPhoto}
             onUnlock={() => { /* paiement redirige directement vers /capsule/[id] */ }}
+          />
+        )}
+        {step === "porteclef" && (
+          <PorteClefFinalize
+            config={config}
+            audios={selectedAudios}
+            theme={theme}
+            coverPhoto={coverPhoto}
+            initialFormat={initialFormat}
           />
         )}
         {step === "livre" && (

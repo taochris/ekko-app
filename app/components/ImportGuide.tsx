@@ -148,6 +148,14 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
   const [isMobile, setIsMobile] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [recordingOpen, setRecordingOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     setIsMobile(typeof window !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
   }, []);
@@ -164,7 +172,11 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
 
   const applyConversationSelection = useCallback(async (zip: File, prefixes: Set<string>) => {
     const extracted = await extractAudiosFromZip(zip, prefixes);
-    setImportedFiles(extracted);
+    setImportedFiles((prev) => {
+      const existingNames = new Set(prev.map((f) => f.name));
+      const newFiles = extracted.filter((f) => !existingNames.has(f.name));
+      return [...prev, ...newFiles];
+    });
     setConversations([]);
     setPendingZip(null);
     if (extracted.length > 0) {
@@ -192,7 +204,11 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
     }
 
     if (audioFiles.length > 0) {
-      setImportedFiles(audioFiles);
+      setImportedFiles((prev) => {
+        const existingNames = new Set(prev.map((f) => f.name));
+        const newFiles = audioFiles.filter((f) => !existingNames.has(f.name));
+        return [...prev, ...newFiles];
+      });
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3500);
     } else if (zipFiles.length > 0) {
@@ -206,7 +222,11 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
       } else {
         // 0 ou 1 conversation (WhatsApp simple, fichiers à la racine, etc.) → importer directement
         const extracted = await extractAudiosFromZip(zip, convs.length === 1 ? new Set([convs[0].prefix]) : undefined);
-        setImportedFiles(extracted);
+        setImportedFiles((prev) => {
+          const existingNames = new Set(prev.map((f) => f.name));
+          const newFiles = extracted.filter((f) => !existingNames.has(f.name));
+          return [...prev, ...newFiles];
+        });
         if (extracted.length > 0) {
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 3500);
@@ -243,6 +263,74 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
       if (next.has(prefix)) next.delete(prefix); else next.add(prefix);
       return next;
     });
+  };
+
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+
+  const startRecording = async () => {
+    setRecordingError(null);
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setRecordingError("Votre navigateur ne supporte pas l'enregistrement audio. Essayez Chrome ou Firefox.");
+      return;
+    }
+    const MIME_TYPES = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+      "audio/mp4",
+    ];
+    const mimeType = MIME_TYPES.find((t) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(t)) ?? "";
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const actualType = mr.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: actualType });
+        setRecordedBlob(blob);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      setRecordedBlob(null);
+      timerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("Permission") || msg.includes("NotAllowed") || msg.includes("denied")) {
+        setRecordingError("Accès au microphone refusé. Autorisez le micro dans les paramètres de votre navigateur.");
+      } else if (msg.includes("NotFound") || msg.includes("Devices")) {
+        setRecordingError("Aucun microphone détecté sur cet appareil.");
+      } else {
+        setRecordingError(`Impossible d'accéder au microphone : ${msg}`);
+      }
+      console.error("[recording]", e);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const addRecordingToFiles = () => {
+    if (!recordedBlob) return;
+    const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-");
+    const ext = recordedBlob.type.includes("mp4") ? "mp4"
+      : recordedBlob.type.includes("ogg") ? "ogg"
+      : "webm";
+    const file = new File([recordedBlob], `enregistrement-${ts}.${ext}`, { type: recordedBlob.type || "audio/webm" });
+    setImportedFiles((prev) => [...prev, file]);
+    setRecordedBlob(null);
+    setRecordingTime(0);
+    setRecordingError(null);
+    setRecordingOpen(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3500);
   };
 
   // Aiguillage minimal : tout le flux mobile est isolé dans MobileLanding / MobileImport
@@ -323,6 +411,142 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
             <span className="text-xs ekko-serif tracking-wide">{p.name}</span>
           </motion.button>
         ))}
+      </div>
+
+      {/* Enregistrer directement */}
+      <div className="mb-8">
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => { setRecordingOpen(!recordingOpen); if (recordingOpen && isRecording) stopRecording(); setRecordedBlob(null); setRecordingTime(0); }}
+          className="w-full flex items-center gap-3 py-4 px-5 rounded-2xl transition-all duration-300"
+          style={{
+            background: recordingOpen ? `${config.accent}15` : "rgba(255,255,255,0.04)",
+            border: `1px solid ${recordingOpen ? config.accent + "50" : "rgba(255,255,255,0.07)"}`,
+            color: recordingOpen ? config.accent : "rgba(240,232,216,0.5)",
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18, flexShrink: 0 }}>
+            <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 14a8 8 0 0 0 8-8h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 8 8zm-1 3v2h2v-2a10 10 0 0 0 0-20v2a8 8 0 0 1 0 16v2z" />
+          </svg>
+          <span className="text-sm ekko-serif tracking-wide flex-1 text-center">Enregistrer mon message directement</span>
+          <span style={{ fontSize: 10, transform: recordingOpen ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+        </motion.button>
+
+        <AnimatePresence>
+          {recordingOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 rounded-2xl p-6" style={{ background: `${config.accent}08`, border: `1px solid ${config.accent}25` }}>
+
+                {/* Phrase principale */}
+                <p className="ekko-serif text-center mb-7" style={{ fontSize: 17, color: "rgba(240,232,216,0.72)", lineHeight: 1.65 }}>
+                  Enregistrez un message unique — ou ajoutez-le à vos autres fichiers
+                </p>
+
+                {/* Timer */}
+                {(isRecording || recordingTime > 0) && (
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
+                    <span className="ekko-serif" style={{ fontSize: 34, letterSpacing: "0.18em", color: isRecording ? "#e07070" : config.accent, fontVariantNumeric: "tabular-nums" }}>
+                      {formatTime(recordingTime)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Bouton record */}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+                  {!isRecording ? (
+                    <motion.button
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={startRecording}
+                      title="Démarrer l'enregistrement"
+                      style={{
+                        width: 72, height: 72, borderRadius: "50%", cursor: "pointer",
+                        background: "rgba(220,60,60,0.12)",
+                        border: "2px solid rgba(220,60,60,0.45)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#dc3c3c" }} />
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={stopRecording}
+                      title="Arrêter l'enregistrement"
+                      style={{
+                        width: 72, height: 72, borderRadius: "50%", cursor: "pointer",
+                        background: "rgba(220,60,60,0.15)",
+                        border: "2px solid #dc3c3c",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 0 22px rgba(220,60,60,0.35)",
+                      }}
+                    >
+                      <div style={{ width: 22, height: 22, borderRadius: 4, background: "#dc3c3c" }} />
+                    </motion.button>
+                  )}
+                </div>
+
+                {/* Textes sous le bouton */}
+                <p className="ekko-serif text-xs text-center mb-1" style={{ color: "rgba(240,232,216,0.3)" }}>
+                  Votre micro sera utilisé directement depuis cette page.
+                </p>
+                <p className="ekko-serif text-xs text-center mb-3" style={{ color: "rgba(240,232,216,0.18)" }}>
+                  {isRecording ? "Appuyez pour arrêter" : recordedBlob ? "Enregistrement terminé" : "Appuyez pour enregistrer"}
+                </p>
+
+                {recordingError && (
+                  <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(220,60,60,0.1)", border: "1px solid rgba(220,60,60,0.3)" }}>
+                    <p className="ekko-serif text-xs text-center" style={{ color: "#e07070", lineHeight: 1.6, margin: 0 }}>
+                      {recordingError}
+                    </p>
+                  </div>
+                )}
+
+                {/* Lecture + actions */}
+                <AnimatePresence>
+                  {recordedBlob && !isRecording && (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                      <audio controls src={URL.createObjectURL(recordedBlob)} style={{ width: "100%", borderRadius: 8, accentColor: config.accent }} />
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <button
+                          onClick={() => { setRecordedBlob(null); setRecordingTime(0); }}
+                          className="ekko-serif"
+                          style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "rgba(240,232,216,0.35)", fontSize: 12, cursor: "pointer" }}
+                        >
+                          Recommencer
+                        </button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={addRecordingToFiles}
+                          className="ekko-serif"
+                          style={{ flex: 1, padding: "10px 0", borderRadius: 12, background: `${config.accent}22`, border: `1px solid ${config.accent}50`, color: config.accent, fontSize: 12, cursor: "pointer", fontWeight: 600 }}
+                        >
+                          ✓ Ajouter à mes fichiers
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Note stockage */}
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 14 }}>
+                  <p className="ekko-serif text-xs text-center" style={{ color: "rgba(240,232,216,0.18)", lineHeight: 1.65 }}>
+                    🔒 L'enregistrement reste dans la mémoire de votre navigateur jusqu'à la validation de votre commande, puis est hébergé de manière sécurisée.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Platform guide accordion */}
@@ -652,7 +876,13 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
         {coverPreview ? (
           <div
             className="relative rounded-2xl overflow-hidden"
-            style={{ border: `1px solid ${config.accent}30`, aspectRatio: "16 / 9" }}
+            style={{
+              border: `1px solid ${config.accent}30`, aspectRatio: "16 / 9",
+              backgroundImage: "linear-gradient(45deg, #2a2a2a 25%, transparent 25%), linear-gradient(-45deg, #2a2a2a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #2a2a2a 75%), linear-gradient(-45deg, transparent 75%, #2a2a2a 75%)",
+              backgroundSize: "16px 16px",
+              backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+              backgroundColor: "#1a1a1a",
+            }}
           >
             <img src={coverPreview} alt="Photo choisie" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
             <button

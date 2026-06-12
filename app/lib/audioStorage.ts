@@ -2,7 +2,7 @@ import { storage } from "./firebase";
 import { ref, uploadBytes, listAll, deleteObject } from "firebase/storage";
 
 const ALLOWED_EXTENSIONS = new Set([
-  "mp3", "wav", "ogg", "oga", "m4a", "aac", "opus", "flac", "weba", "3gp", "amr", "mp4",
+  "mp3", "wav", "ogg", "oga", "m4a", "aac", "opus", "flac", "weba", "webm", "3gp", "amr", "mp4",
 ]);
 
 /**

@@ -3,6 +3,12 @@ import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
+
+// Augmenter la limite du body pour les uploads d'images (défaut Next.js = 4 MB)
+export const dynamic = "force-dynamic";
+// Pour les app routes Next.js 13+, la limite se configure via next.config
+// Voir : experimental.serverActions.bodySizeLimit dans next.config.mjs
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB

@@ -358,7 +358,7 @@ export default function HomePage() {
       <div style={{ position: "relative", zIndex: 10, overflow: "hidden", background: "rgb(10,8,12)" }}>
         {/* Image de fond — droite, décalage léger */}
         <img
-          src="/images/hero/ChatGPT Image 26 mai 2026, 12_51_29.png"
+          src="/images/hero/ChatGPT Image 4 juin 2026, 20_00_09.png"
           alt=""
           aria-hidden="true"
           style={{
@@ -548,16 +548,15 @@ export default function HomePage() {
 
         {/* Conteneur héro */}
         <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px", alignItems: "flex-end" }} className="hp-hero-inner">
-            {/* Ligne 1 : vidéo + texte côte à côte, même taille */}
-            <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px" }} className="hp-hero-inner">
+            {/* Ligne 1 : vidéo + texte côte à côte */}
+            <div style={{ display: "flex", gap: 24, alignItems: "stretch", marginLeft: 300, marginTop: 50 }}>
               {/* Vidéo */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.9 }}
                 className="hp-hero-visual"
-                style={{ flexShrink: 0 }}
               >
                 <div style={{
                   width: 240, height: 290, borderRadius: 20, overflow: "hidden",
@@ -572,42 +571,40 @@ export default function HomePage() {
                   </video>
                 </div>
               </motion.div>
-              {/* Texte — même largeur et hauteur que le conteneur vidéo, fond transparent sans bordure */}
+              {/* Texte */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.9 }}
                 className="hp-hero-text"
-                style={{ flexShrink: 0 }}
-              >
-                <div style={{
-                  width: 240, height: 290,
+                style={{
+                  width: 290, height: 290, marginLeft: 50,
                   display: "flex", alignItems: "center", padding: "0 8px",
                   boxSizing: "border-box",
+                }}
+              >
+                <p style={{
+                  fontFamily: font, fontSize: 16, lineHeight: 1.8,
+                  color: "rgba(240,232,216,0.65)", margin: 0,
                 }}>
-                  <p style={{
-                    fontFamily: font, fontSize: 14, lineHeight: 1.8,
-                    color: "rgba(240,232,216,0.65)", margin: 0,
-                  }}>
-                    Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
-                    <span className="voca-wrap">
-                      vocapsule
-                      <span className="voca-sup">*</span>
-                      <span className="voca-tooltip">
-                        Découvrez ce qu&apos;est une vocapsule dans la page &laquo;&nbsp;Comment ça marche&nbsp;&raquo;.
-                      </span>
+                  Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
+                  <span className="voca-wrap">
+                    vocapsule
+                    <span className="voca-sup">*</span>
+                    <span className="voca-tooltip">
+                      Découvrez ce qu&apos;est une vocapsule dans la page &laquo;&nbsp;Comment ça marche&nbsp;&raquo;.
                     </span>
-                    {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
-                  </p>
-                </div>
+                  </span>
+                  {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
+                </p>
               </motion.div>
             </div>
-            {/* Ligne 2 : boutons centrés sous les deux conteneurs */}
+            {/* Ligne 2 : boutons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.2 }}
-              style={{ display: "flex", flexDirection: "column", gap: 12, width: 504, alignItems: "stretch" }}
+              style={{ display: "flex", flexDirection: "column", gap: 12, width: 454, alignItems: "stretch", marginTop: 50, alignSelf: "center" }}
             >
               <a href="/produit" className="hp-hero-btn-primary">
                 Créer mon porte-clé

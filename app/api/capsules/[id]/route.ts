@@ -24,6 +24,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       expiresAt: capsule.expiresAt ?? null,
       error: capsule.error ?? null,
       uid: capsule.uid,
+      productType: capsule.productType ?? "numerique",
+      engraveName: capsule.engraveName ?? null,
+      format: capsule.format ?? null,
+      shippingStatus: capsule.shippingStatus ?? null,
     });
   } catch (err) {
     console.error("[capsules/GET]", err);

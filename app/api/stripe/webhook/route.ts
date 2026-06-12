@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
-import { markCapsulePaid } from "../../../lib/capsules";
+import { markCapsulePaid, updateCapsule } from "../../../lib/capsules";
+import { buildKeychainEmail, buildAdminOrderEmail, generateLightBurnSVG, sendPushover } from "../../../lib/order-emails";
 
 export const runtime = "nodejs";
 
@@ -129,31 +130,97 @@ export async function POST(req: NextRequest) {
       console.error("[stripe/webhook] capsuleId absent du metadata");
       return NextResponse.json({ received: true });
     }
+    const isPorteClef = session.metadata?.productType === "porteClef";
+    const origin = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get("host")}`;
+
+    // ── Adresse & téléphone Stripe ──
+    type ShippingDetails = { name?: string; address?: { line1?: string; line2?: string; postal_code?: string; city?: string; country?: string } };
+    const sessionAny = session as unknown as Record<string, unknown>;
+    const shipping = (sessionAny.shipping_details ?? sessionAny.shipping ?? null) as ShippingDetails | null;
+    const shippingName    = shipping?.name ?? session.customer_details?.name ?? "";
+    const shippingAddr    = shipping?.address;
+    const shippingAddress = shippingAddr
+      ? [shippingAddr.line1, shippingAddr.line2, `${shippingAddr.postal_code} ${shippingAddr.city}`, shippingAddr.country]
+          .filter(Boolean).join(", ")
+      : "";
+    const customerPhone = session.customer_details?.phone ?? "";
+
     try {
       await markCapsulePaid(capsuleId, session.id);
-      console.log("[stripe/webhook] capsule marquée paid:", capsuleId);
 
-      // Envoyer l'email de confirmation
-      if (customerEmail && process.env.RESEND_API_KEY) {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const origin = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get("host")}`;
-        const capsuleUrl = `${origin}/capsule/${capsuleId}`;
-        resend.emails.send({
-          from: "EKKO <onboarding@resend.dev>",
-          to: customerEmail,
-          subject: "Votre vocapsule EKKO est en cours de création ✦",
-          html: buildConfirmationEmail({ capsuleUrl, capsuleId }),
-        }).catch((e: unknown) => console.error("[stripe/webhook] email error:", e));
+      // Sauvegarder adresse + téléphone en Firestore (pour porteClef)
+      if (isPorteClef && (shippingAddress || customerPhone)) {
+        await updateCapsule(capsuleId, {
+          shippingName,
+          shippingAddress,
+          customerPhone,
+          shippingStatus: "to_engrave",
+        });
       }
 
-      // Déclencher le processing en fire-and-forget
-      const origin = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get("host")}`;
+      console.log("[stripe/webhook] capsule marquée paid:", capsuleId, isPorteClef ? "(porteClef)" : "(numérique)");
+
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const adminEmail = process.env.ADMIN_EMAIL ?? "vosekko@outlook.com";
+        const engraveName = session.metadata?.engraveName ?? "";
+        const format      = session.metadata?.format ?? "etiquette-rect";
+        const qrUrl       = `${origin}/capsule/${capsuleId}`;
+        const amount      = session.amount_total ?? 2490;
+
+        if (isPorteClef) {
+          // ── Email client porte-clé ──
+          if (customerEmail) {
+            resend.emails.send({
+              from: "EKKO <ekko@vosekko.com>",
+              to: customerEmail,
+              subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
+              html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName }),
+            }).catch((e: unknown) => console.error("[webhook] email client porteClef:", e));
+          }
+
+          // ── SVG LightBurn + email admin ──
+          generateLightBurnSVG(capsuleId, engraveName, format, qrUrl).then((svg) => {
+            resend.emails.send({
+              from: "EKKO <ekko@vosekko.com>",
+              to: adminEmail,
+              subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
+              html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount }),
+              attachments: [{
+                filename: `lightburn-${engraveName.toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
+                content: Buffer.from(svg),
+              }],
+            }).catch((e: unknown) => console.error("[webhook] email admin porteClef:", e));
+
+            // ── Notification Pushover ──
+            sendPushover(
+              "🔑 Nouvelle commande EKKO",
+              `Prénom : ${engraveName}\nFormat : ${format}\nClient : ${shippingName}\n${shippingAddress}`
+            ).catch((e) => console.error("[webhook] pushover:", e));
+          }).catch((e) => console.error("[webhook] generateLightBurnSVG:", e));
+
+        } else {
+          // ── Email client numérique ──
+          if (customerEmail) {
+            const capsuleUrl = `${origin}/capsule/${capsuleId}`;
+            resend.emails.send({
+              from: "EKKO <ekko@vosekko.com>",
+              to: customerEmail,
+              subject: "Votre vocapsule EKKO est en cours de création ✦",
+              html: buildConfirmationEmail({ capsuleUrl, capsuleId }),
+            }).catch((e: unknown) => console.error("[webhook] email client numérique:", e));
+          }
+        }
+      }
+
+      // ── Déclencher le processing audio (toujours, porte-clé ou numérique) ──
       fetch(`${origin}/api/capsules/${capsuleId}/process`, {
         method: "POST",
         headers: { "x-internal-trigger": "stripe-webhook" },
       }).catch((e) => console.error("[stripe/webhook] trigger process failed:", e));
+
     } catch (err) {
-      console.error("[stripe/webhook] markCapsulePaid error:", err);
+      console.error("[stripe/webhook] error:", err);
     }
   }
 

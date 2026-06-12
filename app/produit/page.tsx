@@ -16,11 +16,11 @@ const FORMATS = [
         <circle cx="24" cy="2" r="2.5" stroke="currentColor" strokeWidth="1" />
       </svg>
     ),
-    dimensions: "90 × 30 mm",
+    dimensions: "50 × 30 mm",
     description: "Grand format rectangulaire aux coins arrondis. Surface généreuse pour un QR code lisible et un prénom gravé en dessous.",
     image: "/images/produit/etiquette%20rectangulaire.png",
     carousel: [
-      "/images/produit/porteclef_format_rectangulaire/etiquette rectangulaire.png",
+      "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 11 juin 2026, 12_44_51.png",
       "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 31 mai 2026, 11_59_03 (1).png",
       "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 31 mai 2026, 11_59_04 (2).png",
       "/images/produit/porteclef_format_rectangulaire/ChatGPT Image 31 mai 2026, 11_59_04 (3).png",
@@ -530,7 +530,7 @@ export default function ProduitPage() {
         textAlign: "center", padding: "0 24px 80px",
       }}>
         <a
-          href="/produit/themes"
+          href={`/produit/themes?format=${selectedFormat}`}
           style={{
             display: "inline-block", padding: "16px 40px", borderRadius: 50,
             background: "linear-gradient(135deg, rgba(201,169,110,0.3), rgba(201,169,110,0.5))",
