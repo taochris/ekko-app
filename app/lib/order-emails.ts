@@ -206,7 +206,7 @@ export async function sendKeychainOrderEmails({
   if (customerEmail) {
     try {
       const { data, error } = await resend.emails.send({
-        from: "EKKO <ekko@vosekko.com>",
+        from: "EKKO <onboarding@resend.dev>",
         to: customerEmail,
         subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
         html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName }),

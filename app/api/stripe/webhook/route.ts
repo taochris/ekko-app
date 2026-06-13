@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
           // ── Email client porte-clé ──
           if (customerEmail) {
             resend.emails.send({
-              from: "EKKO <ekko@vosekko.com>",
+              from: "EKKO <onboarding@resend.dev>",
               to: customerEmail,
               subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
               html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName }),
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
           // ── SVG LightBurn + email admin ──
           generateLightBurnSVG(capsuleId, engraveName, format, qrUrl).then((svg) => {
             resend.emails.send({
-              from: "EKKO <ekko@vosekko.com>",
+              from: "EKKO <onboarding@resend.dev>",
               to: adminEmail,
               subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
               html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount }),
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
           if (customerEmail) {
             const capsuleUrl = `${origin}/capsule/${capsuleId}`;
             resend.emails.send({
-              from: "EKKO <ekko@vosekko.com>",
+              from: "EKKO <onboarding@resend.dev>",
               to: customerEmail,
               subject: "Votre vocapsule EKKO est en cours de création ✦",
               html: buildConfirmationEmail({ capsuleUrl, capsuleId }),
