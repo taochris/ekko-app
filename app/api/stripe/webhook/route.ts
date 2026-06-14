@@ -163,8 +163,9 @@ export async function POST(req: NextRequest) {
       if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const adminEmail = process.env.ADMIN_EMAIL ?? "vosekko@outlook.com";
-        const engraveName = session.metadata?.engraveName ?? "";
-        const format      = session.metadata?.format ?? "etiquette-rect";
+        const engraveName    = session.metadata?.engraveName ?? "";
+        const format        = session.metadata?.format ?? "etiquette-rect";
+        const engravingFont = session.metadata?.engravingFont ?? "Georgia, serif";
         const qrUrl       = `${origin}/capsule/${capsuleId}`;
         const amount      = session.amount_total ?? 2490;
 
@@ -180,7 +181,7 @@ export async function POST(req: NextRequest) {
           }
 
           // ── SVG LightBurn + email admin ──
-          generateLightBurnSVG(capsuleId, engraveName, format, qrUrl).then((svg) => {
+          generateLightBurnSVG(capsuleId, engraveName, format, qrUrl, engravingFont).then((svg) => {
             resend.emails.send({
               from: "EKKO <onboarding@resend.dev>",
               to: adminEmail,

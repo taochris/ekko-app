@@ -101,7 +101,7 @@ export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, sh
 }
 
 // ─── Génération SVG LightBurn ─────────────────────────────────────────────────
-export async function generateLightBurnSVG(capsuleId: string, engraveName: string, format: string, qrUrl: string): Promise<string> {
+export async function generateLightBurnSVG(capsuleId: string, engraveName: string, format: string, qrUrl: string, engravingFont = "Georgia, serif"): Promise<string> {
   const dims: Record<string, { w: number; h: number; rx: number }> = {
     "etiquette-rect":     { w: 30,   h: 50,   rx: 3  },
     "etiquette-arrondie": { w: 31.8, h: 50.8, rx: 14 },
@@ -113,10 +113,10 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   const qr = QRCode.create(qrUrl, { errorCorrectionLevel: "M" });
   const moduleCount = qr.modules.size;
 
-  // QR agrandi à 72 % de la dimension courte (était 60 %)
+  // QR : 72% de la dimension courte, décalé vers le bas (+8% de hauteur)
   const qrSizeMm = Math.min(dim.w, dim.h) * 0.72;
   const qrX = (dim.w - qrSizeMm) / 2;
-  const topOffset = dim.h * 0.13;
+  const topOffset = dim.h * 0.10 + 3; // légèrement plus bas
   const modSize = qrSizeMm / moduleCount;
 
   // Un seul <path> avec toutes les coordonnées directement en mm — aucun transform,
@@ -133,12 +133,22 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
     }
   }
 
-  const fontSize = dim.w * 0.085;
-  const textY = topOffset + qrSizeMm + fontSize * 1.9;
+  // Police plus grande (+30%) et texte décalé de 8mm vers le bas
+  const fontSize = dim.w * 0.11;
+  const textY = topOffset + qrSizeMm + fontSize * 1.9 + 8;
+
+  // Largeur adaptative du texte : clamp(nbLettres * 2.3, 12, 23) mm — format rect uniquement
+  const nameLen = engraveName.trim().length || 1;
+  const textWidthMm = format === "etiquette-rect"
+    ? Math.min(23, Math.max(12, nameLen * 2.3))
+    : null;
+  const textLengthAttr = textWidthMm !== null
+    ? `textLength="${textWidthMm.toFixed(1)}" lengthAdjust="spacingAndGlyphs"`
+    : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!-- LightBurn SVG — EKKO — ${capsuleId} -->
-<!-- Format : ${format} | Prénom : ${engraveName} -->
+<!-- Format : ${format} | Prénom : ${engraveName} | Police : ${engravingFont} -->
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${dim.w} ${dim.h}"
      width="${dim.w}mm" height="${dim.h}mm">
@@ -148,10 +158,6 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
         rx="${dim.rx}" ry="${dim.rx}"
         fill="none" stroke="#FF0000" stroke-width="0.25"/>
 
-  <!-- Trou anneau (repère, ne pas graver) -->
-  <circle cx="${(dim.w / 2).toFixed(3)}" cy="2" r="1.4"
-          fill="none" stroke="#FF0000" stroke-width="0.25"/>
-
   <!-- NOIR = Gravure laser — QR Code (coordonnées directes en mm, sans transform) -->
   <!-- URL : ${qrUrl} -->
   <path fill="#000000" d="${d}"/>
@@ -159,11 +165,11 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   <!-- Prénom gravé -->
   <text x="${(dim.w / 2).toFixed(3)}" y="${textY.toFixed(3)}"
         text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif"
+        font-family="${engravingFont}"
         font-size="${fontSize.toFixed(3)}"
         font-weight="bold"
         fill="#000000"
-        letter-spacing="0.6">
+        ${textLengthAttr}>
     ${engraveName.toUpperCase()}
   </text>
 

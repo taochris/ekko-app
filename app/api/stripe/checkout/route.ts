@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, uploadId, storage, storageLabel, uid, accentColor, email, devBypass, product, engraveName, format, material } = await req.json();
+    const { theme, uploadId, storage, storageLabel, uid, accentColor, email, devBypass, product, engraveName, engravingFont, format, material } = await req.json();
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
     const isPorteClef = product === "porteClef";
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         capsuleId,
         customerEmail: email || "",
         productType: isPorteClef ? "porteClef" : "numerique",
-        ...(isPorteClef ? { engraveName: engraveName || "", format: format || "" } : {}),
+        ...(isPorteClef ? { engraveName: engraveName || "", format: format || "", engravingFont: engravingFont || "Georgia, serif" } : {}),
       },
       ...(isPorteClef ? {
         shipping_address_collection: { allowed_countries: ["FR", "BE", "CH", "LU", "MC"] },
