@@ -45,3 +45,8 @@ next-env.d.ts
 
 # QR codes gravure
 /qr-output/
+
+# Scripts utilitaires locaux (vérification, samples)
+scripts/generate-all-samples.mjs
+scripts/test-font-paths.mjs
+lightburn-test.svg
