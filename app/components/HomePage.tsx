@@ -7,7 +7,7 @@ import ThemeCard from "./ThemeCard";
 /* ─── Navigation ─────────────────────────────────────────────────────── */
 const NAV_LINKS = [
   { text: "Comment ça marche", href: "/comment-ca-marche" },
-  { text: "Idées cadeaux", href: "/idees-cadeaux" },
+  { text: "Inspirations", href: "/inspirations" },
   { text: "FAQ", href: "/faq" },
   { text: "Blog", href: "/blog" },
 ];
@@ -29,7 +29,7 @@ const MOBILE_NAV_CATEGORIES = [
     label: "Explorer",
     links: [
       { text: "Comment ça marche", href: "/comment-ca-marche" },
-      { text: "Idées cadeaux", href: "/idees-cadeaux" },
+      { text: "Inspirations", href: "/inspirations" },
     ],
   },
   {
@@ -225,7 +225,7 @@ const FOOTER_COLS = [
       { text: "Fichier numérique", href: "/numerique" },
       { text: "Porte-clé", href: "/produit" },
       { text: "Comment ça marche", href: "/comment-ca-marche" },
-      { text: "Idées cadeaux", href: "/idees-cadeaux" },
+      { text: "Inspirations", href: "/inspirations" },
     ],
   },
   {
@@ -387,12 +387,7 @@ export default function HomePage() {
       }} className="hp-nav">
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            <span style={{
-              fontFamily: "Georgia, serif", fontSize: isMobile ? 22 : 28,
-              fontWeight: 400, letterSpacing: "0.12em", textTransform: "uppercase",
-              color: "#c9a96e", lineHeight: 1,
-            }}>VOS</span>
-            <img src="/ekko-logo.png" alt="EKKO" style={{ height: isMobile ? 50 : 70, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+            <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: isMobile ? 80 : 180, width: "auto", objectFit: "contain", mixBlendMode: "screen", filter: "contrast(1.3) brightness(1.1)" }} />
           </a>
           <p style={{ fontFamily: font, fontSize: 9, letterSpacing: "0.38em", textTransform: "uppercase", color: "rgba(201,169,110,0.55)", margin: 0, paddingLeft: 4 }}>
             Vos émotions, à portée de main.

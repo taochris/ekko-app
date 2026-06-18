@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * Génère un SVG compatible LightBurn pour gravure laser.
+ * Génère un SVG compatible LightBurn pour gravure laser — FORMAT ARRONDI.
  *
  * Couches (couleurs LightBurn) :
- *   - NOIR (#000000)  → Gravure remplissage : modules QR + texte EKKO
- *   - ROUGE (#FF0000) → Découpe contour : contour plaque (bords arrondis)
+ *   - NOIR (#000000)  → Gravure remplissage : modules QR + nom
+ *   - ROUGE (#FF0000) → Découpe contour : contour plaque (grands bords arrondis)
  *
  * Dimensions :
- *   - Plaque : 30 × 50 mm, coins arrondis r=2mm
- *   - QR : 22 × 22 mm centré horizontalement, 4mm du haut
+ *   - Plaque : 31.8 × 50.8 mm, coins arrondis r=10mm (forme arrondie/pilule)
+ *   - QR : 22 × 22 mm centré horizontalement, 5mm du haut
  *   - Nom : centré sous le QR, 3mm d'écart, dans le cadre
  *
  * Usage :
- *   node scripts/qr-lightburn.mjs <echoId>
- *   node scripts/qr-lightburn.mjs <echoId> --url <fullUrl>
+ *   node scripts/qr-lightburn-arrondi.mjs <echoId>
+ *   node scripts/qr-lightburn-arrondi.mjs <echoId> --url <fullUrl>
  *
  * Le SVG est exporté dans ./qr-output/
  */
@@ -27,11 +27,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(__dirname, "..", "qr-output");
 
 // ─── Dimensions (mm) ────────────────────────────────────────────────────
-const PLATE_W = 30;        // largeur plaque
-const PLATE_L = 50;        // longueur plaque
-const CORNER_R = 2;        // rayon bords arrondis
+const PLATE_W = 31.8;      // largeur plaque
+const PLATE_L = 50.8;      // longueur plaque
+const CORNER_R = 10;       // rayon bords arrondis (grand → aspect arrondi/pilule)
 
-const QR_SIZE = 22;        // côté zone QR
+const QR_SIZE = 22;        // côté zone QR (adapté à la largeur 31.8mm)
 
 const BASE_URL = "https://www.vosekko.com/v/";
 
@@ -39,10 +39,11 @@ const BASE_URL = "https://www.vosekko.com/v/";
 const args = process.argv.slice(2);
 if (args.length === 0 || args[0] === "--help") {
   console.log(`
-Usage: node scripts/qr-lightburn.mjs <echoId> [--url <fullUrl>]
+Usage: node scripts/qr-lightburn-arrondi.mjs <echoId> [--url <fullUrl>]
 
 Génère un SVG pour LightBurn (gravure + découpe) dans ./qr-output/
-  Noir  = gravure (QR + EKKO)
+  Format : 31.8×50.8mm arrondi (grands coins r=10mm)
+  Noir  = gravure (QR + nom)
   Rouge = découpe (contour plaque)
 `);
   process.exit(0);
@@ -61,9 +62,9 @@ const modules = qrData.modules;
 const moduleCount = modules.size;
 const moduleSize = QR_SIZE / moduleCount;
 
-// Position QR centrée horizontalement, 4mm du bord haut
+// Position QR centrée horizontalement, 5mm du bord haut
 const qrOffsetX = (PLATE_W - QR_SIZE) / 2;
-const qrOffsetY = 4;
+const qrOffsetY = 5;
 
 // ─── Construction SVG ───────────────────────────────────────────────────
 const svgParts = [];
@@ -98,11 +99,8 @@ for (let row = 0; row < moduleCount; row++) {
 svgParts.push(`  </g>\n`);
 
 // ── 3. Nom personnalisé (GRAVURE — noir) ──
-// Utilisation d'un <text> SVG standard — LightBurn supporte le texte SVG natif.
-// Le nom est centré horizontalement, 2mm sous le QR, baseline ~3.5mm du bas.
-
-const textWord = (echoId.length <= 12 ? echoId : echoId.slice(0, 12)).toUpperCase();
-const fontSize = 3.5;  // mm
+const textWord = (echoId.length <= 10 ? echoId : echoId.slice(0, 10)).toUpperCase();
+const fontSize = 3.2;  // mm (légèrement plus petit pour la largeur 31.8mm)
 const textX = PLATE_W / 2;
 const textY = qrOffsetY + QR_SIZE + 3 + fontSize; // baseline (3mm sous le QR)
 
@@ -120,12 +118,12 @@ svgParts.push(`</svg>\n`);
 
 // ─── Export ─────────────────────────────────────────────────────────────
 mkdirSync(OUTPUT_DIR, { recursive: true });
-const filename = `ekko-qr-${echoId.slice(0, 8)}.svg`;
+const filename = `ekko-qr-arrondi-${echoId.slice(0, 8)}.svg`;
 const filepath = join(OUTPUT_DIR, filename);
 writeFileSync(filepath, svgParts.join(""), "utf-8");
 
 console.log(`✅ SVG généré : ${filepath}`);
-console.log(`   Plaque : ${PLATE_W}×${PLATE_L} mm (coins arrondis r=${CORNER_R}mm)`);
+console.log(`   Plaque : ${PLATE_W}×${PLATE_L} mm arrondi (coins r=${CORNER_R}mm)`);
 console.log(`   QR     : ${QR_SIZE}×${QR_SIZE}mm (${moduleCount}×${moduleCount} modules)`);
 console.log(`   Texte  : "${textWord}" centré sous QR, dans le cadre`);
 console.log(`   URL    : ${url}`);

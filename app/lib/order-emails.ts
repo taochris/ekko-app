@@ -1,5 +1,8 @@
 import { Resend } from "resend";
 import QRCode from "qrcode";
+import * as opentype from "opentype.js";
+import * as fs from "fs";
+import * as path from "path";
 
 // ─── Email client porte-clé ──────────────────────────────────────────────────
 export function buildKeychainEmail({ capsuleId, engraveName, format, shippingName }: {
@@ -100,6 +103,26 @@ export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, sh
 </html>`;
 }
 
+// ─── Mapping police → fichier local ─────────────────────────────────────────
+const FONT_FILES: Record<string, string> = {
+  "Georgia, serif":              "Georgia-Regular.ttf",
+  "'Cinzel', serif":             "Cinzel-Regular.woff",
+  "'Dancing Script', cursive":   "DancingScript-Bold.woff",
+  "'Bebas Neue', sans-serif":    "BebasNeue-Regular.ttf",
+  "'Pacifico', cursive":         "Pacifico-Regular.ttf",
+};
+
+function loadFont(engravingFont: string): opentype.Font | null {
+  const fontsDir = path.join(process.cwd(), "public", "fonts");
+  const filename = FONT_FILES[engravingFont] ?? "Georgia-Regular.ttf";
+  try {
+    const buf = fs.readFileSync(path.join(fontsDir, filename));
+    return opentype.parse(buf.buffer as ArrayBuffer);
+  } catch {
+    return null;
+  }
+}
+
 // ─── Génération SVG LightBurn ─────────────────────────────────────────────────
 export async function generateLightBurnSVG(capsuleId: string, engraveName: string, format: string, qrUrl: string, engravingFont = "Georgia, serif"): Promise<string> {
   const dims: Record<string, { w: number; h: number; rx: number }> = {
@@ -113,10 +136,22 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   const qr = QRCode.create(qrUrl, { errorCorrectionLevel: "M" });
   const moduleCount = qr.modules.size;
 
-  // QR : 72% de la dimension courte, décalé vers le bas (+8% de hauteur)
-  const qrSizeMm = Math.min(dim.w, dim.h) * 0.72;
+  // ── Mise en page adaptative ──
+  // On réserve une bande de texte en bas, des marges (plus grandes si coins très
+  // arrondis), puis on dimensionne le QR pour tenir dans l'espace restant.
+  // Évite tout débordement du texte (ex. format carré 40×40) ou rognage des
+  // coins du QR par la découpe (ex. format arrondi en pilule).
+  const fontSize     = Math.min(dim.w, dim.h) * 0.10;
+  const sideMargin   = Math.max(dim.w * 0.10, dim.rx * 0.45);
+  const topOffset    = Math.max(dim.h * 0.08, dim.rx * 0.5);
+  const gap          = Math.max(1.5, dim.h * 0.035);
+  const textBandH    = fontSize * 1.3;
+  const bottomMargin = Math.max(2, dim.rx * 0.4);
+
+  const availH = dim.h - topOffset - gap - textBandH - bottomMargin;
+  const availW = dim.w - sideMargin * 2;
+  const qrSizeMm = Math.min(availW, availH);
   const qrX = (dim.w - qrSizeMm) / 2;
-  const topOffset = dim.h * 0.10 + 3; // légèrement plus bas
   const modSize = qrSizeMm / moduleCount;
 
   // Un seul <path> avec toutes les coordonnées directement en mm — aucun transform,
@@ -133,18 +168,26 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
     }
   }
 
-  // Police plus grande (+30%) et texte décalé de 8mm vers le bas
-  const fontSize = dim.w * 0.11;
-  const textY = topOffset + qrSizeMm + fontSize * 1.9 + 8;
+  // Position du texte : sous le QR, dans la bande réservée
+  const extraGap  = (format === "etiquette-rect" || format === "etiquette-arrondie") ? 5 : 0;
+  const baselineY = topOffset + qrSizeMm + gap + fontSize + extraGap;
 
-  // Largeur adaptative du texte : clamp(nbLettres * 2.3, 12, 23) mm — format rect uniquement
-  const nameLen = engraveName.trim().length || 1;
-  const textWidthMm = format === "etiquette-rect"
-    ? Math.min(23, Math.max(12, nameLen * 2.3))
-    : null;
-  const textLengthAttr = textWidthMm !== null
-    ? `textLength="${textWidthMm.toFixed(1)}" lengthAdjust="spacingAndGlyphs"`
-    : "";
+  // Convertir le texte en paths SVG via opentype.js
+  const font = loadFont(engravingFont);
+  let textPathData = "";
+
+  if (font) {
+    const label = engraveName.toUpperCase();
+    // Calculer la largeur du texte à l'échelle cible (fontSize en mm)
+    const textWidth = font.getAdvanceWidth(label, fontSize);
+    const startX = (dim.w - textWidth) / 2;
+    const glyphPath = font.getPath(label, startX, baselineY, fontSize);
+    textPathData = glyphPath.toSVG(4);
+  }
+
+  const textBlock = textPathData
+    ? `  <!-- Prénom gravé en paths (police : ${engravingFont}) -->\n  <g fill="#000000">\n  ${textPathData}\n  </g>`
+    : `  <!-- Prénom gravé (fallback texte) -->\n  <text x="${(dim.w / 2).toFixed(3)}" y="${baselineY.toFixed(3)}" text-anchor="middle" font-family="${engravingFont}" font-size="${fontSize.toFixed(3)}" font-weight="bold" fill="#000000">${engraveName.toUpperCase()}</text>`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!-- LightBurn SVG — EKKO — ${capsuleId} -->
@@ -162,16 +205,7 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   <!-- URL : ${qrUrl} -->
   <path fill="#000000" d="${d}"/>
 
-  <!-- Prénom gravé -->
-  <text x="${(dim.w / 2).toFixed(3)}" y="${textY.toFixed(3)}"
-        text-anchor="middle"
-        font-family="${engravingFont}"
-        font-size="${fontSize.toFixed(3)}"
-        font-weight="bold"
-        fill="#000000"
-        ${textLengthAttr}>
-    ${engraveName.toUpperCase()}
-  </text>
+${textBlock}
 
 </svg>`;
 }

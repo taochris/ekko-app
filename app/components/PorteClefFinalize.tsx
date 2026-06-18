@@ -131,7 +131,7 @@ function KeychainPreview({ format, name, accent, font }: { format: typeof FORMAT
   // baseFontSize = taille de base; réduite auto si prénom long
   const photoParams: Record<string, { src: string; height: number; nameTopPx: number; baseFontSize: number; spacing: string; maxChars: number; nameWidth: string }> = {
     "etiquette-rect":     { src: "/images/preview/keychain-rect1.png",    height: 300, nameTopPx: 213, baseFontSize: 14, spacing: "0.08em", maxChars: 10, nameWidth: "52%" },
-    "etiquette-arrondie": { src: "/images/preview/keychain-arrondie.png", height: 320, nameTopPx: 222, baseFontSize: 14, spacing: "0.08em", maxChars: 12, nameWidth: "58%" },
+    "etiquette-arrondie": { src: "/images/preview/keychain-arrondie.png", height: 320, nameTopPx: 222, baseFontSize: 14, spacing: "0.08em", maxChars: 8, nameWidth: "58%" },
     "carre":              { src: "/images/preview/keychain-carre.png",     height: 280, nameTopPx: 207, baseFontSize: 15, spacing: "0.12em", maxChars: 12, nameWidth: "60%" },
   };
   const p = photoParams[format.id] ?? photoParams["etiquette-arrondie"];
@@ -422,7 +422,7 @@ export default function PorteClefFinalize({
             <input
               type="text"
               value={engraveName}
-              maxLength={18}
+              maxLength={format === "etiquette-arrondie" ? 10 : 18}
               onChange={(e) => setEngraveName(e.target.value)}
               placeholder="Ex. : Maman, Léa, Papi…"
               style={{

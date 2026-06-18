@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LightBurn SVG — TEST POLICES EKKO — 5 formats côte à côte -->
+<!-- Chaque colonne = 30mm de large, espacées de 5mm → total 190mm x 50mm -->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 190 50"
+     width="190mm" height="50mm">
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&amp;family=Dancing+Script:wght@700&amp;family=Bebas+Neue&amp;family=Pacifico&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- ROUGE = Contour -->
+  <rect x="0.3" y="0.3" width="29.40" height="49.40"
+        rx="3" ry="3"
+        fill="none" stroke="#FF0000" stroke-width="0.25"/>
+
+  <!-- NOIR = QR Code placeholder (21x21 modules, 21.6mm, centré) -->
+  <!-- topOffset = 50*0.10 + 3 = 8mm -->
+  <!-- qrSizeMm = 30 * 0.72 = 21.6mm -->
+  <!-- qrX = (30 - 21.6) / 2 = 4.2mm -->
+
+  <!-- Finder top-left -->
+  <rect x="4.2" y="8.0" width="7.029" height="7.029" rx="0.3" fill="#000"/>
+  <rect x="5.23" y="9.03" width="5.0" height="5.0" rx="0.15" fill="#fff"/>
+  <rect x="6.26" y="10.06" width="2.94" height="2.94" rx="0.15" fill="#000"/>
+
+  <!-- Finder top-right -->
+  <rect x="18.771" y="8.0" width="7.029" height="7.029" rx="0.3" fill="#000"/>
+  <rect x="19.8" y="9.03" width="5.0" height="5.0" rx="0.15" fill="#fff"/>
+  <rect x="20.83" y="10.06" width="2.94" height="2.94" rx="0.15" fill="#000"/>
+
+  <!-- Finder bottom-left -->
+  <rect x="4.2" y="22.571" width="7.029" height="7.029" rx="0.3" fill="#000"/>
+  <rect x="5.23" y="23.6" width="5.0" height="5.0" rx="0.15" fill="#fff"/>
+  <rect x="6.26" y="24.63" width="2.94" height="2.94" rx="0.15" fill="#000"/>
+
+  <!-- Quelques modules de données pour simuler le QR -->
+  <rect x="12.26" y="8.0"  width="1.029" height="1.029" fill="#000"/>
+  <rect x="14.32" y="8.0"  width="1.029" height="1.029" fill="#000"/>
+  <rect x="16.37" y="8.0"  width="1.029" height="1.029" fill="#000"/>
+  <rect x="12.26" y="10.06" width="1.029" height="1.029" fill="#000"/>
+  <rect x="15.34" y="10.06" width="1.029" height="1.029" fill="#000"/>
+  <rect x="12.26" y="12.11" width="1.029" height="1.029" fill="#000"/>
+  <rect x="14.32" y="12.11" width="1.029" height="1.029" fill="#000"/>
+  <rect x="16.37" y="12.11" width="1.029" height="1.029" fill="#000"/>
+  <rect x="12.26" y="14.17" width="1.029" height="1.029" fill="#000"/>
+  <rect x="13.29" y="14.17" width="1.029" height="1.029" fill="#000"/>
+  <rect x="15.34" y="14.17" width="1.029" height="1.029" fill="#000"/>
+  <rect x="12.26" y="16.23" width="1.029" height="1.029" fill="#000"/>
+  <rect x="14.32" y="16.23" width="1.029" height="1.029" fill="#000"/>
+  <rect x="16.37" y="16.23" width="1.029" height="1.029" fill="#000"/>
+  <rect x="13.29" y="18.28" width="1.029" height="1.029" fill="#000"/>
+  <rect x="15.34" y="18.28" width="1.029" height="1.029" fill="#000"/>
+  <rect x="12.26" y="20.34" width="1.029" height="1.029" fill="#000"/>
+  <rect x="14.32" y="20.34" width="1.029" height="1.029" fill="#000"/>
+  <rect x="16.37" y="20.34" width="1.029" height="1.029" fill="#000"/>
+  <rect x="12.26" y="22.39" width="1.029" height="1.029" fill="#000"/>
+  <rect x="13.29" y="22.39" width="1.029" height="1.029" fill="#000"/>
+  <rect x="15.34" y="22.39" width="1.029" height="1.029" fill="#000"/>
+  <rect x="18.77" y="22.39" width="1.029" height="1.029" fill="#000"/>
+  <rect x="20.83" y="22.39" width="1.029" height="1.029" fill="#000"/>
+  <rect x="22.88" y="22.39" width="1.029" height="1.029" fill="#000"/>
+  <rect x="19.8"  y="24.45" width="1.029" height="1.029" fill="#000"/>
+  <rect x="21.86" y="24.45" width="1.029" height="1.029" fill="#000"/>
+  <rect x="18.77" y="26.51" width="1.029" height="1.029" fill="#000"/>
+  <rect x="20.83" y="26.51" width="1.029" height="1.029" fill="#000"/>
+  <rect x="22.88" y="26.51" width="1.029" height="1.029" fill="#000"/>
+
+  <!-- Prénom gravé -->
+  <!-- fontSize = 30 * 0.11 = 3.3mm -->
+  <!-- textY = 8 + 21.6 + 3.3*1.9 + 8 = 8 + 21.6 + 6.27 + 8 = 43.87mm -->
+  <text x="15.000" y="43.870"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="3.300"
+        font-weight="bold"
+        fill="#000000"
+        letter-spacing="0.6">
+    MUMY
+  </text>
+
+</svg>
