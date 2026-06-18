@@ -13,9 +13,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     "@ffmpeg-installer/ffmpeg", "fluent-ffmpeg", "ffprobe-static",
     "ogg-opus-decoder", "opus-decoder", "@wasm-audio-decoders", "@eshaz/web-worker",
+    "opentype.js",
   ],
   outputFileTracingIncludes: {
     "/api/capsules/[id]/process": ["./node_modules/@ffmpeg-installer/**"],
+    "/api/stripe/webhook":        ["./public/fonts/**"],
   },
 };
 

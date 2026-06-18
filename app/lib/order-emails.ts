@@ -118,7 +118,8 @@ function loadFont(engravingFont: string): opentype.Font | null {
   try {
     const buf = fs.readFileSync(path.join(fontsDir, filename));
     return opentype.parse(buf.buffer as ArrayBuffer);
-  } catch {
+  } catch (err) {
+    console.error(`[loadFont] Impossible de charger "${filename}" depuis "${fontsDir}":`, err);
     return null;
   }
 }
