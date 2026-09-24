@@ -166,27 +166,28 @@ export async function POST(req: NextRequest) {
         const engraveName    = session.metadata?.engraveName ?? "";
         const format        = session.metadata?.format ?? "etiquette-rect";
         const engravingFont = session.metadata?.engravingFont ?? "Georgia, serif";
+        const nfcEnabled   = session.metadata?.nfcEnabled === "true";
         const qrUrl       = `${origin}/capsule/${capsuleId}`;
-        const amount      = session.amount_total ?? 2490;
+        const amount      = session.amount_total ?? (nfcEnabled ? 2790 : 2490);
 
         if (isPorteClef) {
           // ── Email client porte-clé ──
           if (customerEmail) {
             resend.emails.send({
-              from: "EKKO <onboarding@resend.dev>",
+              from: "EKKO <ekko@vosekko.com>",
               to: customerEmail,
               subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
-              html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName }),
+              html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled }),
             }).catch((e: unknown) => console.error("[webhook] email client porteClef:", e));
           }
 
           // ── SVG LightBurn + email admin ──
           generateLightBurnSVG(capsuleId, engraveName, format, qrUrl, engravingFont).then((svg) => {
             resend.emails.send({
-              from: "EKKO <onboarding@resend.dev>",
+              from: "EKKO <ekko@vosekko.com>",
               to: adminEmail,
               subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
-              html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount }),
+              html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
               attachments: [{
                 filename: `lightburn-${engraveName.toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
                 content: Buffer.from(svg),
@@ -196,7 +197,7 @@ export async function POST(req: NextRequest) {
             // ── Notification Pushover ──
             sendPushover(
               "🔑 Nouvelle commande EKKO",
-              `Prénom : ${engraveName}\nFormat : ${format}\nClient : ${shippingName}\n${shippingAddress}`
+              `Prénom : ${engraveName}\nFormat : ${format}\nNFC au dos : ${nfcEnabled ? "oui" : "non"}\nClient : ${shippingName}\n${shippingAddress}`
             ).catch((e) => console.error("[webhook] pushover:", e));
           }).catch((e) => console.error("[webhook] generateLightBurnSVG:", e));
 
@@ -205,7 +206,7 @@ export async function POST(req: NextRequest) {
           if (customerEmail) {
             const capsuleUrl = `${origin}/capsule/${capsuleId}`;
             resend.emails.send({
-              from: "EKKO <onboarding@resend.dev>",
+              from: "EKKO <ekko@vosekko.com>",
               to: customerEmail,
               subject: "Votre vocapsule EKKO est en cours de création ✦",
               html: buildConfirmationEmail({ capsuleUrl, capsuleId }),

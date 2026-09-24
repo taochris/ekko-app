@@ -6,8 +6,8 @@ import ThemeCard from "./ThemeCard";
 
 /* ─── Navigation ─────────────────────────────────────────────────────── */
 const NAV_LINKS = [
-  { text: "Comment ça marche", href: "/comment-ca-marche" },
   { text: "Inspirations", href: "/inspirations" },
+  { text: "Comment ça marche", href: "/comment-ca-marche" },
   { text: "FAQ", href: "/faq" },
   { text: "Blog", href: "/blog" },
 ];
@@ -28,8 +28,8 @@ const MOBILE_NAV_CATEGORIES = [
   {
     label: "Explorer",
     links: [
-      { text: "Comment ça marche", href: "/comment-ca-marche" },
       { text: "Inspirations", href: "/inspirations" },
+      { text: "Comment ça marche", href: "/comment-ca-marche" },
     ],
   },
   {
@@ -70,8 +70,8 @@ const FEATURES = [
         <circle cx="16" cy="16" r="3" stroke="currentColor" strokeWidth="1" />
       </svg>
     ),
-    title: "NFC intégré",
-    desc: "Approchez. Écoutez. Aucune app nécessaire.",
+    title: "Lecture NFC",
+    desc: "Une puce au dos permet d'approcher un téléphone compatible.",
   },
   {
     icon: (
@@ -113,7 +113,7 @@ const STEPS_PORTE_CLEF = [
   {
     number: "3",
     title: "Recevez votre porte-clé à scanner",
-    desc: "Scannez le QR code ou approchez le NFC. Écoutez. Ressentez.",
+    desc: "Scannez le QR code ou approchez votre téléphone si vous choisissez la puce NFC.",
     img: "/images/steps/ChatGPT Image 20 mai 2026, 19_46_58.png",
   },
 ];
@@ -213,7 +213,7 @@ const PRODUCT_SPECS = [
         <circle cx="16" cy="16" r="2" fill="currentColor" opacity="0.5" />
       </svg>
     ),
-    label: "NFC intégré invisible",
+    label: "Lecture NFC au dos",
   },
 ];
 
@@ -224,8 +224,8 @@ const FOOTER_COLS = [
     links: [
       { text: "Fichier numérique", href: "/numerique" },
       { text: "Porte-clé", href: "/produit" },
-      { text: "Comment ça marche", href: "/comment-ca-marche" },
       { text: "Inspirations", href: "/inspirations" },
+      { text: "Comment ça marche", href: "/comment-ca-marche" },
     ],
   },
   {
@@ -267,11 +267,59 @@ export default function HomePage() {
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden" }}>
       <style>{`
+        .hp-hero-bg { width: 96% !important; transform: translateX(15%) !important; object-position: 35% center !important; }
+        .hp-hero-main-row {
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) 240px minmax(0, 1fr) !important;
+          align-items: center !important;
+          width: 100% !important;
+          margin-left: 0 !important;
+        }
+        .hp-hero-visual { grid-column: 2 !important; grid-row: 1 !important; justify-self: center !important; }
+        .hp-hero-actions { margin-top: 150px !important; }
+        .hp-hero-btn-primary { margin-bottom: 20px !important; }
+        .hp-hero-text {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          justify-self: end !important;
+          width: 300px !important;
+          height: auto !important;
+          margin-left: 0 !important;
+          margin-right: 36px !important;
+          align-self: center !important;
+          padding: 24px 26px !important;
+          background: rgba(0,0,0,0.58) !important;
+          border: 1px solid rgba(201,169,110,0.18) !important;
+          border-radius: 16px !important;
+          box-shadow: 0 16px 45px rgba(0,0,0,0.28) !important;
+          backdrop-filter: blur(10px) !important;
+          -webkit-backdrop-filter: blur(10px) !important;
+        }
+        .hp-hero-text p { font-size: 18px !important; line-height: 1.85 !important; color: rgba(240,232,216,0.92) !important; text-shadow: 0 1px 8px rgba(0,0,0,0.7); }
+        .hp-hero-inspirations { margin-top: 18px !important; gap: 14px !important; }
+        .hp-hero-inspirations-plus { flex: 0 0 30px !important; width: 30px !important; height: 30px !important; margin-right: 2px !important; }
+        @media (max-width: 1200px) {
+          .hp-nav { padding-left: 28px !important; padding-right: 28px !important; }
+          .hp-nav-links { gap: 18px !important; }
+          .hp-hero-bg { object-position: 38% center !important; }
+        }
+        @media (max-width: 900px) {
+          .hp-hero-inner { padding-left: 28px !important; padding-right: 28px !important; }
+          .hp-hero-text { width: 260px !important; margin-right: 20px !important; }
+          .hp-hero-actions { margin-top: 70px !important; }
+          .hp-hero-bg { object-position: 40% center !important; opacity: 0.78; }
+        }
         @media (max-width: 768px) {
           .hp-nav-links { display: none !important; }
-          .hp-hero-inner { flex-direction: column !important; text-align: center !important; padding: 40px 20px !important; }
-          .hp-hero-text { align-items: center !important; }
+          .hp-hero-inner { flex-direction: column !important; text-align: center !important; padding: 32px 20px 48px !important; }
+          .hp-hero-main-row { display: flex !important; flex-direction: column !important; align-items: center !important; margin: 0 !important; gap: 24px !important; }
+          .hp-hero-text { align-items: center !important; width: min(100%, 420px) !important; height: auto !important; margin: 0 !important; padding: 20px !important; }
           .hp-hero-visual { justify-content: center !important; }
+          .hp-hero-visual-frame { width: min(68vw, 240px) !important; height: min(82vw, 290px) !important; }
+          .hp-hero-actions { width: min(100%, 454px) !important; margin-top: 12px !important; }
+          .hp-hero-note { position: relative !important; right: auto !important; bottom: auto !important; max-width: 320px !important; margin: 0 auto 28px !important; text-align: center !important; padding: 0 20px !important; }
+          .hp-hero-bg { width: 100% !important; transform: none !important; opacity: 0.48; object-position: 65% center !important; }
+          .hp-hero-overlay { background: linear-gradient(180deg, rgba(10,8,12,0.55) 0%, rgba(10,8,12,0.72) 45%, rgba(10,8,12,0.94) 100%) !important; }
           .hp-features-bar { flex-wrap: wrap !important; gap: 24px !important; padding: 40px 20px !important; }
           .hp-features-bar > div { flex: 1 1 140px !important; }
           .hp-steps-grid { flex-direction: column !important; gap: 32px !important; padding: 0 20px !important; }
@@ -351,32 +399,40 @@ export default function HomePage() {
           box-sizing: border-box;
         }
         .hp-hero-btn-secondary-outline:hover { background: rgba(201,169,110,0.13); }
+        .hp-hero-inspirations {
+          display: inline-flex; align-items: center; justify-content: center; gap: 8;
+          font-family: Georgia, serif; font-size: 12px; letter-spacing: 0.15em;
+          text-transform: uppercase; color: rgb(87, 212, 147); text-decoration: none;
+          margin-top: 4px; transition: color 0.25s ease, transform 0.25s ease;
+        }
+        .hp-hero-inspirations:hover { color: rgb(120, 235, 180); transform: scale(1.05); text-shadow: 0 0 16px rgba(120, 235, 180, 0.55), 0 0 32px rgba(120, 235, 180, 0.25); }
       `}</style>
       <BlobBackground variant="home" />
 
       {/* ═══ BLOC UNIFIÉ : nav + hero + features sur même fond ═══ */}
-      <div style={{ position: "relative", zIndex: 10, overflow: "hidden", background: "rgb(10,8,12)" }}>
+      <div style={{ position: "relative", zIndex: 10, overflow: "hidden", background: "#000" }}>
         {/* Image de fond — droite, décalage léger */}
         <img
           src="/images/hero/ChatGPT Image 4 juin 2026, 20_00_09.png"
           alt=""
           aria-hidden="true"
+          className="hp-hero-bg"
           style={{
             position: "absolute", top: 0, right: 0, bottom: 0,
-            width: "72%", height: "100%",
-            objectFit: "cover", objectPosition: "left center",
+            width: "100%", height: "100%",
+            objectFit: "cover", objectPosition: "center center",
             zIndex: 0,
           }}
         />
         {/* Fondu de transition gauche → image droite */}
-        <div style={{
+        <div className="hp-hero-overlay" style={{
           position: "absolute", inset: 0, zIndex: 1,
-          background: "linear-gradient(90deg, rgba(10,8,12,1) 0%, rgba(10,8,12,1) 28%, rgba(10,8,12,0.82) 44%, rgba(10,8,12,0.2) 65%, transparent 100%)",
+          background: "linear-gradient(90deg, #000 0%, rgba(0,0,0,0.94) 24%, rgba(5,4,6,0.7) 46%, rgba(10,8,12,0.18) 72%, transparent 100%)",
         }} />
         {/* Fondu bas */}
         <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "25%", zIndex: 1,
-          background: "linear-gradient(to bottom, transparent 0%, rgba(10,8,12,0.7) 70%, rgba(10,8,12,1) 100%)",
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "40%", zIndex: 1,
+          background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.28) 38%, rgba(0,0,0,0.82) 76%, #000 100%)",
         }} />
 
       {/* ═══════════════ NAV ═══════════════ */}
@@ -385,13 +441,10 @@ export default function HomePage() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "20px 48px", boxSizing: "border-box",
       }} className="hp-nav">
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: isMobile ? 80 : 180, width: "auto", objectFit: "contain", mixBlendMode: "screen", filter: "contrast(1.3) brightness(1.1)" }} />
+            <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: isMobile ? 93 : 146, width: "auto", objectFit: "contain", mixBlendMode: "screen", opacity: 0.9 }} />
           </a>
-          <p style={{ fontFamily: font, fontSize: 9, letterSpacing: "0.38em", textTransform: "uppercase", color: "rgba(201,169,110,0.55)", margin: 0, paddingLeft: 4 }}>
-            Vos émotions, à portée de main.
-          </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 28 }} className="hp-nav-links">
           {/* Dropdown Produits */}
@@ -542,10 +595,10 @@ export default function HomePage() {
       }}>
 
         {/* Conteneur héro */}
-        <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0" }}>
+        <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px" }} className="hp-hero-inner">
             {/* Ligne 1 : vidéo + texte côte à côte */}
-            <div style={{ display: "flex", gap: 24, alignItems: "stretch", marginLeft: 300, marginTop: 50 }}>
+            <div className="hp-hero-main-row" style={{ display: "flex", gap: 24, alignItems: "stretch", marginLeft: 300, marginTop: 50 }}>
               {/* Vidéo */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -553,7 +606,7 @@ export default function HomePage() {
                 transition={{ duration: 0.9 }}
                 className="hp-hero-visual"
               >
-                <div style={{
+                <div className="hp-hero-visual-frame" style={{
                   width: 240, height: 290, borderRadius: 20, overflow: "hidden",
                   border: "1px solid rgba(201,169,110,0.22)",
                   boxShadow: "0 0 40px rgba(201,169,110,0.08)",
@@ -583,13 +636,9 @@ export default function HomePage() {
                   color: "rgba(240,232,216,0.65)", margin: 0,
                 }}>
                   Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
-                  <span className="voca-wrap">
+                  <a href="/comment-ca-marche" style={{ color: "rgb(87, 212, 147)", textDecoration: "none", fontWeight: 600, borderBottom: "1px solid rgba(87, 212, 147, 0.45)", transition: "border-color 0.2s, opacity 0.2s" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgb(87, 212, 147)"; (e.currentTarget as HTMLElement).style.opacity = "0.85"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgba(87, 212, 147, 0.45)"; (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
                     vocapsule
-                    <span className="voca-sup">*</span>
-                    <span className="voca-tooltip">
-                      Découvrez ce qu&apos;est une vocapsule dans la page &laquo;&nbsp;Comment ça marche&nbsp;&raquo;.
-                    </span>
-                  </span>
+                  </a>
                   {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
                 </p>
               </motion.div>
@@ -599,6 +648,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.2 }}
+              className="hp-hero-actions"
               style={{ display: "flex", flexDirection: "column", gap: 12, width: 454, alignItems: "stretch", marginTop: 50, alignSelf: "center" }}
             >
               <a href="/produit" className="hp-hero-btn-primary">
@@ -607,28 +657,24 @@ export default function HomePage() {
               <a href="/numerique" className="hp-hero-btn-secondary-outline">
                 Créer mon fichier numérique
               </a>
-              <a href="/comment-ca-marche" style={{
-                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-                fontFamily: font, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase",
-                color: "rgba(240,232,216,0.5)", textDecoration: "none", marginTop: 4,
-              }}>
-                <span style={{
-                  width: 28, height: 28, borderRadius: "50%", border: "1px solid rgba(240,232,216,0.25)",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+              <a href="/inspirations" className="hp-hero-inspirations">
+                <span className="hp-hero-inspirations-plus" style={{
+                  width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(87,212,147,0.45)",
+                  display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 15,
                 }}>+</span>
-                Découvrir comment ça marche
+                Mille &amp; une occasions
               </a>
             </motion.div>
           </div>
         </div>
 
         {/* Note bas droite */}
-        <p style={{
+        <p className="hp-hero-note" style={{
           position: "absolute", right: 32, bottom: 24, zIndex: 2, maxWidth: 180,
           fontFamily: font, fontSize: 11, fontStyle: "italic", lineHeight: 1.6,
           color: "rgba(240,232,216,0.3)", textAlign: "right", margin: 0,
         }}>
-          Scannez le QR code ou approchez un smartphone compatible NFC pour ouvrir votre vocapsule.
+          Scannez le QR code ou, avec une puce NFC au dos, approchez un smartphone compatible.
         </p>
       </section>
       </div>{/* fin bloc unifié */}

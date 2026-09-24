@@ -510,7 +510,7 @@ export default function ProduitPage() {
                 fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 300,
                 color: currentMaterial.accent,
               }}>
-                {currentMaterial.price}
+                Dès {currentMaterial.price}
               </span>
               <span style={{
                 fontFamily: "Georgia, serif", fontSize: 11, fontStyle: "italic",
@@ -519,6 +519,9 @@ export default function ProduitPage() {
                 Expédition gratuite
               </span>
             </div>
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.6)", marginTop: 10 }}>
+              QR code gravé inclus à 24,90 € · Puce NFC autocollante au dos en option : 27,90 €.
+            </p>
           </div>
         </motion.div>
       </section>

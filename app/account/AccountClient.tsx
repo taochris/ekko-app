@@ -45,6 +45,9 @@ interface Echo {
   storageOption: number;
   expiresAt: string | null;
   createdApprox: string | null;
+  productType?: string;
+  nfcEnabled?: boolean;
+  paidAt?: string | null;
 }
 
 interface Invoice {
@@ -57,6 +60,11 @@ interface Invoice {
 
 const STORAGE_PRICES: Record<number, string> = { 0: "9,99 €", 100: "10,99 €", 200: "11,99 €", 7: "9,99 €" };
 const STORAGE_LABELS_INV: Record<number, string> = { 0: "7 jours", 100: "1 an", 200: "2 ans", 7: "7 jours" };
+
+function storageBadgeForType(opt: number, productType?: string): { label: string; color: string } {
+  if (productType === "porteClef") return { label: "Illimité ♥", color: "#c9a96e" };
+  return storageBadge(opt);
+}
 
 function SectionLabel({ children, accent }: { children: string; accent: string }) {
   return (
@@ -100,12 +108,12 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const invoices: Invoice[] = echos
-    .filter(e => e.createdApprox)
+    .filter(e => e.paidAt ?? e.createdApprox)
     .map((e, i) => ({
       id: "INV-" + String(i + 1).padStart(3, "0"),
-      date: e.createdApprox as string,
-      amount: STORAGE_PRICES[e.storageOption] ?? "—",
-      description: "Echo Sonore — " + (STORAGE_LABELS_INV[e.storageOption] ?? ""),
+      date: (e.paidAt ?? e.createdApprox) as string,
+      amount: e.productType === "porteClef" ? (e.nfcEnabled ? "27,90 €" : "24,90 €") : (STORAGE_PRICES[e.storageOption] ?? "—"),
+      description: e.productType === "porteClef" ? `Porte-clé EKKO — ${e.nfcEnabled ? "QR + NFC" : "QR seul"}` : "Echo Sonore — " + (STORAGE_LABELS_INV[e.storageOption] ?? ""),
       status: "payee" as const,
     }));
 
@@ -184,9 +192,19 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
     <div style={{ minHeight: "100vh", background: "#0d0a0f", color: "#f0e8d8", position: "relative", overflow: "hidden" }}>
       <BlobBackground />
 
-      <nav style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 32px" }}>
-        <img src="/ekko-logo.png" alt="EKKO" onClick={() => router.push("/")} style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <style>{`
+        .account-nav { padding: 16px 24px; }
+        .account-logo { height: 80px; }
+        .account-nav-btns { gap: 8px; }
+        @media (max-width: 480px) {
+          .account-nav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+          .account-logo { height: 56px; }
+          .account-nav-btns { gap: 6px; }
+        }
+      `}</style>
+      <nav className="account-nav" style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <img src="/ekko-logo.png" alt="EKKO" onClick={() => router.push("/")} className="account-logo" style={{ width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
+        <div className="account-nav-btns" style={{ display: "flex", alignItems: "center" }}>
           <button
             onClick={() => router.push("/")}
             className="ekko-serif"
@@ -198,12 +216,12 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
           </button>
           <button onClick={logout} className="ekko-serif"
             style={{ background: "none", border: "1px solid " + accent + "30", borderRadius: 8, padding: "6px 16px", color: "rgba(243,227,190,0.88)", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase" }}>
-            Deconnexion
+            Déconnexion
           </button>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "100px 20px 80px", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "40px 16px 80px", position: "relative", zIndex: 1 }}>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
           style={{ textAlign: "center", marginBottom: 48 }}>
@@ -298,7 +316,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {echos.map((echo, i) => {
                 const a = echo.accentColor || THEME_ACCENTS[echo.theme] || accent;
-                const storage = storageBadge(echo.storageOption);
+                const storage = storageBadgeForType(echo.storageOption, echo.productType);
                 const days = daysLeft(echo.expiresAt);
                 return (
                   <motion.div key={echo.echoId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}
@@ -314,11 +332,17 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
                           </span>
                         </div>
                         <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.6)", margin: "0 0 4px" }}>
-                          Cree le {formatDate(echo.createdApprox)}
+                          Cree le {formatDate(echo.paidAt ?? echo.createdApprox)}
                         </p>
-                        <p className="ekko-serif" style={{ fontSize: 13, color: days <= 3 ? "#c96e6e" : "rgba(240,232,216,0.35)", margin: 0 }}>
-                          Expire dans {days} jour{days > 1 ? "s" : ""} — {formatDate(echo.expiresAt)}
-                        </p>
+                        {echo.productType === "porteClef" ? (
+                          <p className="ekko-serif" style={{ fontSize: 13, color: accent + "50", margin: 0, fontStyle: "italic" }}>
+                            Accès illimité — porte-clé physique
+                          </p>
+                        ) : (
+                          <p className="ekko-serif" style={{ fontSize: 13, color: days <= 3 ? "#c96e6e" : "rgba(240,232,216,0.35)", margin: 0 }}>
+                            Expire dans {days} jour{days > 1 ? "s" : ""} — {formatDate(echo.expiresAt)}
+                          </p>
+                        )}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0, alignItems: "center" }}>
                         <button onClick={() => router.push("/v/" + echo.echoId)}

@@ -5,8 +5,8 @@ import * as fs from "fs";
 import * as path from "path";
 
 // ─── Email client porte-clé ──────────────────────────────────────────────────
-export function buildKeychainEmail({ capsuleId, engraveName, format, shippingName }: {
-  capsuleId: string; engraveName: string; format: string; shippingName: string;
+export function buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled = false }: {
+  capsuleId: string; engraveName: string; format: string; shippingName: string; nfcEnabled?: boolean;
 }): string {
   const formatLabel: Record<string, string> = {
     "etiquette-rect":     "Rectangulaire · 50×30 mm",
@@ -34,6 +34,7 @@ export function buildKeychainEmail({ capsuleId, engraveName, format, shippingNam
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Prénom gravé</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${engraveName.toUpperCase()}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Format</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${formatLabel[format] ?? format}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Matière</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">Bois naturel · Gravure laser</td></tr>
+                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Accès</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${nfcEnabled ? "QR code + puce NFC au dos · 27,90 €" : "QR code gravé · 24,90 €"}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Livraison</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">5–7 jours ouvrés · Gratuite</td></tr>
               </table>
               <p style="margin:18px 0 4px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,169,110,0.6);">Référence</p>
@@ -53,15 +54,25 @@ export function buildKeychainEmail({ capsuleId, engraveName, format, shippingNam
 }
 
 // ─── Email admin nouvelle commande ───────────────────────────────────────────
-export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount }: {
+const FONT_LABELS: Record<string, string> = {
+  "Georgia, serif":              "Classique (Georgia)",
+  "'Cinzel', serif":             "Romain (Cinzel)",
+  "'Dancing Script', cursive":   "Cursif (Dancing Script)",
+  "'Bebas Neue', sans-serif":    "Bold (Bebas Neue)",
+  "'Pacifico', cursive":         "Arrondi (Pacifico)",
+};
+
+export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled = false }: {
   capsuleId: string; engraveName: string; format: string; qrUrl: string;
   shippingName: string; shippingAddress: string; customerPhone: string; customerEmail: string; amount: number;
+  engravingFont?: string; nfcEnabled?: boolean;
 }): string {
   const formatLabel: Record<string, string> = {
     "etiquette-rect":     "Rectangulaire (50×30 mm)",
     "etiquette-arrondie": "Arrondie (50,8×31,8 mm)",
     "carre":              "Carré (40×40 mm)",
   };
+  const fontLabel = FONT_LABELS[engravingFont ?? ""] ?? (engravingFont || "Classique (Georgia)");
   return `<!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"/><title>Nouvelle commande EKKO</title></head>
@@ -78,6 +89,8 @@ export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, sh
             <tr><td colspan="2" style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#c9a96e;padding-bottom:10px;">GRAVURE</td></tr>
             <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Prénom à graver</td><td style="font-size:16px;font-weight:bold;color:#f0e8d8;">${engraveName.toUpperCase()}</td></tr>
             <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Format</td><td style="font-size:14px;color:#f0e8d8;">${formatLabel[format] ?? format}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Police</td><td style="font-size:14px;color:#f0e8d8;font-weight:bold;">${fontLabel}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Accès</td><td style="font-size:14px;color:#f0e8d8;font-weight:bold;">${nfcEnabled ? "QR code + puce NFC autocollante au dos" : "QR code seul (sans NFC)"}</td></tr>
             <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Montant</td><td style="font-size:14px;color:#c9a96e;font-weight:bold;">${(amount / 100).toFixed(2)} €</td></tr>
           </table>
           <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:20px 0;"/>
@@ -92,7 +105,7 @@ export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, sh
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td colspan="2" style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#c9a96e;padding-bottom:10px;">TECHNIQUE</td></tr>
             <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Capsule ID</td><td style="font-family:monospace;font-size:13px;color:rgba(240,232,216,0.7);">${capsuleId}</td></tr>
-            <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;">URL QR code</td><td style="font-size:13px;color:#c9a96e;">${qrUrl}</td></tr>
+            <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;">URL QR${nfcEnabled ? " + NFC" : ""}</td><td style="font-size:13px;color:#c9a96e;">${qrUrl}</td></tr>
           </table>
           <p style="margin:24px 0 0;font-size:12px;color:rgba(240,232,216,0.4);font-style:italic;">Le fichier LightBurn SVG est en pièce jointe de cet email.</p>
         </td></tr>
@@ -112,14 +125,22 @@ const FONT_FILES: Record<string, string> = {
   "'Pacifico', cursive":         "Pacifico-Regular.ttf",
 };
 
-function loadFont(engravingFont: string): opentype.Font | null {
+async function loadFont(engravingFont: string): Promise<opentype.Font | null> {
   const fontsDir = path.join(process.cwd(), "public", "fonts");
   const filename = FONT_FILES[engravingFont] ?? "Georgia-Regular.ttf";
+  console.log(`[loadFont] police="${engravingFont}" → fichier="${filename}" cwd="${process.cwd()}"`);
   try {
     const buf = fs.readFileSync(path.join(fontsDir, filename));
-    return opentype.parse(buf.buffer as ArrayBuffer);
+    const ot = await import("opentype.js");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parseFn: (ab: ArrayBuffer) => opentype.Font = (ot as any).parse ?? (ot as any).default?.parse;
+    if (typeof parseFn !== "function") throw new Error("opentype.parse introuvable dans le module");
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    const font = parseFn(ab);
+    console.log(`[loadFont] OK — ${font.numGlyphs} glyphes`);
+    return font;
   } catch (err) {
-    console.error(`[loadFont] Impossible de charger "${filename}" depuis "${fontsDir}":`, err);
+    console.error(`[loadFont] ERREUR "${filename}":`, err);
     return null;
   }
 }
@@ -174,7 +195,7 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   const baselineY = topOffset + qrSizeMm + gap + fontSize + extraGap;
 
   // Convertir le texte en paths SVG via opentype.js
-  const font = loadFont(engravingFont);
+  const font = await loadFont(engravingFont);
   let textPathData = "";
 
   if (font) {
@@ -231,11 +252,11 @@ export async function sendPushover(title: string, message: string): Promise<void
 export async function sendKeychainOrderEmails({
   capsuleId, engraveName, format, qrUrl,
   shippingName, shippingAddress, customerPhone, customerEmail,
-  amount,
+  amount, engravingFont, nfcEnabled = false,
 }: {
   capsuleId: string; engraveName: string; format: string; qrUrl: string;
   shippingName: string; shippingAddress: string; customerPhone: string;
-  customerEmail: string; amount: number;
+  customerEmail: string; amount: number; engravingFont?: string; nfcEnabled?: boolean;
 }): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[order-emails] RESEND_API_KEY absent — emails non envoyés");
@@ -247,10 +268,10 @@ export async function sendKeychainOrderEmails({
   if (customerEmail) {
     try {
       const { data, error } = await resend.emails.send({
-        from: "EKKO <onboarding@resend.dev>",
+        from: "EKKO <ekko@vosekko.com>",
         to: customerEmail,
         subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
-        html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName }),
+        html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled }),
       });
       if (error) console.error("[order-emails] email client ERREUR:", JSON.stringify(error));
       else console.log("[order-emails] email client envoyé →", customerEmail, "id:", data?.id);
@@ -262,14 +283,14 @@ export async function sendKeychainOrderEmails({
   }
 
   try {
-    const svg = await generateLightBurnSVG(capsuleId, engraveName, format, qrUrl);
+    const svg = await generateLightBurnSVG(capsuleId, engraveName, format, qrUrl, engravingFont);
     const { data, error } = await resend.emails.send({
       from: "EKKO <ekko@vosekko.com>",
       to: adminEmail,
       subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
-      html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount }),
+      html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
       attachments: [{
-        filename: `lightburn-${engraveName.toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
+        filename: `lightburn-${engraveName.toLowerCase()}-${(FONT_LABELS[engravingFont ?? ""] ?? "classique").split(" ")[0].toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
         content: Buffer.from(svg),
       }],
     });
@@ -278,7 +299,7 @@ export async function sendKeychainOrderEmails({
 
     sendPushover(
       "🔑 Nouvelle commande EKKO",
-      `Prénom : ${engraveName}\nFormat : ${format}\nClient : ${shippingName}\n${shippingAddress}`
+      `Prénom : ${engraveName}\nFormat : ${format}\nNFC au dos : ${nfcEnabled ? "oui" : "non"}\nClient : ${shippingName}\n${shippingAddress}`
     ).catch((e) => console.error("[order-emails] pushover:", e));
   } catch (e) {
     console.error("[order-emails] email admin exception:", e);

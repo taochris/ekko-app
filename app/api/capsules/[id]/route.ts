@@ -27,6 +27,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       productType: capsule.productType ?? "numerique",
       engraveName: capsule.engraveName ?? null,
       format: capsule.format ?? null,
+      nfcEnabled: capsule.nfcEnabled ?? false,
       shippingStatus: capsule.shippingStatus ?? null,
     });
   } catch (err) {

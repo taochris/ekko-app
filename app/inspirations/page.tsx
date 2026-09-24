@@ -929,7 +929,7 @@ export default function InspirationsPage() {
         padding: "20px 28px", borderBottom: "1px solid rgba(201,169,110,0.08)",
       }}>
         <a href="/" style={{ textDecoration: "none" }}>
-          <img src="/g.png" alt="VOSEKKO" style={{ height: 52, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/g.png" alt="VOSEKKO" style={{ height: 96, width: "auto", objectFit: "contain", mixBlendMode: "screen", filter: "brightness(1.4)" }} />
         </a>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
           {[

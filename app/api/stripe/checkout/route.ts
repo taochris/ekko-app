@@ -6,9 +6,11 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, uploadId, storage, storageLabel, uid, accentColor, email, devBypass, product, engraveName, engravingFont, format, material } = await req.json();
+    const { theme, uploadId, storage, storageLabel, uid, accentColor, email, devBypass, product, engraveName, engravingFont, format, material, nfcEnabled } = await req.json();
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
     const isPorteClef = product === "porteClef";
+    const withNfc = isPorteClef && nfcEnabled === true;
+    if (isPorteClef) console.log(`[checkout] engravingFont reçu="${engravingFont}" engraveName="${engraveName}"`);
 
     // 1. Créer la capsule Firestore en statut "pending"
     const capsuleId = await createCapsule({
@@ -18,7 +20,7 @@ export async function POST(req: NextRequest) {
       storageOption: storage ?? 0,
       uploadId: uploadId || "",
       productType: isPorteClef ? "porteClef" : "numerique",
-      ...(isPorteClef ? { engraveName, format, material: material || "bois" } : {}),
+      ...(isPorteClef ? { engraveName, format, material: material || "bois", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: withNfc } : {}),
       customerEmail: email || "",
     });
 
@@ -38,11 +40,12 @@ export async function POST(req: NextRequest) {
       ? {
           price_data: {
             currency: "eur",
-            unit_amount: 2490,
+            unit_amount: withNfc ? 2790 : 2490,
             product_data: {
               name: "Porte-clé EKKO en bois gravé",
               description:
                 "Porte-clé bois gravé au laser · QR code unique" +
+                (withNfc ? " · Puce NFC autocollante au dos" : "") +
                 (engraveName ? ` · Gravure « ${engraveName} »` : "") +
                 " · Anneau inox · Expédition gratuite",
             },
@@ -71,7 +74,7 @@ export async function POST(req: NextRequest) {
         capsuleId,
         customerEmail: email || "",
         productType: isPorteClef ? "porteClef" : "numerique",
-        ...(isPorteClef ? { engraveName: engraveName || "", format: format || "", engravingFont: engravingFont || "Georgia, serif" } : {}),
+        ...(isPorteClef ? { engraveName: engraveName || "", format: format || "", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: String(withNfc) } : {}),
       },
       ...(isPorteClef ? {
         shipping_address_collection: { allowed_countries: ["FR", "BE", "CH", "LU", "MC"] },

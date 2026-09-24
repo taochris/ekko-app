@@ -126,7 +126,7 @@ export default function NumeriquePage() {
         position: "relative", zIndex: 10,
         maxWidth: 1100, margin: "0 auto", padding: "0 24px 80px",
       }}>
-        <div style={{
+        <div id="themes" style={{
           display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24,
         }} className="numerique-themes-grid">
           {THEMES.map((theme, i) => (
@@ -202,7 +202,7 @@ export default function NumeriquePage() {
                   fontWeight: 500, letterSpacing: "0.05em",
                   textAlign: "center", marginTop: "auto", flexShrink: 0,
                 }}>
-                  Voir un exemple
+                  Créer avec ce thème →
                 </div>
               </div>
             </motion.a>
@@ -260,6 +260,37 @@ export default function NumeriquePage() {
             <span style={{ fontFamily: font, fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.25)" }}>paiement unique</span>
           </div>
         </div>
+      </section>
+
+      {/* CTA principal */}
+      <section style={{ position: "relative", zIndex: 10, textAlign: "center", padding: "0 24px 80px" }}>
+        <motion.a
+          href="#themes"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          whileHover={{ scale: 1.03, y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            display: "inline-block",
+            padding: "18px 44px",
+            borderRadius: 50,
+            background: `linear-gradient(135deg, ${gold}cc, ${gold})`,
+            color: "#0d0a0f",
+            fontFamily: font,
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textDecoration: "none",
+            boxShadow: `0 8px 32px ${gold}40`,
+          }}
+        >
+          Créer mon fichier numérique →
+        </motion.a>
+        <p style={{ fontFamily: font, fontSize: 12, color: "rgba(240,232,216,0.3)", marginTop: 14, fontStyle: "italic" }}>
+          Ou choisissez un autre thème ci-dessus
+        </p>
       </section>
 
       {/* Footer */}

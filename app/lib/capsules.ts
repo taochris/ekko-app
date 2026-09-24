@@ -23,6 +23,8 @@ export interface Capsule {
   engraveName?: string;
   format?: string;
   material?: string;
+  engravingFont?: string;
+  nfcEnabled?: boolean;
   shippingStatus?: "pending" | "to_engrave" | "shipped";
   shippingName?: string;
   shippingAddress?: string;
@@ -52,6 +54,8 @@ export async function createCapsule(data: {
   engraveName?: string;
   format?: string;
   material?: string;
+  engravingFont?: string;
+  nfcEnabled?: boolean;
   customerEmail?: string;
 }): Promise<string> {
   const db = getAdminFirestore();
@@ -69,6 +73,8 @@ export async function createCapsule(data: {
       engraveName: data.engraveName ?? "",
       format: data.format ?? "",
       material: data.material ?? "bois",
+      engravingFont: data.engravingFont ?? "Georgia, serif",
+      nfcEnabled: data.nfcEnabled === true,
       shippingStatus: "pending" as const,
     } : {}),
     ...(data.customerEmail ? { customerEmail: data.customerEmail } : {}),
@@ -101,6 +107,8 @@ export async function getCapsule(id: string): Promise<Capsule | null> {
     engraveName: raw.engraveName,
     format: raw.format,
     material: raw.material,
+    engravingFont: raw.engravingFont,
+    nfcEnabled: raw.nfcEnabled === true,
     shippingStatus: raw.shippingStatus,
     shippingName: raw.shippingName,
     shippingAddress: raw.shippingAddress,

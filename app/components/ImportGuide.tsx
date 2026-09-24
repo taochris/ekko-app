@@ -952,10 +952,11 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="mb-6"
+            style={{ padding: "16px 16px 20px", borderRadius: 16 }}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs tracking-widest uppercase ekko-serif" style={{ color: `${config.accent}80` }}>
+              <p className="text-xs tracking-widest uppercase ekko-serif" style={{ color: "rgba(43, 182, 45, 0.9)" }}>
                 {importedFiles.length} audio{importedFiles.length > 1 ? "s" : ""} importé{importedFiles.length > 1 ? "s" : ""}
                 {isDemoMode ? " · démonstration" : ""}
               </p>
@@ -980,7 +981,7 @@ export default function ImportGuide({ theme, config, onAudiosImported, onCoverSe
                     display: "flex", alignItems: "center", gap: 10,
                     padding: "10px 14px", borderRadius: 12,
                     background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(43, 182, 45, 0.75)",
                   }}
                 >
                   <div style={{

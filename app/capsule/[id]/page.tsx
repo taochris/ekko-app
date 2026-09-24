@@ -22,6 +22,7 @@ interface CapsuleState {
   productType?: "numerique" | "porteClef";
   engraveName?: string | null;
   format?: string | null;
+  nfcEnabled?: boolean;
   shippingStatus?: string | null;
 }
 
@@ -107,13 +108,9 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
         if (pollRef.current) clearInterval(pollRef.current);
         return;
       }
-      // Pour un porte-clé : arrêter dès que statut != pending
-      // OU dès que session_id est présent (Stripe redirect = paiement confirmé)
-      if (data.productType === "porteClef" && (data.status !== "pending" || !!sessionId)) {
-        cancelled = true;
-        if (pollRef.current) clearInterval(pollRef.current);
-        return;
-      }
+      // Porte-clé : on continue de poller jusqu'à "ready" afin que le client
+      // puisse vérifier le montage audio (fusion + qualité) via le lecteur numérique,
+      // exactement comme pour une édition numérique.
     };
 
     loop().then(() => {
@@ -184,6 +181,23 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
         )}
         {capsule && capsule.productType === "porteClef" && (capsule.status !== "pending" || !!sessionId) && capsule.status !== "failed" && (
           <KeychainSuccessScreen capsule={capsule} accent={accent} />
+        )}
+        {capsule && capsule.productType === "porteClef" && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 480, margin: "0 auto 4px" }}>
+              <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.08)" }} />
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${accent}90`, whiteSpace: "nowrap" }}>
+                Vérifiez votre montage
+              </span>
+              <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.08)" }} />
+            </div>
+            <EchoRevealScreen
+              config={{ accent, accentDim: accent + "60" }}
+              echoId={capsule.echoId}
+              audioUrl={capsule.audioUrl}
+              uid={capsule.uid}
+            />
+          </div>
         )}
 
         {/* ── Numérique : flux processing / ready / failed ── */}
@@ -319,6 +333,7 @@ function KeychainSuccessScreen({ capsule, accent }: { capsule: CapsuleState; acc
             ["Prénom gravé",  (capsule.engraveName ?? "—").toUpperCase()],
             ["Format",        formatLabel[capsule.format ?? ""] ?? capsule.format ?? "—"],
             ["Matière",       "Bois naturel · Gravure laser"],
+            ["Accès",         capsule.nfcEnabled ? "QR code + puce NFC au dos · 27,90 €" : "QR code gravé · 24,90 €"],
             ["Livraison",     "5–7 jours ouvrés · Gratuite"],
           ].map(([label, value]) => (
             <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>

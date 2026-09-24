@@ -44,8 +44,8 @@ const ENGRAVING_FONTS = [
   { id: "arrondi",   name: "Arrondi",    family: "'Pacifico', cursive",         previewSize: 15 },
 ] as const;
 
-const PRICE_EUR = 24.9;
-const PRICE_CENTS = 2490;
+const QR_PRICE_CENTS = 2490;
+const NFC_PRICE_CENTS = 2790;
 
 interface PorteClefFinalizeProps {
   config: {
@@ -240,6 +240,7 @@ export default function PorteClefFinalize({
     (FORMATS.find((f) => f.id === initialFormat)?.id ?? "etiquette-rect") as FormatId
   );
   const [engraveName, setEngraveName] = useState("");
+  const [nfcEnabled, setNfcEnabled] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
   const [status, setStatus] = useState<"idle" | "uploading" | "redirecting">("idle");
   const [showAuth, setShowAuth] = useState(false);
@@ -247,6 +248,7 @@ export default function PorteClefFinalize({
   const [engravingFont, setEngravingFont] = useState<string>(ENGRAVING_FONTS[0].family);
 
   const currentFormat = FORMATS.find((f) => f.id === format) ?? FORMATS[0];
+  const price = ((nfcEnabled ? NFC_PRICE_CENTS : QR_PRICE_CENTS) / 100).toFixed(2).replace(".", ",");
 
   useEffect(() => {
     if (user && showAuth) setShowAuth(false);
@@ -279,6 +281,7 @@ export default function PorteClefFinalize({
         engravingFont,
         format,
         material: "bois",
+        nfcEnabled,
         // Conservation permanente incluse : le QR gravé doit rester valide
         storage: 200,
         storageLabel: "incluse",
@@ -491,6 +494,27 @@ export default function PorteClefFinalize({
             </div>
           </div>
 
+          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.4)", marginBottom: 10 }}>
+              Accès à votre vocapsule
+            </legend>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { enabled: false, title: "QR code gravé", detail: "Scannez le QR code avec l’appareil photo du téléphone.", price: "24,90 €" },
+                { enabled: true, title: "QR code + NFC au dos", detail: "Puce NFC autocollante au dos : approchez un téléphone compatible.", price: "27,90 €" },
+              ].map((option) => (
+                <label key={option.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, cursor: "pointer", background: nfcEnabled === option.enabled ? `${accent}12` : "rgba(255,255,255,0.03)", border: `1px solid ${nfcEnabled === option.enabled ? accent + "55" : "rgba(255,255,255,0.07)"}` }}>
+                  <input type="radio" name="acces-porte-cle" checked={nfcEnabled === option.enabled} onChange={() => setNfcEnabled(option.enabled)} style={{ accentColor: accent, flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>
+                    <span style={{ display: "block", fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>{option.title}</span>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.55)", lineHeight: 1.5 }}>{option.detail}</span>
+                  </span>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: accent, whiteSpace: "nowrap" }}>{option.price}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
           {/* Prix + livraison */}
           <div style={{
             padding: "16px 18px", borderRadius: 14,
@@ -502,11 +526,11 @@ export default function PorteClefFinalize({
                 Porte-clé {currentFormat.name} · bois
               </span>
               <span style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 300, color: accent }}>
-                {PRICE_EUR.toFixed(2).replace(".", ",")} €
+                {price} €
               </span>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {["Gravure laser", "Anneau inox", "QR code unique", "Conservation incluse", "Expédition gratuite"].map((t) => (
+              {["Gravure laser", "Anneau inox", "QR code unique", ...(nfcEnabled ? ["NFC au dos"] : []), "Conservation incluse", "Expédition gratuite"].map((t) => (
                 <span key={t} style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>✦ {t}</span>
               ))}
             </div>
@@ -558,7 +582,7 @@ export default function PorteClefFinalize({
                 ? "Préparation de votre commande…"
                 : status === "redirecting"
                   ? "Redirection vers le paiement…"
-                  : `Commander mon porte-clé — ${PRICE_EUR.toFixed(2).replace(".", ",")} €`}
+                  : `Commander mon porte-clé — ${price} €`}
             </motion.button>
             <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0, fontStyle: "italic", textAlign: "center" }}>
               Adresse de livraison demandée à l&apos;étape suivante · Paiement sécurisé

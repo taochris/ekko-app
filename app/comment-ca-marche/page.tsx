@@ -112,7 +112,7 @@ export default function CommentCamarchePage() {
           Avec Ekko, vous gardez seulement ce qui compte vraiment. Vous supprimez les audios parasites et créez un souvenir audio propre, clair et unique.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
-          {["Jusqu'à 2 h d'audio", "Audios réunis au même endroit", "QR code + NFC sur le support", "Écoute en une seconde"].map((label) => (
+          {["Jusqu'à 2 h d'audio", "Audios réunis au même endroit", "QR gravé · NFC en option", "Écoute en une seconde"].map((label) => (
             <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 40, background: "rgba(201,169,110,0.08)", border: "1px solid rgba(201,169,110,0.2)", fontFamily: font, fontSize: 13, color: cream }}>
               <span style={{ width: 5, height: 5, borderRadius: "50%", background: gold, display: "inline-block", flexShrink: 0 }} />{label}
             </div>
@@ -138,7 +138,7 @@ export default function CommentCamarchePage() {
           </div>
           <div style={{ background: "rgba(22,28,26,0.85)", border: "2px solid rgba(72,231,204,0.5)", borderRadius: 20, padding: "24px 20px", boxShadow: "0 0 18px rgba(72,231,204,0.07)" }}>
             <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "#4ee6d1", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avec Ekko</p>
-            {["Les bons audios sont réunis", "Le souvenir reste toujours au même endroit", "Le QR code ouvre directement l'écoute", "La puce NFC fonctionne en approchant le téléphone", "Toujours avec soi, partout où vous allez", "Une seconde suffit"].map((item, idx) => (
+            {["Les bons audios sont réunis", "Le souvenir reste toujours au même endroit", "Le QR code ouvre directement l'écoute", "Avec l’option NFC, approchez un téléphone compatible", "Toujours avec soi, partout où vous allez", "Une seconde suffit"].map((item, idx) => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12, fontFamily: font, fontSize: 13, color: "#c8ffe9", lineHeight: 1.5 }}>
                 <span style={{ minWidth: 14, display: "inline-flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, marginTop: 4 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: idx === 4 ? "#ff9f7a" : "#4ee6d1", display: "inline-block" }} /></span>{item}
               </div>
@@ -153,7 +153,7 @@ export default function CommentCamarchePage() {
               <rect x="2" y="14" width="8" height="8" rx="1" stroke={`${gold}77`} strokeWidth="1.5"/>
               <rect x="14" y="14" width="8" height="8" rx="1" stroke={`${gold}77`} strokeWidth="1.5"/>
             </svg>
-            Scannez le QR code ou approchez le support du téléphone.
+            Scannez le QR code ou, avec l&apos;option NFC, approchez un téléphone compatible.
           </div>
           <p style={{ fontFamily: font, fontSize: 14, fontStyle: "italic", color: cream }}>Le souvenir n'est plus à chercher.{" "}<span style={{ color: "#ffb48a" }}>Il est là.</span></p>
         </div>
@@ -167,12 +167,12 @@ export default function CommentCamarchePage() {
           Deux accès, <em style={{ fontStyle: "italic", color: gold }}>un seul souvenir</em>
         </h2>
         <p style={{ fontFamily: font, fontSize: 14, lineHeight: 1.8, color: "rgba(240,232,216,0.5)", textAlign: "center", maxWidth: 620, margin: "0 auto 40px" }}>
-          Sur le support physique (porte-clés en bois, par exemple), vous avez un QR code gravé et une puce NFC intégrée. À vous de choisir la façon qui vous convient le mieux pour écouter.
+          Le porte-clé en bois comprend un QR code gravé (24,90 €). Vous pouvez ajouter une puce NFC autocollante au dos (27,90 €) pour ouvrir la même vocapsule avec un téléphone compatible.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }} className="two-col-grid access-grid">
           {[
             { title: "QR code", desc: "Scannez avec l'appareil photo et ouvrez instantanément la vocapsule.", icon: (<svg viewBox="0 0 32 32" fill="none" style={{ width: 40, height: 40, flexShrink: 0 }}><rect x="2" y="2" width="12" height="12" rx="1" stroke={gold} strokeWidth="1.5"/><rect x="5" y="5" width="6" height="6" rx="0.5" fill={gold} opacity="0.55"/><rect x="18" y="2" width="12" height="12" rx="1" stroke={gold} strokeWidth="1.5"/><rect x="21" y="5" width="6" height="6" rx="0.5" fill={gold} opacity="0.55"/><rect x="2" y="18" width="12" height="12" rx="1" stroke={gold} strokeWidth="1.5"/><rect x="5" y="21" width="6" height="6" rx="0.5" fill={gold} opacity="0.55"/><rect x="18" y="18" width="4" height="4" fill={gold} opacity="0.45"/><rect x="24" y="18" width="4" height="4" fill={gold} opacity="0.45"/><rect x="18" y="24" width="4" height="4" fill={gold} opacity="0.45"/><rect x="24" y="24" width="4" height="4" fill={gold} opacity="0.45"/></svg>) },
-            { title: "NFC", desc: "Approchez votre téléphone du support et la vocapsule s'ouvre en une seconde.", icon: (<svg viewBox="0 0 32 32" fill="none" style={{ width: 40, height: 40, flexShrink: 0 }}><path d="M6 16a10 10 0 0 1 10-10" stroke={gold} strokeWidth="1.5" strokeLinecap="round" opacity="0.35"/><path d="M9.5 16a6.5 6.5 0 0 1 6.5-6.5" stroke={gold} strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/><path d="M13 16a3 3 0 0 1 3-3" stroke={gold} strokeWidth="1.5" strokeLinecap="round"/><circle cx="16" cy="16" r="1.8" fill={gold}/></svg>) },
+            { title: "NFC en option", desc: "La puce collée au dos ouvre la vocapsule en approchant un téléphone compatible.", icon: (<svg viewBox="0 0 32 32" fill="none" style={{ width: 40, height: 40, flexShrink: 0 }}><path d="M6 16a10 10 0 0 1 10-10" stroke={gold} strokeWidth="1.5" strokeLinecap="round" opacity="0.35"/><path d="M9.5 16a6.5 6.5 0 0 1 6.5-6.5" stroke={gold} strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/><path d="M13 16a3 3 0 0 1 3-3" stroke={gold} strokeWidth="1.5" strokeLinecap="round"/><circle cx="16" cy="16" r="1.8" fill={gold}/></svg>) },
           ].map((item) => (
             <div key={item.title} style={{ display: "flex", gap: 20, alignItems: "flex-start", background: "rgba(255,255,255,0.02)", border: `1px solid ${gold}22`, borderRadius: 16, padding: "24px 20px" }}>
               {item.icon}
@@ -183,7 +183,7 @@ export default function CommentCamarchePage() {
             </div>
           ))}
         </div>
-        <p style={{ fontFamily: font, fontSize: 14, fontStyle: "italic", color: "rgba(240,232,216,0.4)", textAlign: "center" }}>Même vocapsule. Deux façons de l'écouter.</p>
+        <p style={{ fontFamily: font, fontSize: 14, fontStyle: "italic", color: "rgba(240,232,216,0.4)", textAlign: "center" }}>Même vocapsule. Deux façons de l&apos;écouter avec l&apos;option NFC.</p>
       </motion.section>
 
       {/* ── 6. Les usages ── */}
@@ -248,7 +248,7 @@ export default function CommentCamarchePage() {
               Votre vocapsule prend vie dans un support physique, pensé pour durer et se transmettre.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
-              {["Un QR code gravé", "Une puce NFC intégrée", "Un accès direct à votre vocapsule"].map((line) => (
+              {["Un QR code gravé", "Une puce NFC au dos en option", "Un accès direct à votre vocapsule"].map((line) => (
                 <div key={line} style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: font, fontSize: 14, color: "rgba(240,232,216,0.7)" }}>
                   <span style={{ color: gold, fontWeight: 700, fontSize: 16 }}>✓</span>{line}
                 </div>
@@ -287,7 +287,7 @@ export default function CommentCamarchePage() {
               <span style={{ width: 4, height: 4, borderRadius: "50%", background: `${gold}44`, display: "inline-block" }} />Jusqu'à 2 heures d'audio.
             </span>
             <span style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.25)", display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: `${gold}44`, display: "inline-block" }} />QR code et NFC inclus sur le support.
+              <span style={{ width: 4, height: 4, borderRadius: "50%", background: `${gold}44`, display: "inline-block" }} />QR code inclus, NFC en option.
             </span>
           </div>
         </div>

@@ -448,19 +448,19 @@ export default function FaqPage() {
 
           <Accordion title="Qu'est-ce que le porte-clé EKKO ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Le porte-clé EKKO est un objet en bois gravé au laser. Il contient un <span style={{ color: accent }}>QR code unique</span> et une <span style={{ color: accent }}>puce NFC intégrée</span>, tous deux liés à votre vocapsule. Il suffit de le scanner ou de l'approcher d'un téléphone pour que vos souvenirs audio s'ouvrent immédiatement.
+              Le porte-clé EKKO est un objet en bois gravé au laser avec un <span style={{ color: accent }}>QR code unique</span> lié à votre vocapsule (24,90 €). Vous pouvez choisir en option une <span style={{ color: accent }}>puce NFC autocollante au dos</span> (27,90 €) pour l&apos;ouvrir en approchant un téléphone compatible.
             </p>
           </Accordion>
 
           <Accordion title="Comment associer ma vocapsule au porte-clé ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Au moment de la commande du porte-clé, vous indiquez le lien de votre vocapsule. Ce lien est ensuite encodé dans le QR code gravé et dans la puce NFC. Le porte-clé est fabriqué et expédié avec votre vocapsule déjà liée.
+              Vous créez votre vocapsule en sélectionnant vos audios avant de commander. Son lien est gravé dans le QR code et, si vous choisissez l&apos;option NFC, encodé dans la puce collée au dos. Le porte-clé est expédié avec votre vocapsule déjà liée.
             </p>
           </Accordion>
 
           <Accordion title="Combien de temps le lien audio reste-t-il actif avec un porte-clé ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              L'achat d'un porte-clé inclut automatiquement un stockage de votre fichier audio pendant <span style={{ color: accent }}>20 ans</span>. Votre vocapsule reste accessible via le QR code et la NFC pendant toute cette durée, sans action supplémentaire de votre part.
+              L&apos;achat d&apos;un porte-clé inclut automatiquement un stockage de votre fichier audio pendant <span style={{ color: accent }}>20 ans</span>. Votre vocapsule reste accessible via le QR code et, si vous avez choisi l&apos;option, via la NFC pendant cette durée.
             </p>
           </Accordion>
 
@@ -472,7 +472,7 @@ export default function FaqPage() {
 
           <Accordion title="La puce NFC fonctionne-t-elle sur tous les téléphones ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              La NFC fonctionne sur la grande majorité des smartphones récents : <span style={{ color: accent }}>iPhone 7 et versions ultérieures</span> (sans app), et la plupart des Android depuis 2015. Il suffit d'approcher le téléphone du porte-clé sans avoir à ouvrir une application. Si votre téléphone ne supporte pas la NFC, le <span style={{ color: accent }}>QR code</span> fonctionne sur tous les appareils équipés d'un appareil photo.
+              Si vous choisissez l&apos;option NFC, vous pouvez approcher un téléphone compatible de la puce collée au dos. Certains modèles ou réglages nécessitent d&apos;activer la NFC. Dans tous les cas, le <span style={{ color: accent }}>QR code gravé</span> reste disponible et peut être scanné avec l&apos;appareil photo.
             </p>
           </Accordion>
 
@@ -484,13 +484,13 @@ export default function FaqPage() {
 
           <Accordion title="Puis-je changer la vocapsule liée au porte-clé après réception ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Non. Le QR code est gravé dans le bois de façon permanente — il ne peut pas être modifié après fabrication. La puce NFC, en revanche, pourrait techniquement être réécrite, mais ce n'est pas une fonctionnalité proposée actuellement.
+              Non. Le QR code est gravé dans le bois de façon permanente — il ne peut pas être modifié après fabrication. Si vous avez choisi l&apos;option NFC, sa puce peut techniquement être réécrite, mais ce n&apos;est pas une fonctionnalité proposée actuellement.
             </p>
           </Accordion>
 
           <Accordion title="Quel est le délai de livraison ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Comptez <span style={{ color: accent }}>5 à 7 jours ouvrés</span> entre la commande et la réception : 2 à 3 jours pour la fabrication (gravure laser, intégration NFC) et 2 à 4 jours pour l'expédition. L'expédition est <span style={{ color: accent }}>gratuite</span>.
+              Comptez <span style={{ color: accent }}>5 à 7 jours ouvrés</span> entre la commande et la réception : 2 à 3 jours pour la fabrication (gravure laser et, si choisie, pose de la puce NFC au dos) et 2 à 4 jours pour l&apos;expédition. L&apos;expédition est <span style={{ color: accent }}>gratuite</span>.
             </p>
           </Accordion>
 

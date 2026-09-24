@@ -39,6 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // Emails pour porteClef (même logique que le webhook Stripe)
   if (capsule.productType === "porteClef" && capsule.engraveName) {
+    console.log(`[dev-claim] engravingFont Firestore="${capsule.engravingFont}" format="${capsule.format}"`);
     const qrUrl = `${origin}/capsule/${capsuleId}`;
     await sendKeychainOrderEmails({
       capsuleId,
@@ -49,7 +50,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       shippingAddress: capsule.shippingAddress ?? "",
       customerPhone: capsule.customerPhone ?? "",
       customerEmail: capsule.customerEmail ?? "",
-      amount: 2490,
+      amount: capsule.nfcEnabled ? 2790 : 2490,
+      engravingFont: capsule.engravingFont ?? "Georgia, serif",
+      nfcEnabled: capsule.nfcEnabled ?? false,
     }).catch((e) => console.error("[dev-claim] sendKeychainOrderEmails:", e));
   }
 
