@@ -572,11 +572,13 @@ export default function HomePage() {
                           onClick={() => setOpenCat(null)}
                           style={{
                             fontFamily: font, fontSize: 14,
-                            color: "rgba(240,232,216,0.9)",
-                            textDecoration: "none", padding: "12px 16px", borderRadius: 10,
+                            color: "rgba(240,232,216,0.9)", textDecoration: "none",
+                            padding: "12px 16px", borderRadius: 10,
                             display: "block",
                           }}
-                        >{link.text}</a>
+                        >
+                          {link.text}
+                        </a>
                       ))}
                     </motion.div>
                   </div>
