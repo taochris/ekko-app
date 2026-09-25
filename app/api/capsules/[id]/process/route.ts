@@ -6,6 +6,7 @@ import path from "path";
 import { getAdminBucket } from "../../../../lib/firebaseAdmin";
 import {
   getCapsule,
+  getExpirationDate,
   markCapsuleProcessing,
   markCapsuleReady,
   markCapsuleFailed,
@@ -47,13 +48,6 @@ function resolveFfmpegPath(): string {
   }
   console.warn("[ffmpeg] fallback sur 'ffmpeg' du PATH système");
   return "ffmpeg";
-}
-
-function expiresAt(storageOption: number): Date {
-  const now = Date.now();
-  if (storageOption === 100) return new Date(now + 365 * 24 * 3600 * 1000);
-  if (storageOption === 200) return new Date(now + 2 * 365 * 24 * 3600 * 1000);
-  return new Date(now + 7 * 24 * 3600 * 1000);
 }
 
 function spawnFfmpeg(bin: string, args: string[]): Promise<void> {
@@ -226,7 +220,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     // 4. Upload final
     const echoId = crypto.randomUUID();
-    const expires = expiresAt(capsule.storageOption);
+    const createdAt = new Date();
+    const expires = getExpirationDate(capsule.productType, capsule.storageOption, createdAt);
     const destPath = `echos/${capsule.uid}/${echoId}/audio.${ext}`;
     const destFile = bucket.file(destPath);
     await destFile.save(mergedBuf, {
@@ -236,6 +231,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
           theme: capsule.theme,
           accentColor: capsule.accentColor,
           storageOption: String(capsule.storageOption),
+          productType: capsule.productType ?? "numerique",
+          createdAt: createdAt.toISOString(),
           expiresAt: expires.toISOString(),
           uploadId: capsule.uploadId,
           uid: capsule.uid,

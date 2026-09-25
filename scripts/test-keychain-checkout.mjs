@@ -91,3 +91,22 @@ test("les récapitulatifs client et fabricant distinguent QR seul et QR + NFC", 
   assert.match(emailExports.buildAdminOrderEmail({ ...admin, nfcEnabled: true }), /QR code \+ puce NFC autocollante au dos/);
   assert.match(emailExports.buildAdminOrderEmail({ ...admin, nfcEnabled: false }), /QR code seul \(sans NFC\)/);
 });
+
+test("le porte-clé conserve l'audio vingt ans indépendamment de l'option numérique", () => {
+  const capsulesPath = fileURLToPath(new URL("../app/lib/capsules.ts", import.meta.url));
+  const capsulesSource = readFileSync(capsulesPath, "utf8");
+  const capsulesCompiled = ts.transpileModule(capsulesSource, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  const capsulesExports = {};
+  vm.runInNewContext(capsulesCompiled, {
+    exports: capsulesExports,
+    require: (id) => id === "firebase-admin/firestore" ? { FieldValue: {} } : { getAdminFirestore: () => { throw new Error("Pas de Firebase pendant ce test"); } },
+  });
+  const start = new Date("2026-09-25T10:00:00.000Z");
+  assert.equal(capsulesExports.getExpirationDate("porteClef", 200, start).toISOString(), "2046-09-25T10:00:00.000Z");
+  assert.equal(capsulesExports.getExpirationDate("porteClef", 0, start).toISOString(), "2046-09-25T10:00:00.000Z");
+  assert.equal(capsulesExports.getExpirationDate("numerique", 200, start).toISOString(), "2028-09-24T10:00:00.000Z");
+  assert.equal(capsulesExports.getExpirationDate("numerique", 100, start).toISOString(), "2027-09-25T10:00:00.000Z");
+  assert.equal(capsulesExports.getExpirationDate("numerique", 0, start).toISOString(), "2026-10-02T10:00:00.000Z");
+});

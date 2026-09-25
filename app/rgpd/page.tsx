@@ -141,19 +141,27 @@ export default function RGPDPage() {
             </Li>
             <Li>
               <div>
-                <strong style={{ color: "#f0e8d8" }}>Vocapsule MP3 finale</strong><br />
-                Finalité : mise à disposition du client via lien sécurisé et QR code.<br />
+                <strong style={{ color: "#f0e8d8" }}>Fichier audio final de la vocapsule</strong><br />
+                Finalité : mise à disposition du client via un lien et un QR code, ainsi que via une puce NFC si elle a été choisie pour le porte-clé.<br />
                 Stockage : Google Cloud Storage, région europe-west, chiffrement au repos (AES-256).<br />
-                Durée : 7 jours (offre de base), 1 an ou 2 ans (options payantes), puis suppression automatique.
+                Durée : 7 jours, 1 an ou 2 ans pour la version numérique selon l&apos;option choisie ; 20 ans à compter de sa création pour le porte-clé, sauf demande de suppression du client.
               </div>
             </Li>
             <Li>
               <div>
                 <strong style={{ color: "#f0e8d8" }}>Métadonnées de commande</strong><br />
                 Finalité : gestion du service, suivi des statuts de capsule, service client.<br />
-                Contenu : identifiant de capsule, thème choisi, date de création, statut de traitement.<br />
+                Contenu : identifiant de capsule, thème, date de création, statut de traitement, et pour un porte-clé format, gravure et choix NFC.<br />
                 Stockage : Firestore (Google Cloud, région europe-west).<br />
                 Aucune donnée de carte bancaire — le paiement est géré exclusivement par Stripe (certifié PCI-DSS).
+              </div>
+            </Li>
+            <Li>
+              <div>
+                <strong style={{ color: "#f0e8d8" }}>Coordonnées de livraison du porte-clé</strong><br />
+                Finalité : fabrication, expédition et suivi de la commande.<br />
+                Contenu : nom, adresse de livraison et téléphone fournis lors du paiement, enregistrés dans Firestore et communiqués au transporteur chargé de la livraison.<br />
+                Durée : conservation limitée aux besoins de la commande, des obligations légales et des éventuels litiges.
               </div>
             </Li>
             <Li>
@@ -168,7 +176,7 @@ export default function RGPDPage() {
 
         <Section title="3 — Base légale des traitements">
           <Ul>
-            <Li><strong style={{ color: "#f0e8d8" }}>Exécution du contrat (art. 6.1.b RGPD)</strong> — création du compte, traitement des audios, livraison de la vocapsule.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Exécution du contrat (art. 6.1.b RGPD)</strong> — création du compte, traitement des audios, accès à la vocapsule et livraison du porte-clé commandé.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Obligation légale (art. 6.1.c RGPD)</strong> — conservation des données comptables (10 ans).</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Intérêt légitime (art. 6.1.f RGPD)</strong> — sécurité de la plateforme, prévention des abus.</Li>
           </Ul>
@@ -180,7 +188,8 @@ export default function RGPDPage() {
           <Ul>
             <Li><strong style={{ color: "#f0e8d8" }}>Firebase / Google Cloud (UE)</strong> — authentification, base de données, stockage des fichiers audio et vocapsules.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Stripe (UE, certifié PCI-DSS)</strong> — traitement sécurisé des paiements. VosEkko ne voit jamais vos données de carte.</Li>
-            <Li><strong style={{ color: "#f0e8d8" }}>Resend</strong> — envoi de l'email de confirmation de commande uniquement.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Resend</strong> — envoi des emails liés aux commandes.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Transporteur</strong> — accès aux coordonnées nécessaires à l&apos;expédition d&apos;un porte-clé commandé.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Vercel</strong> — hébergement de l'application web (infrastructure serverless, sans accès aux données utilisateurs).</Li>
           </Ul>
         </Section>
@@ -190,7 +199,7 @@ export default function RGPDPage() {
           <Ul>
             <Li><strong style={{ color: "#f0e8d8" }}>Droit d'accès</strong> — obtenir une copie de vos données personnelles détenues par VosEkko.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Droit de rectification</strong> — corriger des informations inexactes (email, nom de profil).</Li>
-            <Li><strong style={{ color: "#f0e8d8" }}>Droit à l'effacement</strong> — demander la suppression de votre compte et de toutes vos données, y compris vocapsules et audios hébergés, quel que soit votre abonnement en cours (7 jours, 1 an ou 2 ans). Suppression effective sous 72 heures.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Droit à l'effacement</strong> — demander la suppression de votre compte et de toutes vos données, y compris vocapsules et audios hébergés, quelle que soit la durée d&apos;accès prévue (7 jours, 1 an, 2 ans ou 20 ans pour un porte-clé). Suppression effective sous 72 heures.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Droit à la portabilité</strong> — recevoir vos données dans un format structuré et lisible par machine.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Droit d'opposition</strong> — vous opposer à certains traitements fondés sur l'intérêt légitime.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Droit à la limitation</strong> — demander la suspension d'un traitement le temps d'un examen.</Li>

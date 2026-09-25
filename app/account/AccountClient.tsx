@@ -62,7 +62,7 @@ const STORAGE_PRICES: Record<number, string> = { 0: "9,99 €", 100: "10,99 €"
 const STORAGE_LABELS_INV: Record<number, string> = { 0: "7 jours", 100: "1 an", 200: "2 ans", 7: "7 jours" };
 
 function storageBadgeForType(opt: number, productType?: string): { label: string; color: string } {
-  if (productType === "porteClef") return { label: "Illimité ♥", color: "#c9a96e" };
+  if (productType === "porteClef") return { label: "20 ans ♥", color: "#c9a96e" };
   return storageBadge(opt);
 }
 
@@ -336,7 +336,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
                         </p>
                         {echo.productType === "porteClef" ? (
                           <p className="ekko-serif" style={{ fontSize: 13, color: accent + "50", margin: 0, fontStyle: "italic" }}>
-                            Accès illimité — porte-clé physique
+                            Accès 20 ans — porte-clé physique
                           </p>
                         ) : (
                           <p className="ekko-serif" style={{ fontSize: 13, color: days <= 3 ? "#c96e6e" : "rgba(240,232,216,0.35)", margin: 0 }}>

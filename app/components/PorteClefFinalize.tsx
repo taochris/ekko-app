@@ -549,14 +549,11 @@ export default function PorteClefFinalize({
               )}
             </span>
             <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.55)", lineHeight: 1.65, margin: 0 }} onClick={() => setConsentChecked((v) => !v)}>
-              J&apos;accepte que la fabrication de mon porte-clé personnalisé commence après le paiement et je reconnais que, ce produit étant gravé sur mesure, je renonce à mon{" "}
-              <a href="/cgv" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
-                droit de rétractation
-              </a>{" "}
-              conformément aux{" "}
+              J&apos;accepte les{" "}
               <a href="/cgv" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
                 CGV
-              </a>.
+              </a>{" "}
+              et comprends que ce porte-clé gravé sur mesure ne bénéficie pas du droit de rétractation de 14 jours (article L.221-28 3° du Code de la consommation), sans préjudice des garanties légales en cas de défaut ou de non-conformité.
             </p>
           </label>
 

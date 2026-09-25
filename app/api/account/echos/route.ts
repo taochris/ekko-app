@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
         storageOption,
         expiresAt: expiresAt || null,
         expired,
-        createdApprox: expiresAt
+        createdApprox: meta.createdAt ? String(meta.createdAt) : expiresAt
           ? (() => {
               const exp = new Date(expiresAt).getTime();
               const dur =
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
               return new Date(exp - dur).toISOString();
             })()
           : null,
-        productType: "numerique" as string,
+        productType: String(meta.productType ?? "numerique"),
         nfcEnabled: false,
         paidAt: null as string | null,
       };

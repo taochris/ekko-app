@@ -11,6 +11,16 @@ import { FieldValue } from "firebase-admin/firestore";
  */
 export type CapsuleStatus = "pending" | "paid" | "processing" | "ready" | "failed";
 
+export function getExpirationDate(productType: "numerique" | "porteClef" | undefined, storageOption: number, from = new Date()): Date {
+  const expiration = new Date(from);
+  if (productType === "porteClef") {
+    expiration.setUTCFullYear(expiration.getUTCFullYear() + 20);
+    return expiration;
+  }
+  const days = storageOption === 100 ? 365 : storageOption === 200 ? 730 : 7;
+  return new Date(expiration.getTime() + days * 24 * 3600 * 1000);
+}
+
 export interface Capsule {
   id: string;
   status: CapsuleStatus;
