@@ -231,18 +231,16 @@ const FOOTER_COLS = [
   {
     title: "Aide",
     links: [
-      { text: "FAQ", href: "/faq" },
-      { text: "Livraison & retours", href: "/livraison" },
-      { text: "Nous contacter", href: "mailto:vosekko@outlook.com" },
+      { text: "FAQ et livraison", href: "/faq" },
+      { text: "Nous contacter", href: "/contact" },
     ],
   },
   {
-    title: "À propos",
+    title: "Informations",
     links: [
-      { text: "Notre histoire", href: "/a-propos" },
       { text: "Blog", href: "/blog" },
-      { text: "CGV", href: "/cgv" },
-      { text: "Mentions légales", href: "/rgpd" },
+      { text: "Conditions générales de vente", href: "/cgv" },
+      { text: "Politique de confidentialité", href: "/rgpd" },
     ],
   },
 ];
@@ -1141,18 +1139,8 @@ export default function HomePage() {
           </div>
 
           {/* Réseaux sociaux */}
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", paddingTop: 4 }}>
-            {[
-              { label: "Instagram", path: "M7.5 2h9A5.5 5.5 0 0122 7.5v9a5.5 5.5 0 01-5.5 5.5h-9A5.5 5.5 0 012 16.5v-9A5.5 5.5 0 017.5 2zm4.5 5a5 5 0 100 10 5 5 0 000-10zm5.5-.5a1 1 0 110 2 1 1 0 010-2z" },
-              { label: "Facebook", path: "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" },
-              { label: "TikTok", path: "M9 12a4 4 0 104 4V4a5 5 0 005 5" },
-            ].map((s) => (
-              <a key={s.label} href="#" aria-label={s.label} style={{ color: "rgba(240,232,216,0.3)", transition: "color 0.2s" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-                  <path d={s.path} />
-                </svg>
-              </a>
-            ))}
+          <div style={{ paddingTop: 4, fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.3)" }}>
+            Réseaux sociaux à venir
           </div>
         </div>
       </footer>
