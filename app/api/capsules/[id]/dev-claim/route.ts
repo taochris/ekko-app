@@ -12,14 +12,20 @@ export const runtime = "nodejs";
  * Ce fichier n'a aucun effet en production (variable absente sur Netlify).
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const devBypassEnabled = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID || process.env.NODE_ENV === "development";
-  if (!devBypassEnabled) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
-  }
-
   const { id: capsuleId } = await params;
   const capsule = await getCapsule(capsuleId);
   if (!capsule) return NextResponse.json({ error: "Capsule introuvable" }, { status: 404 });
+
+  const devUid = process.env.NEXT_PUBLIC_DEV_UID;
+  const isDevOwner = !!devUid && capsule.uid === devUid;
+  const devBypassEnabled =
+    process.env.NEXT_PUBLIC_DEV_BYPASS === "true" ||
+    process.env.NODE_ENV === "development" ||
+    isDevOwner;
+
+  if (!devBypassEnabled) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
 
   if (capsule.status === "ready" || capsule.status === "processing" || capsule.status === "paid") {
     return NextResponse.json({ status: capsule.status });

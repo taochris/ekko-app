@@ -96,7 +96,11 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
       }
 
       // Dev bypass : pas de session_id mais compte dev → court-circuiter le paiement
-      const isDevBypass = process.env.NEXT_PUBLIC_DEV_BYPASS === "true" || !!process.env.NEXT_PUBLIC_DEV_UID || process.env.NODE_ENV === "development";
+      const devUid = process.env.NEXT_PUBLIC_DEV_UID;
+      const isDevBypass =
+        process.env.NEXT_PUBLIC_DEV_BYPASS === "true" ||
+        process.env.NODE_ENV === "development" ||
+        (!!devUid && data.uid === devUid);
       if (!sessionId && data.status === "pending" && !claimedRef.current && isDevBypass) {
         claimedRef.current = true;
         fetch(`/api/capsules/${id}/dev-claim`, { method: "POST" })
