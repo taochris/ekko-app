@@ -10,17 +10,20 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
     const isPorteClef = product === "porteClef";
     const withNfc = isPorteClef && nfcEnabled === true;
-    if (isPorteClef) console.log(`[checkout] engravingFont reçu="${engravingFont}" engraveName="${engraveName}"`);
+    const validStorage = storage === 100 ? 100 : storage === 200 ? 200 : 0;
+    const safeUploadId = typeof uploadId === "string" && /^[a-zA-Z0-9_-]{1,64}$/.test(uploadId) ? uploadId : "";
+    const safeEngraveName = typeof engraveName === "string" ? engraveName.trim().slice(0, 20) : "";
+    if (isPorteClef) console.log(`[checkout] engravingFont reçu="${engravingFont}" engraveName="${safeEngraveName}"`);
 
     // 1. Créer la capsule Firestore en statut "pending"
     const capsuleId = await createCapsule({
       uid: uid || "anonymous",
       theme: theme || "deuil",
       accentColor: accentColor || "#c9a96e",
-      storageOption: storage ?? 0,
-      uploadId: uploadId || "",
+      storageOption: isPorteClef ? 200 : validStorage,
+      uploadId: safeUploadId,
       productType: isPorteClef ? "porteClef" : "numerique",
-      ...(isPorteClef ? { engraveName, format, material: material || "bois", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: withNfc } : {}),
+      ...(isPorteClef ? { engraveName: safeEngraveName, format, material: material || "bois", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: withNfc } : {}),
       customerEmail: email || "",
     });
 
@@ -55,11 +58,11 @@ export async function POST(req: NextRequest) {
       : {
           price_data: {
             currency: "eur",
-            unit_amount: 999 + (storage ?? 0),
+            unit_amount: 999 + validStorage,
             product_data: {
               name: "Écho EKKO — Accès complet" + (storageLabel ? ` + ${storageLabel}` : ""),
               description:
-                "Assemblage de vos voix · Téléchargement MP3 · QR code" +
+                "Assemblage de vos voix · Téléchargement audio · QR code" +
                 (storageLabel ? ` · Conservation ${storageLabel}` : ""),
             },
           },

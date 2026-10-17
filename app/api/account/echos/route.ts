@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 export const runtime = "nodejs";
 
@@ -17,9 +18,33 @@ function initAdmin(): App {
   });
 }
 
+async function verifyRequestUid(req: NextRequest): Promise<string | null> {
+  initAdmin();
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    try {
+      const decoded = await getAuth().verifyIdToken(token);
+      return decoded.uid;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function GET(req: NextRequest) {
-  const uid = req.nextUrl.searchParams.get("uid");
+  const tokenUid = await verifyRequestUid(req);
+  const queryUid = req.nextUrl.searchParams.get("uid");
+  const uid = tokenUid ?? queryUid;
   if (!uid) return NextResponse.json({ error: "uid manquant" }, { status: 400 });
+  if (tokenUid && queryUid && tokenUid !== queryUid) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+  // Exiger le token d'authentification Firebase pour lister les échos d'un compte
+  if (!tokenUid) {
+    return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+  }
 
   try {
     initAdmin();
@@ -96,5 +121,32 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[account/echos]", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const uid = await verifyRequestUid(req);
+  if (!uid) {
+    return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+  }
+
+  try {
+    initAdmin();
+    const bucket = getStorage().bucket();
+    const db = getFirestore();
+
+    // 1. Supprimer tous les fichiers audio et couvertures de l'utilisateur dans Firebase Storage
+    const [files] = await bucket.getFiles({ prefix: `echos/${uid}/` });
+    await Promise.all(files.map((f) => f.delete().catch(() => {})));
+
+    // 2. Supprimer les capsules associées et le profil dans Firestore
+    const capsulesSnap = await db.collection("capsules").where("uid", "==", uid).get();
+    await Promise.all(capsulesSnap.docs.map((doc) => doc.ref.delete().catch(() => {})));
+    await db.collection("users").doc(uid).delete().catch(() => {});
+
+    return NextResponse.json({ deleted: true });
+  } catch (err) {
+    console.error("[account/echos DELETE]", err);
+    return NextResponse.json({ error: "Erreur lors de la suppression des données" }, { status: 500 });
   }
 }

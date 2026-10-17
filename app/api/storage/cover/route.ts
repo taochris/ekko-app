@@ -35,6 +35,10 @@ export async function POST(req: NextRequest) {
     if (!file || !uid || !echoId) {
       return NextResponse.json({ error: "Paramètres manquants (file, uid, echoId)" }, { status: 400 });
     }
+    const SAFE_ID = /^[a-zA-Z0-9_-]{1,128}$/;
+    if (!SAFE_ID.test(uid) || !SAFE_ID.test(echoId)) {
+      return NextResponse.json({ error: "Identifiants invalides." }, { status: 400 });
+    }
     if (!ALLOWED_MIME.has(file.type)) {
       return NextResponse.json({ error: "Format non autorisé. Utilisez JPEG, PNG ou WebP." }, { status: 400 });
     }
@@ -54,6 +58,13 @@ export async function POST(req: NextRequest) {
 
     initAdmin();
     const bucket = getStorage().bucket();
+
+    // Vérifier que l'écho existe bien sous cet uid avant d'autoriser l'upload de la couverture
+    const [existingEchoFiles] = await bucket.getFiles({ prefix: `echos/${uid}/${echoId}/` });
+    const hasAudio = existingEchoFiles.some((f) => /\/audio\.[a-z0-9]+$/.test(f.name));
+    if (!hasAudio) {
+      return NextResponse.json({ error: "Écho introuvable." }, { status: 404 });
+    }
 
     const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
     const destPath = `echos/${uid}/${echoId}/cover.${ext}`;

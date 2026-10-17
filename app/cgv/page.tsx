@@ -115,13 +115,16 @@ export default function CGVPage() {
         {/* Article 1 */}
         <Section title="Article 1 — Identification de l'entreprise">
           <P>
-            Le service EKKO est édité et exploité par <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, accessible à l&apos;adresse{" "}
+            Le service EKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, Société par Actions Simplifiée (SAS) en cours d&apos;immatriculation au Registre du Commerce et des Sociétés (RCS), accessible à l&apos;adresse{" "}
             <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               vosekko.com
             </a>.
           </P>
           <P>
-            Pour toute question ou réclamation :{" "}
+            Hébergement du site : <strong style={{ color: "#f0e8d8" }}>Vercel Inc.</strong> (440 N Barranca Ave #4133, Covina, CA 91723, États-Unis) — stockage des données en région Union européenne via Google Cloud / Firebase.
+          </P>
+          <P>
+            Pour toute question, demande d&apos;information ou réclamation :{" "}
             <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               vosekko@outlook.com
             </a>
@@ -162,7 +165,7 @@ export default function CGVPage() {
         <Section title="Article 4 — Prix">
           <P>Les tarifs en vigueur sont affichés sur la page de commande avant toute validation d&apos;achat.</P>
           <Ul>
-            <Li>Vocapsule numérique (fichier audio, MP3 et QR code) : <strong style={{ color: "#f0e8d8" }}>9,99 €</strong> TTC, conservation 7 jours.</Li>
+            <Li>Vocapsule numérique (fichier audio téléchargeable et QR code) : <strong style={{ color: "#f0e8d8" }}>9,99 €</strong> TTC, conservation 7 jours.</Li>
             <Li>Option numérique conservation 1 an : <strong style={{ color: "#f0e8d8" }}>+1,00 €</strong> TTC, soit 10,99 € TTC au total.</Li>
             <Li>Option numérique conservation 2 ans : <strong style={{ color: "#f0e8d8" }}>+2,00 €</strong> TTC, soit 11,99 € TTC au total.</Li>
             <Li>Porte-clé en bois personnalisé, avec QR code gravé et accès audio 20 ans : <strong style={{ color: "#f0e8d8" }}>24,90 €</strong> TTC.</Li>
@@ -238,7 +241,7 @@ export default function CGVPage() {
             Une fois la vocapsule créée, le client peut :
           </P>
           <Ul>
-            <Li>Télécharger le fichier MP3 directement depuis la page de confirmation</Li>
+            <Li>Télécharger le fichier audio directement depuis la page de confirmation ou la page d&apos;écoute</Li>
             <Li>Accéder au QR code personnel pour un partage ou un réécoute futur</Li>
             <Li>Retrouver la vocapsule depuis son compte VosEkko pendant sa durée de conservation</Li>
           </Ul>
@@ -270,7 +273,7 @@ export default function CGVPage() {
           <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>8.1 — Données collectées et finalités</h3>
           <Ul>
             <Li><strong style={{ color: "#f0e8d8" }}>Adresse email</strong> — collectée lors de la création de compte. Utilisée pour : authentification, envoi de la confirmation de commande, accès aux vocapsules. Stockée dans Firebase Authentication (Google Cloud, serveurs UE).</Li>
-            <Li><strong style={{ color: "#f0e8d8" }}>Fichiers audio importés</strong> — fournis par le client lors de la création d&apos;une vocapsule. Traités uniquement pour l&apos;assemblage audio (fusion, encodage MP3). Stockés temporairement dans Google Cloud Storage (région europe-west) pendant la durée du traitement, puis supprimés automatiquement dès la vocapsule créée.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Fichiers audio importés</strong> — fournis par le client lors de la création d&apos;une vocapsule. Traités uniquement pour l&apos;assemblage audio (fusion et encodage audio). Stockés temporairement dans Google Cloud Storage (région europe-west) pendant la durée du traitement, puis supprimés automatiquement dès la vocapsule créée.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Fichier vocapsule (audio final)</strong> — résultat du traitement. Hébergé dans Google Cloud Storage pendant 7 jours, 1 an ou 2 ans pour le produit numérique selon l&apos;option choisie, ou pendant 20 ans pour un porte-clé, à compter de sa création.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Métadonnées de la commande</strong> — identifiant de capsule, thème, format, gravure, option NFC, date de création et statut. Stockées dans Firestore. Aucune donnée de carte bancaire n&apos;est conservée par VosEkko — le paiement est géré exclusivement par Stripe.</Li>
             <Li><strong style={{ color: "#f0e8d8" }}>Livraison du porte-clé</strong> — nom, adresse de livraison et numéro de téléphone recueillis à la commande, utilisés pour fabriquer et expédier le produit ainsi que pour traiter les demandes liées à la commande.</Li>
@@ -361,13 +364,17 @@ export default function CGVPage() {
         {/* Article 11 */}
         <Section title="Article 11 — Loi applicable et litiges">
           <P>
-            Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité via{" "}
+            Les présentes CGV sont soumises au droit français. En cas de litige, le client s&apos;adressera en priorité au service client de VosEkko afin de rechercher une solution amiable par écrit à l&apos;adresse{" "}
             <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               vosekko@outlook.com
             </a>.
           </P>
           <P>
-            Conformément aux articles L.611-1 et suivants du Code de la consommation, le consommateur peut recourir gratuitement à un médiateur de la consommation après une réclamation écrite restée sans solution. À défaut de résolution amiable, les juridictions compétentes sont déterminées par les règles applicables.
+            Conformément aux articles L.612-1 et suivants du Code de la consommation, si la réclamation écrite auprès du service client n&apos;a pas abouti, le consommateur a la possibilité de recourir gratuitement à un médiateur de la consommation (coordonnées communiquées sur simple demande à{" "}
+            <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              vosekko@outlook.com
+            </a>{" "}
+            dès désignation de l&apos;organisme de rattachement consécutivement à l&apos;immatriculation de la société). À défaut de résolution amiable, les juridictions françaises compétentes seront saisies conformément au droit commun.
           </P>
         </Section>
 

@@ -4,10 +4,22 @@ import * as opentype from "opentype.js";
 import * as fs from "fs";
 import * as path from "path";
 
+function escapeHtml(s: string): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ─── Email client porte-clé ──────────────────────────────────────────────────
 export function buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled = false }: {
   capsuleId: string; engraveName: string; format: string; shippingName: string; nfcEnabled?: boolean;
 }): string {
+  const safeEngrave = escapeHtml(engraveName.toUpperCase());
+  const safeShippingName = escapeHtml(shippingName);
+  const safeCapsuleId = escapeHtml(capsuleId);
   const formatLabel: Record<string, string> = {
     "etiquette-rect":     "Rectangulaire · 50×30 mm",
     "etiquette-arrondie": "Arrondie · 50,8×31,8 mm",
@@ -25,20 +37,20 @@ export function buildKeychainEmail({ capsuleId, engraveName, format, shippingNam
           <h1 style="margin:0;font-size:22px;font-weight:300;color:#f0e8d8;line-height:1.4;">Votre porte-clé est en cours de fabrication</h1>
         </td></tr>
         <tr><td style="padding:36px 40px;">
-          <p style="margin:0 0 20px;font-size:15px;color:rgba(240,232,216,0.85);line-height:1.75;">Merci ${shippingName} pour votre commande. ✦</p>
+          <p style="margin:0 0 20px;font-size:15px;color:rgba(240,232,216,0.85);line-height:1.75;">Merci ${safeShippingName} pour votre commande. ✦</p>
           <p style="margin:0 0 24px;font-size:15px;color:rgba(240,232,216,0.85);line-height:1.75;">Votre porte-clé en bois gravé au laser est en cours de fabrication. Vous recevrez un second email dès l'expédition.</p>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(201,169,110,0.06);border:1px solid rgba(201,169,110,0.2);border-radius:14px;margin:0 0 28px;">
             <tr><td style="padding:22px 24px;">
               <p style="margin:0 0 14px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#c9a96e;">Récapitulatif commande</p>
               <table width="100%" cellpadding="0" cellspacing="0">
-                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Prénom gravé</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${engraveName.toUpperCase()}</td></tr>
-                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Format</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${formatLabel[format] ?? format}</td></tr>
+                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Prénom gravé</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${safeEngrave}</td></tr>
+                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Format</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${escapeHtml(formatLabel[format] ?? format)}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Matière</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">Bois naturel · Gravure laser</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Accès</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${nfcEnabled ? "QR code + puce NFC au dos · 27,90 €" : "QR code gravé · 24,90 €"}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Livraison</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">5–7 jours ouvrés · Gratuite</td></tr>
               </table>
               <p style="margin:18px 0 4px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,169,110,0.6);">Référence</p>
-              <p style="margin:0;font-family:ui-monospace,monospace;font-size:12px;color:rgba(240,232,216,0.4);">${capsuleId}</p>
+              <p style="margin:0;font-family:ui-monospace,monospace;font-size:12px;color:rgba(240,232,216,0.4);">${safeCapsuleId}</p>
             </td></tr>
           </table>
           <p style="margin:0;font-size:13px;color:rgba(240,232,216,0.5);line-height:1.75;font-style:italic;">Des questions ? Répondez à cet email ou écrivez-nous à <a href="mailto:vosekko@outlook.com" style="color:#c9a96e;">vosekko@outlook.com</a>.</p>
@@ -87,25 +99,25 @@ export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, sh
         <tr><td style="padding:28px 32px;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td colspan="2" style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#c9a96e;padding-bottom:10px;">GRAVURE</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Prénom à graver</td><td style="font-size:16px;font-weight:bold;color:#f0e8d8;">${engraveName.toUpperCase()}</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Format</td><td style="font-size:14px;color:#f0e8d8;">${formatLabel[format] ?? format}</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Police</td><td style="font-size:14px;color:#f0e8d8;font-weight:bold;">${fontLabel}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Prénom à graver</td><td style="font-size:16px;font-weight:bold;color:#f0e8d8;">${escapeHtml(engraveName.toUpperCase())}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Format</td><td style="font-size:14px;color:#f0e8d8;">${escapeHtml(formatLabel[format] ?? format)}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Police</td><td style="font-size:14px;color:#f0e8d8;font-weight:bold;">${escapeHtml(fontLabel)}</td></tr>
             <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Accès</td><td style="font-size:14px;color:#f0e8d8;font-weight:bold;">${nfcEnabled ? "QR code + puce NFC autocollante au dos" : "QR code seul (sans NFC)"}</td></tr>
             <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Montant</td><td style="font-size:14px;color:#c9a96e;font-weight:bold;">${(amount / 100).toFixed(2)} €</td></tr>
           </table>
           <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:20px 0;"/>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td colspan="2" style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#c9a96e;padding-bottom:10px;">LIVRAISON</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Nom</td><td style="font-size:14px;color:#f0e8d8;">${shippingName}</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;vertical-align:top;">Adresse</td><td style="font-size:14px;color:#f0e8d8;">${shippingAddress}</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Téléphone</td><td style="font-size:14px;color:#f0e8d8;">${customerPhone || "—"}</td></tr>
-            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Email</td><td style="font-size:14px;color:#f0e8d8;">${customerEmail}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Nom</td><td style="font-size:14px;color:#f0e8d8;">${escapeHtml(shippingName)}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;vertical-align:top;">Adresse</td><td style="font-size:14px;color:#f0e8d8;">${escapeHtml(shippingAddress)}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Téléphone</td><td style="font-size:14px;color:#f0e8d8;">${escapeHtml(customerPhone || "—")}</td></tr>
+            <tr><td style="font-size:14px;color:rgba(240,232,216,0.55);padding:4px 0;">Email</td><td style="font-size:14px;color:#f0e8d8;">${escapeHtml(customerEmail)}</td></tr>
           </table>
           <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:20px 0;"/>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td colspan="2" style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#c9a96e;padding-bottom:10px;">TECHNIQUE</td></tr>
-            <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Capsule ID</td><td style="font-family:monospace;font-size:13px;color:rgba(240,232,216,0.7);">${capsuleId}</td></tr>
-            <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;">URL QR${nfcEnabled ? " + NFC" : ""}</td><td style="font-size:13px;color:#c9a96e;">${qrUrl}</td></tr>
+            <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;width:140px;">Capsule ID</td><td style="font-family:monospace;font-size:13px;color:rgba(240,232,216,0.7);">${escapeHtml(capsuleId)}</td></tr>
+            <tr><td style="font-size:13px;color:rgba(240,232,216,0.55);padding:4px 0;">URL QR${nfcEnabled ? " + NFC" : ""}</td><td style="font-size:13px;color:#c9a96e;">${escapeHtml(qrUrl)}</td></tr>
           </table>
           <p style="margin:24px 0 0;font-size:12px;color:rgba(240,232,216,0.4);font-style:italic;">Le fichier LightBurn SVG est en pièce jointe de cet email.</p>
         </td></tr>
@@ -208,12 +220,12 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   }
 
   const textBlock = textPathData
-    ? `  <!-- Prénom gravé en paths (police : ${engravingFont}) -->\n  <g fill="#000000">\n  ${textPathData}\n  </g>`
-    : `  <!-- Prénom gravé (fallback texte) -->\n  <text x="${(dim.w / 2).toFixed(3)}" y="${baselineY.toFixed(3)}" text-anchor="middle" font-family="${engravingFont}" font-size="${fontSize.toFixed(3)}" font-weight="bold" fill="#000000">${engraveName.toUpperCase()}</text>`;
+    ? `  <!-- Prénom gravé en paths (police : ${escapeHtml(engravingFont)}) -->\n  <g fill="#000000">\n  ${textPathData}\n  </g>`
+    : `  <!-- Prénom gravé (fallback texte) -->\n  <text x="${(dim.w / 2).toFixed(3)}" y="${baselineY.toFixed(3)}" text-anchor="middle" font-family="${escapeHtml(engravingFont)}" font-size="${fontSize.toFixed(3)}" font-weight="bold" fill="#000000">${escapeHtml(engraveName.toUpperCase())}</text>`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!-- LightBurn SVG — EKKO — ${capsuleId} -->
-<!-- Format : ${format} | Prénom : ${engraveName} | Police : ${engravingFont} -->
+<!-- LightBurn SVG — EKKO — ${escapeHtml(capsuleId)} -->
+<!-- Format : ${escapeHtml(format)} | Prénom : ${escapeHtml(engraveName)} | Police : ${escapeHtml(engravingFont)} -->
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${dim.w} ${dim.h}"
      width="${dim.w}mm" height="${dim.h}mm">

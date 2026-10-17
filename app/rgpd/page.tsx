@@ -112,11 +112,11 @@ export default function RGPDPage() {
 
         <Section title="1 — Responsable du traitement">
           <P>
-            Le service EKKO est édité et exploité par <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, accessible à l'adresse{" "}
+            Le service EKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong> (SAS en cours d&apos;immatriculation au RCS), accessible à l&apos;adresse{" "}
             <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>vosekko.com</a>.
           </P>
           <P>
-            Contact délégué à la protection des données :{" "}
+            Contact protection des données :{" "}
             <a href="mailto:vosekko@outlook.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>vosekko@outlook.com</a>
           </P>
         </Section>
@@ -240,9 +240,15 @@ export default function RGPDPage() {
 
         <Section title="7 — Cookies et traceurs">
           <P>
-            EKKO n'utilise pas de cookies publicitaires ni de traceurs tiers à des fins marketing.
-            Les seuls éléments de session utilisés sont les tokens d'authentification Firebase, nécessaires au fonctionnement du service.
+            EKKO n&apos;utilise aucun cookie publicitaire ni traceur tiers à des fins de revente ou de ciblage commercial.
           </P>
+          <P>
+            Deux catégories d&apos;éléments sont utilisées sur le site :
+          </P>
+          <Ul>
+            <Li><strong style={{ color: "#f0e8d8" }}>Stockage technique strictement nécessaire</strong> — jetons d&apos;authentification Firebase et mémorisation de votre choix de consentement, indispensables au fonctionnement du service et de votre compte.</Li>
+            <Li><strong style={{ color: "#f0e8d8" }}>Mesure d&apos;audience (soumise à votre consentement)</strong> — Google Analytics et Vercel Analytics sont activés uniquement si vous cliquez sur « Accepter » dans le bandeau cookies lors de votre visite, afin de mesurer la fréquentation et d&apos;améliorer les performances du site. En cas de refus, aucun traceur analytique n&apos;est chargé.</Li>
+          </Ul>
         </Section>
 
         <Section title="8 — Modifications de la politique">

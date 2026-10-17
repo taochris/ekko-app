@@ -20,8 +20,8 @@ export async function GET(req: NextRequest) {
   const echoId = req.nextUrl.searchParams.get("echoId");
   const download = req.nextUrl.searchParams.get("download") === "1";
 
-  if (!echoId) {
-    return NextResponse.json({ error: "echoId manquant" }, { status: 400 });
+  if (!echoId || !/^[a-zA-Z0-9_-]{1,128}$/.test(echoId)) {
+    return NextResponse.json({ error: "echoId manquant ou invalide" }, { status: 400 });
   }
 
   try {
@@ -30,10 +30,20 @@ export async function GET(req: NextRequest) {
 
     // Chercher le fichier — supporte les deux formats de path
     const [files] = await bucket.getFiles({ prefix: "echos/" });
-    const match = files.find(f => f.name.includes(echoId) && /\/audio\.[a-z0-9]+$/.test(f.name));
+    const match = files.find(f => f.name.includes(`/${echoId}/`) && /\/audio\.[a-z0-9]+$/.test(f.name));
 
     if (!match) {
       return NextResponse.json({ error: "Echo introuvable" }, { status: 404 });
+    }
+
+    // Vérifier l'expiration comme sur /api/storage/echo
+    const meta = match.metadata?.metadata ?? {};
+    if (meta.expiresAt) {
+      const expires = new Date(String(meta.expiresAt));
+      if (expires < new Date()) {
+        await match.delete().catch(() => {});
+        return NextResponse.json({ error: "Écho expiré" }, { status: 410 });
+      }
     }
 
     const [buffer] = await match.download();

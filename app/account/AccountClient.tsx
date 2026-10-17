@@ -130,15 +130,24 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
       setEchosLoading(false);
       return;
     }
-    fetch("/api/account/echos?uid=" + uid)
-      .then(r => r.json())
-      .then(d => {
+    const loadEchos = async () => {
+      try {
+        const fbUser = getAuth().currentUser;
+        const token = fbUser ? await fbUser.getIdToken() : "";
+        const r = await fetch("/api/account/echos?uid=" + uid, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const d = await r.json();
         const list: Echo[] = d.echos ?? [];
         try { sessionStorage.setItem(key, JSON.stringify(list)); } catch {}
         setEchos(list);
+      } catch {
+        // ignore
+      } finally {
         setEchosLoading(false);
-      })
-      .catch(() => setEchosLoading(false));
+      }
+    };
+    loadEchos();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveProfile() {
@@ -168,7 +177,13 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
       const fbAuth = getAuth();
       const fbUser = fbAuth.currentUser;
       if (!fbUser) throw new Error("Non connecte");
+      const token = await fbUser.getIdToken();
+      await fetch("/api/account/echos", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       await deleteUser(fbUser);
+      try { sessionStorage.removeItem("ekko_echos_" + user.uid); } catch {}
       logout();
       router.push("/");
     } catch (err: unknown) {
