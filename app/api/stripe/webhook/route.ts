@@ -136,7 +136,8 @@ export async function POST(req: NextRequest) {
     // ── Adresse & téléphone Stripe ──
     type ShippingDetails = { name?: string; address?: { line1?: string; line2?: string; postal_code?: string; city?: string; country?: string } };
     const sessionAny = session as unknown as Record<string, unknown>;
-    const shipping = (sessionAny.shipping_details ?? sessionAny.shipping ?? null) as ShippingDetails | null;
+    const collected = sessionAny.collected_information as { shipping_details?: ShippingDetails } | null | undefined;
+    const shipping = (collected?.shipping_details ?? sessionAny.shipping_details ?? sessionAny.shipping ?? null) as ShippingDetails | null;
     const shippingName    = shipping?.name ?? session.customer_details?.name ?? "";
     const shippingAddr    = shipping?.address;
     const shippingAddress = shippingAddr
