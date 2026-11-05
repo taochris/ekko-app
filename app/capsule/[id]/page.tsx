@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import BlobBackground from "../../components/BlobBackground";
 import EkkoLogo from "../../components/EkkoLogo";
 import { EchoRevealScreen } from "../../components/ThemePage";
+import { useAuth } from "../../context/AuthContext";
 
 type Status = "pending" | "paid" | "processing" | "ready" | "failed";
 
@@ -36,6 +37,7 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const sessionId = searchParams.get("session_id");
 
   const [capsule, setCapsule] = useState<CapsuleState | null>(null);
@@ -145,6 +147,18 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
   const accent = capsule?.accentColor ?? "#c9a96e";
   const blobVariant = themeVariants[capsule?.theme ?? "deuil"] ?? "deuil";
 
+  // Le QR/NFC du porte-clé pointe ici : seul l'acheteur voit l'écran de commande,
+  // le destinataire est redirigé vers le lecteur public.
+  const isPorteClefScan =
+    !!capsule && capsule.productType === "porteClef" && !sessionId &&
+    !authLoading && user?.uid !== capsule.uid;
+
+  useEffect(() => {
+    if (isPorteClefScan && capsule?.status === "ready" && capsule.echoId) {
+      window.location.replace(`/v/${capsule.echoId}`);
+    }
+  }, [isPorteClefScan, capsule?.status, capsule?.echoId]);
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       <BlobBackground variant={blobVariant} />
@@ -180,13 +194,16 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
         )}
 
         {/* ── Porte-clé : succès dès que paid OU session_id présent (Stripe redirect) ── */}
-        {capsule && capsule.productType === "porteClef" && capsule.status === "pending" && !sessionId && (
+        {capsule && capsule.productType === "porteClef" && (authLoading || isPorteClefScan) && !sessionId && capsule.status !== "failed" && (
+          <ProcessingScreen status={capsule.status === "ready" ? "processing" : capsule.status} accent={accent} />
+        )}
+        {capsule && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && capsule.status === "pending" && !sessionId && (
           <ProcessingScreen status={capsule.status} accent={accent} />
         )}
-        {capsule && capsule.productType === "porteClef" && (capsule.status !== "pending" || !!sessionId) && capsule.status !== "failed" && (
+        {capsule && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && (capsule.status !== "pending" || !!sessionId) && capsule.status !== "failed" && (
           <KeychainSuccessScreen capsule={capsule} accent={accent} />
         )}
-        {capsule && capsule.productType === "porteClef" && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
+        {capsule && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
           <div style={{ marginTop: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 480, margin: "0 auto 4px" }}>
               <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.08)" }} />
