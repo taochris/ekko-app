@@ -75,6 +75,7 @@ async function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir:
     await spawnFfmpeg(bin, [
       "-y", "-err_detect", "ignore_err",
       "-i", inputPaths[i],
+      "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
       "-ar", "48000", "-ac", "1",
       wavPath,
     ]);
