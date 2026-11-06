@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { markCapsulePaid, updateCapsule } from "../../../lib/capsules";
-import { buildKeychainEmail, buildAdminOrderEmail, generateLightBurnSVG, sendPushover } from "../../../lib/order-emails";
+import { buildKeychainEmail, buildAdminOrderEmail, generateLightBurnSVG, sendPushover, shortQrUrl } from "../../../lib/order-emails";
 
 export const runtime = "nodejs";
 
@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
         const format        = session.metadata?.format ?? "etiquette-rect";
         const engravingFont = session.metadata?.engravingFont ?? "Georgia, serif";
         const nfcEnabled   = session.metadata?.nfcEnabled === "true";
-        const qrUrl       = `${origin}/capsule/${capsuleId}`;
+        const qrUrl       = shortQrUrl(capsuleId);
         const amount      = session.amount_total ?? (nfcEnabled ? 2790 : 2490);
 
         if (isPorteClef) {
