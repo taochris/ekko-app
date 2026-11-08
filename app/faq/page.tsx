@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import BlobBackground from "../components/BlobBackground";
@@ -139,10 +139,16 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-function Accordion({ title, children, defaultOpen = false }: { title: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
+function Accordion({ title, children, defaultOpen = false, anchorId }: { title: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean; anchorId?: string }) {
   const [open, setOpen] = useState(defaultOpen);
+  useEffect(() => {
+    if (anchorId && window.location.hash === `#${anchorId}`) {
+      setOpen(true);
+      setTimeout(() => document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "center" }), 350);
+    }
+  }, [anchorId]);
   return (
-    <div style={{ borderRadius: 14, border: "1px solid rgba(201,169,110,0.12)", overflow: "hidden", background: "rgba(255,255,255,0.02)", marginBottom: 10 }}>
+    <div id={anchorId} style={{ scrollMarginTop: 90, borderRadius: 14, border: "1px solid rgba(201,169,110,0.12)", overflow: "hidden", background: "rgba(255,255,255,0.02)", marginBottom: 10 }}>
       <button
         onClick={() => setOpen(v => !v)}
         style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", background: "none", border: "none", cursor: "pointer", color: open ? accent : "rgba(240,232,216,0.75)", textAlign: "left", gap: 12 }}
@@ -470,9 +476,28 @@ export default function FaqPage() {
             </p>
           </Accordion>
 
-          <Accordion title="La puce NFC fonctionne-t-elle sur tous les téléphones ?">
+          <Accordion anchorId="nfc" title="La puce NFC fonctionne-t-elle sur tous les téléphones ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Si vous choisissez l&apos;option NFC, vous pouvez approcher un téléphone compatible de la puce collée au dos. Certains modèles ou réglages nécessitent d&apos;activer la NFC. Dans tous les cas, le <span style={{ color: accent }}>QR code gravé</span> reste disponible et peut être scanné avec l&apos;appareil photo.
+              Non. La puce NFC fonctionne avec la plupart des smartphones récents, mais pas avec tous. Dans tous les cas, le <span style={{ color: accent }}>QR code gravé</span> reste disponible et peut être scanné avec l&apos;appareil photo.
+            </p>
+            <p className="ekko-serif" style={{ fontSize: 14, color: accent, lineHeight: 1.7, marginTop: 14, marginBottom: 4 }}>Quels téléphones sont compatibles ?</p>
+            <ul className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, margin: 0, paddingLeft: 20 }}>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>iPhone XS, XR et modèles plus récents</strong> (iPhone 11, 12, 13, 14, 15, 16…) : lecture automatique. Écran allumé, approchez le téléphone et appuyez sur la notification qui apparaît.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>iPhone 7, 8 et X</strong> : compatibles, mais il faut ouvrir le « Lecteur de tag NFC » depuis le Centre de contrôle (à ajouter dans Réglages &gt; Centre de contrôle), avec iOS 14 ou plus récent.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>iPhone 6 et modèles plus anciens</strong> : non compatibles, leur NFC ne sert qu&apos;au paiement. Utilisez le QR code.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Android</strong> : tout smartphone équipé de NFC, avec la NFC activée et l&apos;écran déverrouillé. Certains anciens modèles ou téléphones d&apos;entrée de gamme n&apos;ont pas de puce NFC.</li>
+            </ul>
+            <p className="ekko-serif" style={{ fontSize: 14, color: accent, lineHeight: 1.7, marginTop: 14, marginBottom: 4 }}>Conseils si rien ne se passe</p>
+            <ul className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, margin: 0, paddingLeft: 20 }}>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Activez la NFC</strong> sur Android : Paramètres &gt; Connexions (ou Appareils connectés) &gt; NFC. Vous pouvez aussi taper « NFC » dans la recherche des réglages. Sur iPhone XS et plus récents, elle est toujours active.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Déverrouillez le téléphone</strong> et gardez l&apos;écran allumé.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Trouvez l&apos;antenne</strong> : sur iPhone, elle est en haut du dos de l&apos;appareil. Sur Android, elle est souvent au milieu ou en haut du dos, selon le modèle. Posez le porte-clé à plat contre cette zone.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Approchez à 1 à 4 cm</strong> et déplacez lentement le porte-clé le long du dos du téléphone pendant quelques secondes, sans le laisser bouger une fois la zone trouvée.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Retirez la coque</strong> si elle est épaisse ou métallique. Les coques avec plaque métallique pour support magnétique, les étuis portefeuille avec cartes bancaires et les bagues ou supports collés au dos bloquent la lecture.</li>
+              <li><strong style={{ color: "rgba(240,232,216,0.85)", fontWeight: 500 }}>Éloignez le porte-clé du métal</strong> (clés, autres porte-clés) pendant la lecture.</li>
+            </ul>
+            <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
+              Si la NFC ne répond pas, scannez simplement le QR code avec l&apos;appareil photo du téléphone : il ouvre la même vocapsule.
             </p>
           </Accordion>
 

@@ -250,7 +250,7 @@ export default function CGVPage() {
             Le porte-clé est fabriqué et envoyé à l&apos;adresse fournie lors du paiement. Le délai annoncé est généralement de 5 à 7 jours ouvrés après confirmation du paiement, fabrication et expédition comprises. En cas de retard, le client peut contacter VosEkko pour obtenir des informations et exercer les droits prévus par le Code de la consommation en matière de livraison.
           </P>
           <P>
-            Le QR code gravé donne accès à la vocapsule. Si l&apos;option NFC a été commandée, la puce autocollante posée au dos ouvre le même lien sur un téléphone compatible. Le fichier audio associé au porte-clé est conservé 20 ans à compter de sa création, quelle que soit l&apos;option QR ou QR + NFC choisie.
+            Le QR code gravé donne accès à la vocapsule. Si l&apos;option NFC a été commandée, la puce autocollante posée au dos ouvre le même lien sur un téléphone compatible. La lecture NFC dépend du téléphone : certains modèles anciens (notamment les iPhone antérieurs au modèle 7) ou sans puce NFC ne la lisent pas, et certains réglages, coques épaisses ou métalliques peuvent la gêner. Les modèles compatibles et les conseils d&apos;utilisation sont indiqués dans la FAQ. Dans tous les cas, le QR code gravé permet d&apos;accéder à la vocapsule. Le fichier audio associé au porte-clé est conservé 20 ans à compter de sa création, quelle que soit l&apos;option QR ou QR + NFC choisie.
           </P>
           <h3 className="ekko-serif" style={{ fontSize: 15, color: accent, marginTop: 24, marginBottom: 10, fontWeight: 400 }}>Produit endommagé, erreur ou non-conformité</h3>
           <P>

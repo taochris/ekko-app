@@ -501,13 +501,29 @@ export default function PorteClefFinalize({
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
                 { enabled: false, title: "QR code gravé", detail: "Scannez le QR code avec l’appareil photo du téléphone.", price: "24,90 €" },
-                { enabled: true, title: "QR code + NFC au dos", detail: "Puce NFC autocollante au dos : approchez un téléphone compatible.", price: "27,90 €" },
+                { enabled: true, title: "QR code + NFC au dos", detail: "Puce NFC autocollante au dos : approchez un téléphone compatible.", nfcNote: true, price: "27,90 €" },
               ].map((option) => (
                 <label key={option.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, cursor: "pointer", background: nfcEnabled === option.enabled ? `${accent}12` : "rgba(255,255,255,0.03)", border: `1px solid ${nfcEnabled === option.enabled ? accent + "55" : "rgba(255,255,255,0.07)"}` }}>
                   <input type="radio" name="acces-porte-cle" checked={nfcEnabled === option.enabled} onChange={() => setNfcEnabled(option.enabled)} style={{ accentColor: accent, flexShrink: 0 }} />
                   <span style={{ flex: 1 }}>
                     <span style={{ display: "block", fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>{option.title}</span>
-                    <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.55)", lineHeight: 1.5 }}>{option.detail}</span>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.55)", lineHeight: 1.5 }}>
+                      {option.detail}
+                      {"nfcNote" in option && option.nfcNote && (
+                        <>
+                          {" "}
+                          <a
+                            href="/faq#nfc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ color: accent, textDecoration: "underline" }}
+                          >
+                            * Modèles compatibles et conseils
+                          </a>
+                        </>
+                      )}
+                    </span>
                   </span>
                   <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: accent, whiteSpace: "nowrap" }}>{option.price}</span>
                 </label>
