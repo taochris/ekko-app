@@ -332,7 +332,7 @@ export default function FaqPage() {
 
           <Accordion title="Qu'est-ce qu'une vocapsule ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Une vocapsule est un fichier audio unique créé en fusionnant plusieurs messages vocaux récupérés depuis WhatsApp, Instagram, Messenger ou Telegram.
+              Une vocapsule est un fichier audio unique créé en fusionnant plusieurs messages vocaux récupérés depuis WhatsApp, Instagram, Messenger ou Telegram, ou enregistrés directement avec le micro de votre appareil.
               C'est une capsule sonore — un souvenir vocal que vous pouvez écouter, télécharger sur n'importe quel appareil, et partager via un QR code.
             </p>
           </Accordion>

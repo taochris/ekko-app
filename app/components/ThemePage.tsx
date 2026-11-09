@@ -279,8 +279,8 @@ function ThemeHome({
         className="ekko-serif italic text-base leading-relaxed mb-12"
         style={{ color: "rgba(240,232,216,0.45)" }}
       >
-        Importez vos archives vocales depuis WhatsApp, Instagram, Telegram ou Messenger
-        et transformez-les en un souvenir intemporel.
+        Importez vos archives vocales depuis WhatsApp, Instagram, Telegram ou Messenger,
+        ou enregistrez un message directement avec votre micro, et transformez-les en un souvenir intemporel.
       </p>
 
       <motion.button

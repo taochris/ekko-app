@@ -11,6 +11,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import JSZip from "jszip";
+import VoiceRecorder from "./VoiceRecorder";
 
 // Données plateformes — copiées et isolées du code PC (règle de séparation stricte)
 const MOBILE_PLATFORMS = [
@@ -387,7 +388,7 @@ export default function MobileImport({ config, onAudiosImported, onClose, onCove
           </h3>
           <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.6)", lineHeight: 1.6, marginBottom: 24 }}>
             Sélectionnez votre fichier ZIP d&apos;export (WhatsApp, Messenger, Instagram)
-            ou vos fichiers audio directement.
+            ou vos fichiers audio directement, ou enregistrez un message avec le micro de votre téléphone.
           </p>
 
           {error && (
@@ -517,6 +518,8 @@ export default function MobileImport({ config, onAudiosImported, onClose, onCove
           }}>
             Formats acceptés : ZIP WhatsApp / Messenger / Instagram · OGG · MP3 · M4A · OPUS
           </p>
+
+          <VoiceRecorder accent={config.accent} onRecorded={(file) => processFiles([file])} />
 
           {/* Panneau debug — visible quand il y a des logs (utile pour diagnostiquer Android) */}
           {debugLog.length > 0 && (

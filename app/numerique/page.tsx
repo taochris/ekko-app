@@ -10,7 +10,7 @@ const STEPS = [
   {
     number: "01",
     title: "Importez",
-    desc: "Déposez vos archives WhatsApp, Instagram, Telegram ou Messenger directement depuis votre appareil.",
+    desc: "Déposez vos archives WhatsApp, Instagram, Telegram ou Messenger depuis votre appareil, ou enregistrez un message directement avec votre micro.",
   },
   {
     number: "02",
