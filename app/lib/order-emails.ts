@@ -157,6 +157,11 @@ async function loadFont(engravingFont: string): Promise<opentype.Font | null> {
   }
 }
 
+// URL courte gravée dans le QR / écrite sur la puce NFC (42 octets → QR version 3, 29 modules)
+export function shortQrUrl(capsuleId: string): string {
+  return `https://vosekko.com/c/${capsuleId}`;
+}
+
 // ─── Génération SVG LightBurn ─────────────────────────────────────────────────
 export async function generateLightBurnSVG(capsuleId: string, engraveName: string, format: string, qrUrl: string, engravingFont = "Georgia, serif"): Promise<string> {
   const dims: Record<string, { w: number; h: number; rx: number }> = {
@@ -185,9 +190,11 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
 
   const availH = dim.h - topOffset - gap - textBandH - bottomMargin;
   const availW = dim.w - sideMargin * 2;
-  const qrSizeMm = Math.min(availW, availH);
+  const maxQrMm = format === "carre" ? 23 : Infinity;
+  const qrSizeMm = Math.min(availW, availH, maxQrMm);
+  const qrTop = format === "carre" ? Math.max(topOffset, (dim.h - qrSizeMm - gap - textBandH) / 2) : topOffset;
   const qrX = (dim.w - qrSizeMm) / 2;
-  const qrY = hasLabel ? topOffset : (dim.h - qrSizeMm) / 2;
+  const qrY = hasLabel ? qrTop : (dim.h - qrSizeMm) / 2;
   const modSize = qrSizeMm / moduleCount;
 
   // Un seul <path> avec toutes les coordonnées directement en mm — aucun transform,
@@ -297,12 +304,13 @@ export async function sendKeychainOrderEmails({
   }
 
   try {
-    const svg = await generateLightBurnSVG(capsuleId, engraveName, format, qrUrl, engravingFont);
+    const shortUrl = shortQrUrl(capsuleId);
+    const svg = await generateLightBurnSVG(capsuleId, engraveName, format, shortUrl, engravingFont);
     const { data, error } = await resend.emails.send({
       from: "EKKO <ekko@vosekko.com>",
       to: adminEmail,
       subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
-      html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
+      html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl: shortUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
       attachments: [{
         filename: `lightburn-${engraveName.toLowerCase()}-${(FONT_LABELS[engravingFont ?? ""] ?? "classique").split(" ")[0].toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
         content: Buffer.from(svg),
