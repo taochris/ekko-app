@@ -2,6 +2,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 
+interface PlayerBookmark {
+  id: string;
+  title: string;
+  timeSec: number;
+  audioId?: string;
+  displayOrder?: number;
+}
+
 const THEME_LABELS: Record<string, string> = {
   deuil: "Mémoire · Deuil",
   amour: "Amour · Lien",
@@ -23,6 +31,7 @@ export default function VocapsulePage() {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [bookmarks, setBookmarks] = useState<PlayerBookmark[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,6 +54,10 @@ export default function VocapsulePage() {
           if (data.theme) setTheme(data.theme);
           if (data.expiresAt) setExpiresAt(data.expiresAt);
           if (data.coverUrl) setCoverUrl(data.coverUrl);
+          if (Array.isArray(data.bookmarks)) {
+            const sorted = [...data.bookmarks].sort((a, b) => Number(a.timeSec) - Number(b.timeSec));
+            setBookmarks(sorted);
+          }
         } else {
           setNotFound(true);
         }
@@ -71,6 +84,32 @@ export default function VocapsulePage() {
     if (!isFinite(s) || isNaN(s)) return "0:00";
     const m = Math.floor(s / 60);
     return `${m}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  };
+
+  const currentSec = duration > 0 ? (duration * progress) / 100 : 0;
+
+  const activeBookmarkId = (() => {
+    if (bookmarks.length === 0) return null;
+    let active: string | null = null;
+    for (const bm of bookmarks) {
+      if (currentSec + 0.35 >= bm.timeSec) {
+        active = bm.id;
+      } else {
+        break;
+      }
+    }
+    return active;
+  })();
+
+  const jumpToBookmark = (timeSec: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.currentTime = Math.max(0, timeSec);
+    if (duration > 0) {
+      setProgress((Math.max(0, timeSec) / duration) * 100);
+    }
+    a.play().catch(() => {});
+    setIsPlaying(true);
   };
 
   const daysLeft = expiresAt
@@ -270,9 +309,9 @@ export default function VocapsulePage() {
               </div>
             </div>
 
-            {/* Barre de progression — plus haute pour mobile */}
+            {/* Barre de progression — plus haute pour mobile, avec repères visuels des marque-pages */}
             <div
-              style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.07)", cursor: "pointer", marginBottom: 28, touchAction: "none" }}
+              style={{ position: "relative", height: 5, borderRadius: 3, background: "rgba(255,255,255,0.07)", cursor: "pointer", marginBottom: 28, touchAction: "none" }}
               onClick={(e) => {
                 const a = audioRef.current;
                 if (!a || !duration) return;
@@ -286,7 +325,105 @@ export default function VocapsulePage() {
                 background: `linear-gradient(90deg, ${accent}70, ${accent})`,
                 width: `${progress}%`, transition: "width 0.1s linear",
               }} />
+              {duration > 0 && bookmarks.map((bm) => {
+                const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
+                const isActive = activeBookmarkId === bm.id;
+                return (
+                  <button
+                    key={bm.id}
+                    type="button"
+                    title={`${bm.title} (${formatTime(bm.timeSec)})`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      jumpToBookmark(bm.timeSec);
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: `${pct}%`,
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: 22,
+                      height: 24,
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 3,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: isActive ? 5 : 3,
+                        height: isActive ? 14 : 11,
+                        borderRadius: 2,
+                        background: isActive ? "#ffffff" : accent,
+                        boxShadow: `0 0 6px ${accent}`,
+                        transition: "all 0.2s",
+                      }}
+                    />
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Section Mes marque-pages (affichée uniquement lorsqu'il y a des marque-pages) */}
+            {bookmarks.length > 0 && (
+              <div style={{
+                marginBottom: 24,
+                padding: "14px 14px",
+                borderRadius: 16,
+                background: "rgba(13,10,15,0.55)",
+                border: `1px solid ${accent}28`,
+              }}>
+                <p style={{
+                  fontSize: 10,
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: accent,
+                  margin: "0 0 10px",
+                }}>
+                  ✦ Mes marque-pages
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 190, overflowY: "auto" }}>
+                  {bookmarks.map((bm) => {
+                    const isActive = activeBookmarkId === bm.id;
+                    return (
+                      <button
+                        key={bm.id}
+                        type="button"
+                        onClick={() => jumpToBookmark(bm.timeSec)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          width: "100%",
+                          padding: "10px 12px",
+                          borderRadius: 11,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          background: isActive ? `${accent}25` : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${isActive ? accent + "65" : "rgba(255,255,255,0.08)"}`,
+                          color: "#f0e8d8",
+                          fontFamily: "Georgia, serif",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {isActive ? "▶ " : ""}{bm.title}
+                        </span>
+                        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: accent, flexShrink: 0 }}>
+                          {formatTime(bm.timeSec)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div style={{ display: "flex", gap: 10 }}>

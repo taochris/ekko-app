@@ -1,6 +1,9 @@
 "use client";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { computeStableAudioId } from "../lib/audioStorage";
+import BookmarkEditor from "./BookmarkEditor";
+import type { BookmarkDraftItem, CapsuleManifest } from "../lib/capsules";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -10,15 +13,31 @@ function useIsMobile() {
   return isMobile;
 }
 
+interface SearchHit {
+  audioId: string;
+  filename: string;
+  durationSec: number;
+  relevanceLabel: "Très pertinent" | "Pertinent" | "Piste possible";
+  bestSegmentStartSec: number;
+  bestSegmentEndSec: number;
+  rank: number;
+}
+
 interface AudioSelectorProps {
   audios: File[];
   config: { accent: string; accentDim: string };
   onSelect: (files: File[]) => void;
-  onVocapsule: () => void;
+  onVocapsule: (manifest?: CapsuleManifest, selectedFiles?: File[]) => void;
   onLivre: () => void;
   ctaVocapsule: string;
   ctaLivre: string;
   showLivre?: boolean;
+  smartSearchEnabled?: boolean;
+  capsuleId?: string | null;
+  initialOrderedAudioIds?: string[];
+  initialBookmarks?: BookmarkDraftItem[];
+  onManifestChange?: (manifest: CapsuleManifest) => void;
+  onRequestEnableSmartOption?: () => void;
 }
 
 function formatDuration(seconds: number): string {
@@ -135,19 +154,178 @@ function DropSlot({ accent, active, onDragOver, onDrop }: {
 }
 
 export default function AudioSelector({
-  audios, config, onSelect, onVocapsule, onLivre, ctaVocapsule, ctaLivre, showLivre = true,
+  audios,
+  config,
+  onSelect,
+  onVocapsule,
+  onLivre,
+  ctaVocapsule,
+  ctaLivre,
+  showLivre = true,
+  smartSearchEnabled = false,
+  capsuleId = null,
+  initialOrderedAudioIds,
+  initialBookmarks,
+  onManifestChange,
+  onRequestEnableSmartOption,
 }: AudioSelectorProps) {
-  const [orderedSelected, setOrderedSelected] = useState<number[]>([]);
+  const audioIds = useMemo(
+    () => audios.map((f, idx) => computeStableAudioId(f, idx)),
+    [audios]
+  );
+  const audioIdToIndex = useMemo(() => {
+    const m = new Map<string, number>();
+    audioIds.forEach((id, i) => m.set(id, i));
+    return m;
+  }, [audioIds]);
+
+  const [orderedSelected, setOrderedSelected] = useState<number[]>(() => {
+    if (!initialOrderedAudioIds || initialOrderedAudioIds.length === 0) return [];
+    const indices: number[] = [];
+    for (const id of initialOrderedAudioIds) {
+      const idx = audioIds.indexOf(id);
+      if (idx !== -1 && !indices.includes(idx)) indices.push(idx);
+    }
+    return indices;
+  });
   const selectedSet = useMemo(() => new Set(orderedSelected), [orderedSelected]);
+  const [bookmarks, setBookmarks] = useState<BookmarkDraftItem[]>(initialBookmarks ?? []);
   const [filterSource, setFilterSource] = useState("all");
   const [durations, setDurations] = useState<Record<number, number>>({});
   const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
   const urlsRef = useRef<Record<number, string>>({});
 
+  // État Recherche intelligente EmbeddingGemma 2
+  const [indexingStatus, setIndexingStatus] = useState<"idle" | "indexing" | "ready" | "error">("idle");
+  const [indexedCount, setIndexedCount] = useState(0);
+  const indexedAudioIdsRef = useRef<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchHits, setSearchHits] = useState<SearchHit[] | null>(null);
+  const [noRelevantMatch, setNoRelevantMatch] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   // Drag state
   const [dragging, setDragging] = useState<{ zone: "lib" | "order"; audioIdx: number } | null>(null);
   const [dropPos, setDropPos] = useState<number | null>(null);
   const [zone2Over, setZone2Over] = useState(false);
+
+  // Restaurer la sélection si initialOrderedAudioIds arrive après le premier rendu
+  useEffect(() => {
+    if (initialOrderedAudioIds && initialOrderedAudioIds.length > 0 && orderedSelected.length === 0) {
+      const indices: number[] = [];
+      for (const id of initialOrderedAudioIds) {
+        const idx = audioIds.indexOf(id);
+        if (idx !== -1 && !indices.includes(idx)) indices.push(idx);
+      }
+      if (indices.length > 0) {
+        setOrderedSelected(indices);
+        onSelect(indices.map((i) => audios[i]));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOrderedAudioIds, audioIds]);
+
+  useEffect(() => {
+    if (initialBookmarks && initialBookmarks.length > 0 && bookmarks.length === 0) {
+      setBookmarks(initialBookmarks);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBookmarks]);
+
+  const [indexingTrigger, setIndexingTrigger] = useState(0);
+
+  // Indexation automatique par lots vers EmbeddingGemma 2 dès que smartSearchEnabled est actif
+  useEffect(() => {
+    if (!smartSearchEnabled || !capsuleId || audios.length === 0) return;
+    let cancelled = false;
+
+    const runIndexing = async () => {
+      const pendingIndices: number[] = [];
+      audioIds.forEach((id, idx) => {
+        if (!indexedAudioIdsRef.current.has(id)) pendingIndices.push(idx);
+      });
+      if (pendingIndices.length === 0) {
+        setIndexingStatus("ready");
+        setIndexedCount(audios.length);
+        return;
+      }
+
+      setIndexingStatus("indexing");
+      setSearchError(null);
+      const BATCH_SIZE = 20;
+
+      for (let start = 0; start < pendingIndices.length; start += BATCH_SIZE) {
+        if (cancelled) return;
+        const slice = pendingIndices.slice(start, start + BATCH_SIZE);
+        const batchIds = slice.map((i) => audioIds[i]);
+        const form = new FormData();
+        form.append("capsuleId", capsuleId);
+        form.append("audioIds", JSON.stringify(batchIds));
+        slice.forEach((i) => form.append("files", audios[i], audios[i].name));
+
+        try {
+          const res = await fetch("/api/smart-search/index", { method: "POST", body: form });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Erreur indexation (${res.status})`);
+          }
+          batchIds.forEach((id) => indexedAudioIdsRef.current.add(id));
+          if (!cancelled) {
+            setIndexedCount(indexedAudioIdsRef.current.size);
+          }
+        } catch (err) {
+          if (!cancelled) {
+            setIndexingStatus("error");
+            setSearchError((err as Error).message);
+          }
+          return;
+        }
+      }
+
+      if (!cancelled) {
+        setIndexingStatus("ready");
+      }
+    };
+
+    runIndexing();
+    return () => { cancelled = true; };
+  }, [smartSearchEnabled, capsuleId, audios, audioIds, indexingTrigger]);
+
+  const handleRunSearch = async () => {
+    const q = searchQuery.trim();
+    if (!q || !capsuleId || !smartSearchEnabled) return;
+    // Si l'indexation avait échoué ou n'était pas terminée, la relancer d'abord
+    if (indexingStatus !== "ready") {
+      setIndexingTrigger((v) => v + 1);
+    }
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const res = await fetch("/api/smart-search/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ capsuleId, query: q, topK: 20 }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de la recherche");
+      }
+      setSearchHits(data.results ?? []);
+      setNoRelevantMatch(Boolean(data.noRelevantMatch));
+    } catch (err) {
+      setSearchError((err as Error).message);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchHits(null);
+    setNoRelevantMatch(false);
+    setSearchError(null);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -240,10 +418,56 @@ export default function AudioSelector({
   };
 
   const removeFromOrder = (audioIdx: number) => {
+    const targetAudioId = audioIds[audioIdx];
+    const attachedBookmarks = bookmarks.filter((b) => b.audioId === targetAudioId);
+    if (attachedBookmarks.length > 0 && typeof window !== "undefined") {
+      const ok = window.confirm(
+        `Ce message vocal possède ${attachedBookmarks.length} marque-page(s) (« ${attachedBookmarks.map((b) => b.title).join(", ")} »). En le retirant du montage, ses marque-pages seront également supprimés. Continuer ?`
+      );
+      if (!ok) return;
+      setBookmarks((prev) => prev.filter((b) => b.audioId !== targetAudioId));
+    }
     const next = orderedSelected.filter((i) => i !== audioIdx);
     setOrderedSelected(next);
     onSelect(next.map((i) => audios[i]));
   };
+
+  // Liste enrichie des audios sélectionnés avec leur position de départ cumulée dans la Vocapsule
+  const selectedAudiosForBookmarks = useMemo(() => {
+    let runningSec = 0;
+    return orderedSelected.map((audioIdx) => {
+      const dur = durations[audioIdx] ?? 0;
+      const item = {
+        audioId: audioIds[audioIdx],
+        file: audios[audioIdx],
+        durationSec: dur,
+        startSecInMix: runningSec,
+        url: audioUrls[audioIdx],
+      };
+      runningSec += dur;
+      return item;
+    });
+  }, [orderedSelected, durations, audioIds, audios, audioUrls]);
+
+  const currentManifest: CapsuleManifest = useMemo(
+    () => ({
+      selectedAudios: orderedSelected.map((audioIdx, pos) => ({
+        audioId: audioIds[audioIdx],
+        filename: audios[audioIdx]?.name,
+        position: pos,
+        durationSec: Number((durations[audioIdx] ?? 0).toFixed(2)),
+      })),
+      bookmarks,
+    }),
+    [orderedSelected, audioIds, audios, durations, bookmarks]
+  );
+
+  useEffect(() => {
+    if (onManifestChange) {
+      onManifestChange(currentManifest);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentManifest]);
 
   return (
     <motion.div
@@ -263,6 +487,253 @@ export default function AudioSelector({
         {audios.length} audio{audios.length > 1 ? "s" : ""} · {orderedSelected.length} dans le montage
         {totalDuration > 0 && ` · ${formatDuration(totalDuration)} au total`}
       </p>
+
+      {/* ═══ RECHERCHE INTELLIGENTE EMBEDDINGGEMMA 2 ═══ */}
+      {smartSearchEnabled ? (
+        <div
+          style={{
+            marginBottom: 26,
+            padding: "18px 18px",
+            borderRadius: 18,
+            background: `linear-gradient(135deg, ${config.accent}12, rgba(255,255,255,0.025))`,
+            border: `1px solid ${config.accent}40`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: config.accent }}>
+              ✦ Souvenirs intelligents · Recherche vocale IA
+            </span>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>
+              {indexingStatus === "indexing"
+                ? `Analyse cloud de vos vocaux en cours (${indexedCount}/${audios.length})…`
+                : indexingStatus === "ready"
+                  ? `${audios.length} vocaux indexés et prêts`
+                  : indexingStatus === "error"
+                    ? "Service cloud en reconnexion"
+                    : ""}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleRunSearch(); } }}
+              placeholder="Rechercher un souvenir… (ex : Anniversaire maman, Déclaration d'amour, Webinaire Vega)"
+              style={{
+                flex: "1 1 260px",
+                padding: "12px 16px",
+                borderRadius: 12,
+                background: "rgba(13,10,15,0.65)",
+                border: `1px solid ${config.accent}45`,
+                color: "#f0e8d8",
+                fontFamily: "Georgia, serif",
+                fontSize: 13,
+                outline: "none",
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleRunSearch}
+              disabled={searching || indexingStatus === "indexing" || !searchQuery.trim()}
+              style={{
+                padding: "12px 20px",
+                borderRadius: 12,
+                border: `1px solid ${config.accent}`,
+                background: `linear-gradient(135deg, ${config.accent}40, ${config.accent}80)`,
+                color: "#fff",
+                fontFamily: "Georgia, serif",
+                fontSize: 13,
+                cursor: searching || indexingStatus === "indexing" || !searchQuery.trim() ? "not-allowed" : "pointer",
+                opacity: searching || indexingStatus === "indexing" || !searchQuery.trim() ? 0.5 : 1,
+              }}
+            >
+              {searching ? "Recherche…" : "Rechercher"}
+            </button>
+            {searchHits !== null && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "rgba(240,232,216,0.75)",
+                  fontFamily: "Georgia, serif",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                Effacer la recherche
+              </button>
+            )}
+          </div>
+
+          {searchError && (
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#ff8888", margin: "10px 0 0" }}>
+              {searchError}
+            </p>
+          )}
+
+          {/* Résultats de recherche */}
+          {searchHits !== null && (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              {noRelevantMatch || searchHits.length === 0 ? (
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.55)", fontStyle: "italic", margin: 0 }}>
+                  Aucun message vocal pertinent n&apos;a été trouvé pour « {searchQuery} ». Essayez d&apos;autres mots-clés.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)", margin: "0 0 4px" }}>
+                    {searchHits.length} souvenir{searchHits.length > 1 ? "s" : ""} pertinent{searchHits.length > 1 ? "s" : ""} trouvé{searchHits.length > 1 ? "s" : ""} (classés du plus proche au moins proche) :
+                  </p>
+                  {searchHits.map((hit) => {
+                    const idx = audioIdToIndex.get(hit.audioId);
+                    if (idx === undefined) return null;
+                    const file = audios[idx];
+                    const inOrder = selectedSet.has(idx);
+                    const dateKey = extractDateKey(file);
+                    const dur = durations[idx] || hit.durationSec;
+                    const url = audioUrls[idx];
+                    const cleanName = file.name.replace(/\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|3gp|amr|mp4|mpeg)$/i, "");
+                    const badgeColor =
+                      hit.relevanceLabel === "Très pertinent"
+                        ? "#8ac96e"
+                        : hit.relevanceLabel === "Pertinent"
+                          ? config.accent
+                          : "rgba(240,232,216,0.55)";
+
+                    return (
+                      <div
+                        key={hit.audioId}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: 10,
+                          padding: "10px 14px",
+                          borderRadius: 12,
+                          background: inOrder ? `${config.accent}15` : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${inOrder ? config.accent + "65" : "rgba(255,255,255,0.08)"}`,
+                        }}
+                      >
+                        <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <span
+                              style={{
+                                fontFamily: "Georgia, serif",
+                                fontSize: 10,
+                                padding: "2px 8px",
+                                borderRadius: 10,
+                                background: `${badgeColor}20`,
+                                border: `1px solid ${badgeColor}50`,
+                                color: badgeColor,
+                              }}
+                            >
+                              {hit.relevanceLabel}
+                            </span>
+                            <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", fontWeight: 500 }}>
+                              {cleanName}
+                            </span>
+                          </div>
+                          <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.45)", margin: "4px 0 0" }}>
+                            {dateKey ? friendlyDate(dateKey) : "Date inconnue"} · Durée : {formatDuration(dur)}
+                            {hit.bestSegmentStartSec > 0 ? ` · Passage détecté vers ${formatDuration(hit.bestSegmentStartSec)}` : ""}
+                          </p>
+                        </div>
+
+                        {url && (
+                          <div style={{ flexShrink: 0 }}>
+                            {isMobile ? (
+                              <MobileAudioPlayer url={url} accent={config.accent} />
+                            ) : (
+                              <audio
+                                src={hit.bestSegmentStartSec > 0 ? `${url}#t=${Math.floor(hit.bestSegmentStartSec)}` : url}
+                                controls
+                                style={{ width: 170, height: 28, borderRadius: 6, accentColor: config.accent }}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (inOrder) {
+                              removeFromOrder(idx);
+                            } else {
+                              const next = [...orderedSelected, idx];
+                              setOrderedSelected(next);
+                              onSelect(next.map((i) => audios[i]));
+                            }
+                          }}
+                          style={{
+                            padding: "7px 14px",
+                            borderRadius: 10,
+                            cursor: "pointer",
+                            fontFamily: "Georgia, serif",
+                            fontSize: 12,
+                            background: inOrder ? "rgba(255,255,255,0.06)" : `${config.accent}30`,
+                            border: `1px solid ${inOrder ? "rgba(255,255,255,0.15)" : config.accent}`,
+                            color: "#f0e8d8",
+                          }}
+                        >
+                          {inOrder ? "✓ Dans la sélection" : "+ Ajouter à la sélection"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        onRequestEnableSmartOption && (
+          <div
+            style={{
+              marginBottom: 22,
+              padding: "12px 16px",
+              borderRadius: 14,
+              background: "rgba(255,255,255,0.025)",
+              border: `1px solid ${config.accent}25`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 10,
+            }}
+          >
+            <div>
+              <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", margin: 0 }}>
+                ✦ Retrouvez un vocal par son contenu (jusqu&apos;à 100 h d&apos;audios analysés) et créez des marque-pages
+              </p>
+              <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.45)", margin: "2px 0 0" }}>
+                Activez Souvenirs intelligents sans perdre votre sélection actuelle.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRequestEnableSmartOption}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 10,
+                background: `${config.accent}22`,
+                border: `1px solid ${config.accent}55`,
+                color: config.accent,
+                fontFamily: "Georgia, serif",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Activer Souvenirs intelligents — +3 €
+            </button>
+          </div>
+        )
+      )}
 
       {/* ═══ ZONE 1 — Bibliothèque ═══ */}
       <div style={{ marginBottom: 32 }}>
@@ -526,10 +997,24 @@ export default function AudioSelector({
         </div>
       )}
 
+      {/* ═══ ZONE 3 — Marque-pages (uniquement si option Souvenirs intelligents activée) ═══ */}
+      {smartSearchEnabled && (
+        <BookmarkEditor
+          selectedAudios={selectedAudiosForBookmarks}
+          bookmarks={bookmarks}
+          onChangeBookmarks={setBookmarks}
+          accent={config.accent}
+        />
+      )}
+
       {/* Action buttons */}
       <div className="audio-cta-grid" style={{ display: "grid", gridTemplateColumns: showLivre ? "1fr 1fr" : "1fr", gap: 12 }}>
         <motion.button whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.97 }}
-          onClick={() => { onSelect(orderedSelected.map((i) => audios[i])); onVocapsule(); }}
+          onClick={() => {
+            const chosenFiles = orderedSelected.map((i) => audios[i]);
+            onSelect(chosenFiles);
+            onVocapsule(currentManifest, chosenFiles);
+          }}
           disabled={orderedSelected.length === 0 || isOverLimit}
           style={{ padding: "20px 20px", borderRadius: 18, textAlign: "left", cursor: orderedSelected.length === 0 || isOverLimit ? "not-allowed" : "pointer", background: `linear-gradient(135deg, ${config.accent}20, ${config.accent}40)`, border: `1px solid ${config.accent}40`, opacity: orderedSelected.length === 0 || isOverLimit ? 0.5 : 1, boxShadow: `0 8px 30px ${config.accent}15` } as React.CSSProperties}
         >

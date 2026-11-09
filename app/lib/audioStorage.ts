@@ -31,11 +31,36 @@ async function isValidAudioMagic(file: File): Promise<boolean> {
 }
 
 /**
+ * Calcule un identifiant stable pour un fichier audio côté client
+ * basé sur son nom, sa taille et sa date de modification.
+ */
+export function computeStableAudioId(file: File, indexFallback?: number): string {
+  const base = `${file.name}_${file.size}_${file.lastModified || indexFallback || 0}`;
+  let h1 = 0xdeadbeef ^ base.length;
+  let h2 = 0x41c6ce57 ^ base.length;
+  for (let i = 0; i < base.length; i++) {
+    const ch = base.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const hex = (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+  return `aud_${hex}`;
+}
+
+export interface UploadedAudioMapItem {
+  audioId: string;
+  storageName: string;
+  position: number;
+}
+
+/**
  * Valide et upload une liste de fichiers audio vers Firebase Storage sous /temp/{uploadId}/
  * Retourne l'uploadId (UUID) permettant de récupérer les fichiers après paiement.
  * Lève une erreur explicite si un fichier est invalide.
  */
-export async function uploadAudiosToStorage(files: File[]): Promise<string> {
+export async function uploadAudiosToStorage(files: File[], existingUploadId?: string): Promise<string> {
   if (files.length === 0) throw new Error("Aucun fichier fourni.");
 
   for (const file of files) {
@@ -52,7 +77,7 @@ export async function uploadAudiosToStorage(files: File[]): Promise<string> {
     if (!valid) throw new Error(`Le fichier ${file.name} ne semble pas être un fichier audio valide.`);
   }
 
-  const uploadId = crypto.randomUUID();
+  const uploadId = existingUploadId || crypto.randomUUID();
   await Promise.all(
     files.map((file, i) => {
       const idx = String(i).padStart(4, "0");
@@ -62,6 +87,12 @@ export async function uploadAudiosToStorage(files: File[]): Promise<string> {
     })
   );
   return uploadId;
+}
+
+export function getStorageNameForIndex(file: File, index: number): string {
+  const idx = String(index).padStart(4, "0");
+  const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, "_");
+  return `${idx}_${safeName}`;
 }
 
 /**

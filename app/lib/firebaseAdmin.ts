@@ -21,5 +21,11 @@ export function getAdminBucket() {
 
 export function getAdminFirestore() {
   getAdminApp();
-  return getFirestore();
+  const db = getFirestore();
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // déjà initialisé
+  }
+  return db;
 }

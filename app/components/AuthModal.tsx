@@ -28,7 +28,11 @@ export default function AuthModal({ accent, onSuccess }: AuthModalProps) {
     setError("");
     const result = await loginWithGoogle();
     setGoogleLoading(false);
-    if (!result.ok) setError(result.error ?? "Erreur Google.");
+    if (result.ok) {
+      onSuccess();
+    } else {
+      setError(result.error ?? "Erreur Google.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

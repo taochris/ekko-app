@@ -170,6 +170,7 @@ export default function CGVPage() {
             <Li>Option numérique conservation 2 ans : <strong style={{ color: "#f0e8d8" }}>+2,00 €</strong> TTC, soit 11,99 € TTC au total.</Li>
             <Li>Porte-clé en bois personnalisé, avec QR code gravé et accès audio 20 ans : <strong style={{ color: "#f0e8d8" }}>24,90 €</strong> TTC.</Li>
             <Li>Porte-clé personnalisé avec QR code et puce NFC autocollante au dos : <strong style={{ color: "#f0e8d8" }}>27,90 €</strong> TTC au total (supplément NFC de 3,00 €).</Li>
+            <Li>Option facultative « Souvenirs intelligents » (recherche vocale par le sens lors de la création et marque-pages interactifs dans le lecteur final) : <strong style={{ color: "#f0e8d8" }}>+3,00 €</strong> TTC (achat unique par Vocapsule).</Li>
           </Ul>
           <P>
             Les trois formats de porte-clé affichés sur le site sont proposés au même prix. L&apos;expédition est gratuite vers les pays proposés à l&apos;étape de paiement : France, Belgique, Suisse, Luxembourg et Monaco. Les droits ou taxes d&apos;importation éventuellement dus hors de l&apos;Union européenne ne sont pas compris dans ces prix.

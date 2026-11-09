@@ -4,9 +4,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import BlobBackground from "../../components/BlobBackground";
 import EkkoLogo from "../../components/EkkoLogo";
+import AudioSelector from "../../components/AudioSelector";
+import ImportGuide from "../../components/ImportGuide";
+import PorteClefFinalize from "../../components/PorteClefFinalize";
 import { EchoRevealScreen } from "../../components/ThemePage";
+import { useAuth } from "../../context/AuthContext";
+import { uploadAudiosToStorage } from "../../lib/audioStorage";
+import { loadDraftAudios, saveDraftAudios, saveDraftState, loadDraftState, clearDraft } from "../../lib/draftStorage";
+import type { CapsuleManifest, CapsuleBookmark } from "../../lib/capsules";
 
-type Status = "pending" | "paid" | "processing" | "ready" | "failed";
+type Status = "pending" | "paid_awaiting_selection" | "paid" | "processing" | "ready" | "failed";
 
 interface CapsuleState {
   id: string;
@@ -21,9 +28,14 @@ interface CapsuleState {
   uid: string;
   productType?: "numerique" | "porteClef";
   engraveName?: string | null;
+  engravingFont?: string | null;
   format?: string | null;
   nfcEnabled?: boolean;
   shippingStatus?: string | null;
+  smartSearchEnabled?: boolean;
+  advancePayment?: boolean;
+  manifest?: CapsuleManifest | null;
+  bookmarks?: CapsuleBookmark[];
 }
 
 const themeVariants: Record<string, "deuil" | "amitie" | "amour" | "home"> = {
@@ -36,6 +48,7 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const sessionId = searchParams.get("session_id");
 
   const [capsule, setCapsule] = useState<CapsuleState | null>(null);
@@ -144,14 +157,65 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
 
   const accent = capsule?.accentColor ?? "#c9a96e";
   const blobVariant = themeVariants[capsule?.theme ?? "deuil"] ?? "deuil";
+  const isAwaitingSelection = capsule?.status === "paid_awaiting_selection";
+
+  // Le QR/NFC du porte-clé pointe ici : seul l'acheteur voit l'écran de commande,
+  // le destinataire est redirigé vers le lecteur public.
+  const isPorteClefScan =
+    !!capsule && capsule.productType === "porteClef" && !sessionId && !isAwaitingSelection &&
+    !authLoading && user?.uid !== capsule.uid;
+
+  useEffect(() => {
+    if (isPorteClefScan && capsule?.status === "ready" && capsule.echoId) {
+      window.location.replace(`/v/${capsule.echoId}`);
+    }
+  }, [isPorteClefScan, capsule?.status, capsule?.echoId]);
 
   return (
     <div className="relative min-h-screen overflow-hidden">
       <BlobBackground variant={blobVariant} />
-      <div style={{ position: "relative", zIndex: 10, padding: "32px 20px", maxWidth: 520, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}>
+      <div style={{ position: "relative", zIndex: 10, padding: "24px 20px 48px", maxWidth: isAwaitingSelection ? 840 : 520, margin: "0 auto" }}>
+        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 28 }}>
           <EkkoLogo />
-        </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="ekko-serif"
+              style={{
+                padding: "7px 14px",
+                borderRadius: 20,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "rgba(243,227,190,0.88)",
+                fontSize: 11,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}
+            >
+              ← Accueil
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/account")}
+              className="ekko-serif"
+              style={{
+                padding: "7px 14px",
+                borderRadius: 20,
+                background: `${accent}18`,
+                border: `1px solid ${accent}45`,
+                color: accent,
+                fontSize: 11,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}
+            >
+              Mon compte
+            </button>
+          </div>
+        </nav>
 
         {loadError && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
@@ -179,14 +243,26 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
           </p>
         )}
 
-        {/* ── Porte-clé : succès dès que paid OU session_id présent (Stripe redirect) ── */}
-        {capsule && capsule.productType === "porteClef" && capsule.status === "pending" && !sessionId && (
+        {/* ── Commande payée avec Souvenirs intelligents (+3 €) en attente de sélection finale ── */}
+        {capsule && isAwaitingSelection && (
+          <AdvanceSelectionWorkspace
+            capsule={capsule}
+            accent={accent}
+            onFinalized={fetchStatus}
+          />
+        )}
+
+        {/* ── Porte-clé : succès dès que paid OU session_id présent (hors mode awaiting_selection) ── */}
+        {capsule && !isAwaitingSelection && capsule.productType === "porteClef" && (authLoading || isPorteClefScan) && !sessionId && capsule.status !== "failed" && (
+          <ProcessingScreen status={capsule.status === "ready" ? "processing" : capsule.status} accent={accent} />
+        )}
+        {capsule && !isAwaitingSelection && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && capsule.status === "pending" && !sessionId && (
           <ProcessingScreen status={capsule.status} accent={accent} />
         )}
-        {capsule && capsule.productType === "porteClef" && (capsule.status !== "pending" || !!sessionId) && capsule.status !== "failed" && (
+        {capsule && !isAwaitingSelection && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && (capsule.status !== "pending" || (!!sessionId && !capsule.advancePayment)) && capsule.status !== "failed" && (
           <KeychainSuccessScreen capsule={capsule} accent={accent} />
         )}
-        {capsule && capsule.productType === "porteClef" && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
+        {capsule && !isAwaitingSelection && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
           <div style={{ marginTop: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 480, margin: "0 auto 4px" }}>
               <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.08)" }} />
@@ -200,20 +276,22 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
               echoId={capsule.echoId}
               audioUrl={capsule.audioUrl}
               uid={capsule.uid}
+              bookmarks={capsule.bookmarks}
             />
           </div>
         )}
 
         {/* ── Numérique : flux processing / ready / failed ── */}
-        {capsule && capsule.productType !== "porteClef" && (capsule.status === "pending" || capsule.status === "paid" || capsule.status === "processing") && (
+        {capsule && !isAwaitingSelection && capsule.productType !== "porteClef" && (capsule.status === "pending" || capsule.status === "paid" || capsule.status === "processing") && (
           <ProcessingScreen status={capsule.status} accent={accent} />
         )}
-        {capsule && capsule.productType !== "porteClef" && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
+        {capsule && !isAwaitingSelection && capsule.productType !== "porteClef" && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
           <EchoRevealScreen
             config={{ accent, accentDim: accent + "60" }}
             echoId={capsule.echoId}
             audioUrl={capsule.audioUrl}
             uid={capsule.uid}
+            bookmarks={capsule.bookmarks}
           />
         )}
 
@@ -226,6 +304,253 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
           />
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Espace de sélection et marque-pages après paiement anticipé (+3 €) ─────
+function AdvanceSelectionWorkspace({
+  capsule,
+  accent,
+  onFinalized,
+}: {
+  capsule: CapsuleState;
+  accent: string;
+  onFinalized: () => Promise<CapsuleState | null>;
+}) {
+  const [audios, setAudios] = useState<File[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [currentManifest, setCurrentManifest] = useState<CapsuleManifest | undefined>(
+    capsule.manifest ?? undefined
+  );
+  const [subStep, setSubStep] = useState<"select" | "porteclef">("select");
+  const [loadingLocal, setLoadingLocal] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [engraveName] = useState(capsule.engraveName ?? "");
+  const [initialOrderedIds, setInitialOrderedIds] = useState<string[]>(
+    capsule.manifest?.selectedAudios?.map((a) => a.audioId) ?? []
+  );
+  const [initialBookmarks, setInitialBookmarks] = useState(
+    capsule.manifest?.bookmarks ?? []
+  );
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const restore = async () => {
+      let restoredFiles = await loadDraftAudios(capsule.id);
+      if (restoredFiles.length === 0) {
+        restoredFiles = await loadDraftAudios("current");
+        if (restoredFiles.length > 0) {
+          await saveDraftAudios(capsule.id, restoredFiles);
+        }
+      }
+      const draftState = (await loadDraftState(capsule.id)) ?? (await loadDraftState("current"));
+      if (mounted) {
+        setAudios(restoredFiles);
+        if (draftState?.orderedAudioIds?.length && initialOrderedIds.length === 0) {
+          setInitialOrderedIds(draftState.orderedAudioIds);
+        }
+        if (draftState?.bookmarks?.length && initialBookmarks.length === 0) {
+          setInitialBookmarks(draftState.bookmarks);
+        }
+        setLoadingLocal(false);
+      }
+    };
+    restore();
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capsule.id]);
+
+  const handleManifestChange = (manifest: CapsuleManifest) => {
+    setCurrentManifest(manifest);
+    saveDraftState({
+      key: capsule.id,
+      capsuleId: capsule.id,
+      theme: capsule.theme,
+      variant: capsule.productType === "porteClef" ? "porteClef" : "numerique",
+      smartSearchEnabled: true,
+      orderedAudioIds: manifest.selectedAudios.map((a) => a.audioId),
+      bookmarks: manifest.bookmarks,
+      engraveName,
+      updatedAt: Date.now(),
+    });
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      fetch(`/api/capsules/${capsule.id}/selection`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manifest, engraveName }),
+      }).catch(() => {});
+    }, 1200);
+  };
+
+  const handleFinalize = async (
+    manifest?: CapsuleManifest,
+    keychainOverride?: {
+      engraveName: string;
+      format: string;
+      engravingFont: string;
+      nfcEnabled: boolean;
+    },
+    explicitFiles?: File[]
+  ) => {
+    const filesToUse = explicitFiles && explicitFiles.length > 0 ? explicitFiles : selectedFiles;
+    if (submitting || filesToUse.length === 0) return;
+    const finalEngrave = keychainOverride?.engraveName ?? engraveName;
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const uploadId = await uploadAudiosToStorage(filesToUse);
+      const res = await fetch(`/api/capsules/${capsule.id}/selection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId,
+          manifest: manifest ?? currentManifest,
+          ...(capsule.productType === "porteClef"
+            ? {
+                engraveName: finalEngrave.trim(),
+                ...(keychainOverride?.format ? { format: keychainOverride.format } : {}),
+                ...(keychainOverride?.engravingFont ? { engravingFont: keychainOverride.engravingFont } : {}),
+              }
+            : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de la validation finale");
+      }
+      await clearDraft(capsule.id);
+      await clearDraft("current");
+      await onFinalized();
+    } catch (err) {
+      setSubmitError((err as Error).message);
+      setSubmitting(false);
+    }
+  };
+
+  if (loadingLocal) {
+    return (
+      <p className="ekko-serif" style={{ textAlign: "center", color: "rgba(240,232,216,0.5)", fontSize: 14, marginTop: 40 }}>
+        Restauration de votre bibliothèque vocale…
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {/* Bandeau de confirmation paiement anticipé */}
+      <div
+        style={{
+          marginBottom: 24,
+          padding: "14px 18px",
+          borderRadius: 16,
+          background: `${accent}14`,
+          border: `1px solid ${accent}45`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <div>
+          <p className="ekko-serif" style={{ fontSize: 13, color: "#f0e8d8", margin: 0, fontWeight: 500 }}>
+            ✓ Commande réglée · Option « Souvenirs intelligents » activée
+          </p>
+          <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.55)", margin: "2px 0 0" }}>
+            Recherchez vos messages, organisez votre sélection (max 1h) et créez vos marque-pages. Aucun nouveau paiement ne vous sera demandé.
+          </p>
+        </div>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: accent }}>
+          Réf. {capsule.id.slice(0, 8)}
+        </span>
+      </div>
+
+      {audios.length === 0 ? (
+        <div>
+          <p className="ekko-serif" style={{ textAlign: "center", fontSize: 13, color: "rgba(240,232,216,0.65)", marginBottom: 16 }}>
+            Pour reprendre votre création sur cet appareil, importez à nouveau votre archive ou vos messages vocaux (votre paiement et vos marque-pages sont conservés) :
+          </p>
+          <ImportGuide
+            theme={capsule.theme}
+            config={{ accent, accentDim: `${accent}25`, label: "Reprise de votre commande" }}
+            hideImageUpload={true}
+            onAudiosImported={async (files) => {
+              await saveDraftAudios(capsule.id, files);
+              setAudios(files);
+            }}
+          />
+        </div>
+      ) : subStep === "porteclef" && capsule.productType === "porteClef" ? (
+        <div>
+          <div style={{ marginBottom: 16 }}>
+            <button
+              type="button"
+              onClick={() => setSubStep("select")}
+              className="ekko-serif"
+              style={{
+                padding: "8px 16px",
+                borderRadius: 20,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "rgba(240,232,216,0.8)",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              ← Retour à la sélection des vocaux
+            </button>
+          </div>
+          <PorteClefFinalize
+            config={{ accent, accentDim: `${accent}25`, label: capsule.theme }}
+            audios={selectedFiles}
+            theme={capsule.theme}
+            initialFormat={capsule.format ?? undefined}
+            manifest={currentManifest}
+            alreadyPaidCapsuleId={capsule.id}
+            initialEngraveName={capsule.engraveName ?? ""}
+            initialEngravingFont={capsule.engravingFont ?? undefined}
+            initialNfcEnabled={capsule.nfcEnabled ?? false}
+            onAlreadyPaidFinalize={(cfg) => handleFinalize(currentManifest, cfg)}
+          />
+        </div>
+      ) : (
+        <>
+          {submitError && (
+            <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 12, background: "rgba(224,85,128,0.12)", border: "1px solid rgba(224,85,128,0.35)", color: "#ff8888", fontFamily: "Georgia, serif", fontSize: 13 }}>
+              {submitError}
+            </div>
+          )}
+          <AudioSelector
+            audios={audios}
+            config={{ accent, accentDim: `${accent}25` }}
+            smartSearchEnabled={true}
+            capsuleId={capsule.id}
+            initialOrderedAudioIds={initialOrderedIds}
+            initialBookmarks={initialBookmarks}
+            onSelect={(files) => setSelectedFiles(files)}
+            onManifestChange={handleManifestChange}
+            onVocapsule={(manifest, chosenFiles) => {
+              if (manifest) setCurrentManifest(manifest);
+              if (chosenFiles) setSelectedFiles(chosenFiles);
+              handleFinalize(manifest, undefined, chosenFiles);
+            }}
+            onLivre={() => {}}
+            ctaVocapsule={
+              submitting
+                ? "Validation et lancement de la fusion…"
+                : "Valider définitivement ma Vocapsule et mes marque-pages"
+            }
+            ctaLivre=""
+            showLivre={false}
+          />
+        </>
+      )}
     </div>
   );
 }

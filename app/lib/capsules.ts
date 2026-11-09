@@ -3,13 +3,43 @@ import { FieldValue } from "firebase-admin/firestore";
 
 /**
  * Statuts d'une capsule post-paiement :
- * - pending    : créée, paiement non confirmé
- * - paid       : paiement confirmé (webhook Stripe), fusion pas encore lancée
- * - processing : fusion en cours côté serveur
- * - ready      : audio prêt, URL disponible, QR affichable
- * - failed     : erreur lors de la fusion, bouton "réessayer" possible
+ * - pending                 : créée, paiement non confirmé
+ * - paid_awaiting_selection : payée avec option Souvenirs intelligents (+3 €), en attente de la sélection finale et des marque-pages
+ * - paid                    : paiement confirmé et sélection validée, fusion prête à démarrer
+ * - processing              : fusion en cours côté serveur
+ * - ready                   : audio prêt, URL disponible, QR affichable
+ * - failed                  : erreur lors de la fusion, bouton "réessayer" possible
  */
-export type CapsuleStatus = "pending" | "paid" | "processing" | "ready" | "failed";
+export type CapsuleStatus = "pending" | "paid_awaiting_selection" | "paid" | "processing" | "ready" | "failed";
+
+export interface SelectedAudioManifestItem {
+  audioId: string;
+  storageName?: string;
+  filename?: string;
+  position: number;
+  durationSec: number;
+}
+
+export interface BookmarkDraftItem {
+  id: string;
+  title: string;
+  audioId: string;
+  offsetInAudioSec: number;
+}
+
+export interface CapsuleBookmark {
+  id: string;
+  title: string;
+  timeSec: number;
+  audioId: string;
+  offsetInAudioSec?: number;
+  displayOrder: number;
+}
+
+export interface CapsuleManifest {
+  selectedAudios: SelectedAudioManifestItem[];
+  bookmarks: BookmarkDraftItem[];
+}
 
 export function getExpirationDate(productType: "numerique" | "porteClef" | undefined, storageOption: number, from = new Date()): Date {
   const expiration = new Date(from);
@@ -45,8 +75,14 @@ export interface Capsule {
   audioUrl?: string;
   expiresAt?: string;
   error?: string;
+  smartSearchEnabled?: boolean;
+  advancePayment?: boolean;
+  maxDurationSec?: number;
+  manifest?: CapsuleManifest;
+  bookmarks?: CapsuleBookmark[];
   createdAt?: string;
   paidAt?: string;
+  selectionValidatedAt?: string;
   processingAt?: string;
   readyAt?: string;
   failedAt?: string;
@@ -67,6 +103,9 @@ export async function createCapsule(data: {
   engravingFont?: string;
   nfcEnabled?: boolean;
   customerEmail?: string;
+  smartSearchEnabled?: boolean;
+  advancePayment?: boolean;
+  manifest?: CapsuleManifest;
 }): Promise<string> {
   const db = getAdminFirestore();
   const ref = db.collection(COLLECTION).doc();
@@ -79,6 +118,10 @@ export async function createCapsule(data: {
     storageOption: data.storageOption,
     uploadId: data.uploadId,
     productType: data.productType ?? "numerique",
+    smartSearchEnabled: data.smartSearchEnabled === true,
+    advancePayment: data.advancePayment === true,
+    maxDurationSec: 3600,
+    ...(data.manifest ? { manifest: data.manifest } : {}),
     ...(isPorteClef ? {
       engraveName: data.engraveName ?? "",
       format: data.format ?? "",
@@ -123,13 +166,20 @@ export async function getCapsule(id: string): Promise<Capsule | null> {
     shippingName: raw.shippingName,
     shippingAddress: raw.shippingAddress,
     customerPhone: raw.customerPhone,
+    customerEmail: raw.customerEmail,
     sessionId: raw.sessionId,
     echoId: raw.echoId,
     audioUrl: raw.audioUrl,
     expiresAt: raw.expiresAt,
     error: raw.error,
+    smartSearchEnabled: raw.smartSearchEnabled === true,
+    advancePayment: raw.advancePayment === true,
+    maxDurationSec: Number(raw.maxDurationSec ?? 3600),
+    manifest: raw.manifest as CapsuleManifest | undefined,
+    bookmarks: Array.isArray(raw.bookmarks) ? (raw.bookmarks as CapsuleBookmark[]) : undefined,
     createdAt: convert(raw.createdAt),
     paidAt: convert(raw.paidAt),
+    selectionValidatedAt: convert(raw.selectionValidatedAt),
     processingAt: convert(raw.processingAt),
     readyAt: convert(raw.readyAt),
     failedAt: convert(raw.failedAt),
@@ -149,6 +199,15 @@ export async function markCapsulePaid(id: string, sessionId: string): Promise<vo
   });
 }
 
+export async function markCapsulePaidAwaitingSelection(id: string, sessionId: string): Promise<void> {
+  await updateCapsule(id, {
+    status: "paid_awaiting_selection",
+    smartSearchEnabled: true,
+    sessionId,
+    paidAt: FieldValue.serverTimestamp(),
+  });
+}
+
 export async function markCapsuleProcessing(id: string): Promise<void> {
   await updateCapsule(id, {
     status: "processing",
@@ -159,13 +218,14 @@ export async function markCapsuleProcessing(id: string): Promise<void> {
 
 export async function markCapsuleReady(
   id: string,
-  data: { echoId: string; audioUrl: string; expiresAt: string }
+  data: { echoId: string; audioUrl: string; expiresAt: string; bookmarks?: CapsuleBookmark[] }
 ): Promise<void> {
   await updateCapsule(id, {
     status: "ready",
     echoId: data.echoId,
     audioUrl: data.audioUrl,
     expiresAt: data.expiresAt,
+    ...(data.bookmarks ? { bookmarks: data.bookmarks } : {}),
     readyAt: FieldValue.serverTimestamp(),
   });
 }

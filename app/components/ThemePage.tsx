@@ -7,10 +7,13 @@ import EkkoLogo from "./EkkoLogo";
 import ImportGuide from "./ImportGuide";
 import AudioSelector from "./AudioSelector";
 import PorteClefFinalize from "./PorteClefFinalize";
+import SmartOptionModal from "./SmartOptionModal";
 import AuthModal from "./AuthModal";
 import { SealedCapsule, RevealCapsule } from "./CapsuleAnimations";
 import { useAuth } from "../context/AuthContext";
 import { uploadAudiosToStorage } from "../lib/audioStorage";
+import { saveDraftAudios, saveDraftState, copyDraftAudiosKey } from "../lib/draftStorage";
+import type { CapsuleManifest } from "../lib/capsules";
 
 type ThemeType = "deuil" | "amitie" | "amour";
 
@@ -56,7 +59,7 @@ const themeConfig: Record<string, {
   },
 };
 
-type Step = "home" | "import" | "select" | "loading" | "capsule" | "livre" | "porteclef";
+type Step = "home" | "import" | "smart-offer" | "smart-porteclef-config" | "select" | "loading" | "capsule" | "livre" | "porteclef";
 
 function NavButton({ onClick, accent, children }: { onClick: () => void; accent: string; children: React.ReactNode }) {
   const [hovered, setHovered] = useState(false);
@@ -89,15 +92,185 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
   const [step, setStep] = useState<Step>("home");
   const [importedAudios, setImportedAudios] = useState<File[]>([]);
   const [selectedAudios, setSelectedAudios] = useState<File[]>([]);
+  const [currentManifest, setCurrentManifest] = useState<CapsuleManifest | undefined>(undefined);
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [showEchos, setShowEchos] = useState(false);
+  const [showAdvanceAuth, setShowAdvanceAuth] = useState(false);
+  const [smartSearchEnabled, setSmartSearchEnabled] = useState(false);
+  const [advanceCapsuleId, setAdvanceCapsuleId] = useState<string | null>(null);
+  const [advanceEngraveConfig, setAdvanceEngraveConfig] = useState<{
+    storageOption: 0 | 100 | 200;
+    engraveName?: string;
+    format?: string;
+    engravingFont?: string;
+    nfcEnabled?: boolean;
+  } | null>(null);
+  const [pendingAdvanceConfig, setPendingAdvanceConfig] = useState<{
+    storageOption: 0 | 100 | 200;
+    engraveName?: string;
+    format?: string;
+    engravingFont?: string;
+    nfcEnabled?: boolean;
+  } | null>(null);
 
-  // Flow post-paiement géré par la page /capsule/[id] (async + polling Firestore)
-  // ThemePage ne gère plus que le parcours : import → select → capsule (pay)
+  // Dès que l'utilisateur vient de se connecter via la modale d'auth pour l'option +3 €,
+  // relancer automatiquement le paiement anticipé avec la configuration qu'il venait de saisir
+  useEffect(() => {
+    if (user && showAdvanceAuth) {
+      setShowAdvanceAuth(false);
+      if (pendingAdvanceConfig) {
+        const cfg = pendingAdvanceConfig;
+        setPendingAdvanceConfig(null);
+        startAdvanceSmartCheckout(cfg, user);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, showAdvanceAuth]);
 
-  const handleAudiosImported = (files: File[]) => {
+  const handleAudiosImported = async (files: File[]) => {
     setImportedAudios(files);
-    setStep("select");
+    await saveDraftAudios("current", files);
+    setStep("smart-offer");
+  };
+
+  const startAdvanceSmartCheckout = async (
+    smartCfg: {
+      storageOption: 0 | 100 | 200;
+      engraveName?: string;
+      format?: string;
+      engravingFont?: string;
+      nfcEnabled?: boolean;
+    },
+    currentUser = user
+  ) => {
+    if (!currentUser) {
+      setPendingAdvanceConfig(smartCfg);
+      setShowAdvanceAuth(true);
+      return;
+    }
+
+    await saveDraftAudios("current", importedAudios);
+    const storageLabel = smartCfg.storageOption === 100 ? "1 an" : smartCfg.storageOption === 200 ? "2 ans" : null;
+    const isPorteClef = variant === "porteClef";
+
+    const payload = {
+      theme,
+      uploadId: "",
+      product: isPorteClef ? "porteClef" : "numerique",
+      storage: isPorteClef ? 200 : smartCfg.storageOption,
+      storageLabel: isPorteClef ? "incluse" : storageLabel,
+      engraveName: smartCfg.engraveName ?? "",
+      engravingFont: smartCfg.engravingFont ?? "Georgia, serif",
+      format: smartCfg.format ?? initialFormat ?? "etiquette-rect",
+      material: "bois",
+      nfcEnabled: smartCfg.nfcEnabled ?? false,
+      smartSearchEnabled: true,
+      advancePayment: true,
+      manifest: currentManifest,
+      uid: currentUser.uid,
+      accentColor: config.accent,
+      email: currentUser.email ?? "",
+    };
+
+    const isDevUser =
+      process.env.NODE_ENV === "development" ||
+      (!!process.env.NEXT_PUBLIC_DEV_UID && currentUser.uid === process.env.NEXT_PUBLIC_DEV_UID);
+
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, ...(isDevUser ? { devBypass: true } : {}) }),
+    });
+    const data = await res.json();
+    if (data.capsuleId) {
+      await copyDraftAudiosKey("current", data.capsuleId);
+      await saveDraftState({
+        key: data.capsuleId,
+        capsuleId: data.capsuleId,
+        theme,
+        variant,
+        smartSearchEnabled: true,
+        orderedAudioIds: currentManifest?.selectedAudios.map((a) => a.audioId) ?? [],
+        bookmarks: currentManifest?.bookmarks ?? [],
+        storageOption: payload.storage,
+        engraveName: payload.engraveName,
+        engravingFont: payload.engravingFont,
+        format: payload.format,
+        nfcEnabled: payload.nfcEnabled,
+        updatedAt: Date.now(),
+      });
+    }
+
+    if (coverPhoto) {
+      try {
+        const reader = new FileReader();
+        await new Promise<void>((resolve) => {
+          reader.onload = () => {
+            sessionStorage.setItem("ekko_cover_photo", reader.result as string);
+            sessionStorage.setItem("ekko_cover_photo_name", coverPhoto.name);
+            sessionStorage.setItem("ekko_cover_photo_type", coverPhoto.type);
+            resolve();
+          };
+          reader.readAsDataURL(coverPhoto);
+        });
+      } catch { /* ignore */ }
+    }
+
+    if (isDevUser && data.capsuleId) {
+      // En mode dev / admin bypass : pas de rechargement de page !
+      // On garde importedAudios directement en mémoire et on passe immédiatement à la sélection intelligente
+      setAdvanceCapsuleId(data.capsuleId);
+      setSmartSearchEnabled(true);
+      setAdvanceEngraveConfig(smartCfg);
+      setStep("select");
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
+    }
+  };
+
+  const handleFinalizeAdvanceInPlace = async (
+    manifest?: CapsuleManifest,
+    overrideKeychainCfg?: {
+      engraveName: string;
+      format: string;
+      engravingFont: string;
+      nfcEnabled: boolean;
+    },
+    explicitFiles?: File[]
+  ) => {
+    if (!advanceCapsuleId) return;
+    const filesToUpload = explicitFiles && explicitFiles.length > 0 ? explicitFiles : selectedAudios;
+    if (filesToUpload.length === 0) return;
+    const kcCfg = overrideKeychainCfg ?? advanceEngraveConfig;
+    setStep("loading");
+    try {
+      const uploadId = await uploadAudiosToStorage(filesToUpload);
+      const res = await fetch(`/api/capsules/${advanceCapsuleId}/selection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId,
+          manifest: manifest ?? currentManifest,
+          ...(variant === "porteClef" && kcCfg
+            ? {
+                engraveName: kcCfg.engraveName ?? "",
+                engravingFont: kcCfg.engravingFont,
+                format: kcCfg.format,
+              }
+            : {}),
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Erreur validation (${res.status})`);
+      }
+      window.location.replace(`/capsule/${advanceCapsuleId}`);
+    } catch (err) {
+      console.error("[handleFinalizeAdvanceInPlace]", err);
+      setStep("select");
+    }
   };
 
   if (isLoading) {
@@ -126,7 +299,9 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
         >
           {step !== "home" && step !== "loading" && (
             <NavButton onClick={() => {
-              if (step === "select") setStep("import");
+              if (step === "smart-porteclef-config") setStep("smart-offer");
+              else if (step === "smart-offer") setStep("import");
+              else if (step === "select") setStep("smart-offer");
               else if (step === "import") setStep("home");
               else if (step === "capsule") setStep("select");
               else if (step === "porteclef") setStep("select");
@@ -195,22 +370,75 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
             hideImageUpload={hideImageUpload}
           />
         )}
+        {step === "smart-offer" && (
+          showAdvanceAuth ? (
+            <div style={{ maxWidth: 480, margin: "32px auto 0" }}>
+              <p className="ekko-serif text-center mb-6" style={{ fontSize: 14, color: "rgba(240,232,216,0.6)", fontStyle: "italic" }}>
+                Connectez-vous pour activer l&apos;option Souvenirs intelligents
+              </p>
+              <AuthModal
+                accent={config.accent}
+                onSuccess={() => {
+                  setShowAdvanceAuth(false);
+                }}
+              />
+            </div>
+          ) : (
+            <SmartOptionModal
+              accent={config.accent}
+              audioCount={importedAudios.length}
+              variant={variant}
+              initialFormat={initialFormat}
+              onContinueWithoutOption={() => setStep("select")}
+              onOpenKeychainCustomizer={() => setStep("smart-porteclef-config")}
+              onActivateSmartOption={(cfg) => startAdvanceSmartCheckout(cfg)}
+            />
+          )
+        )}
+        {step === "smart-porteclef-config" && (
+          <PorteClefFinalize
+            config={config}
+            audios={importedAudios}
+            theme={theme}
+            coverPhoto={coverPhoto}
+            initialFormat={initialFormat}
+            advanceSmartMode={true}
+            onAdvanceSmartConfirm={(cfg) => startAdvanceSmartCheckout(cfg)}
+          />
+        )}
         {step === "select" && (
           <AudioSelector
             audios={importedAudios}
             config={config}
+            smartSearchEnabled={smartSearchEnabled}
+            capsuleId={advanceCapsuleId}
             onSelect={(files: File[]) => setSelectedAudios(files)}
-            onVocapsule={() => {
-              setSelectedAudios(selectedAudios);
-              setStep(variant === "porteClef" ? "porteclef" : "loading");
+            onManifestChange={(m) => setCurrentManifest(m)}
+            onRequestEnableSmartOption={() => setStep("smart-offer")}
+            onVocapsule={(manifest, chosenFiles) => {
+              if (manifest) setCurrentManifest(manifest);
+              if (chosenFiles) setSelectedAudios(chosenFiles);
+              if (smartSearchEnabled && advanceCapsuleId) {
+                handleFinalizeAdvanceInPlace(manifest, undefined, chosenFiles);
+              } else if (variant === "porteClef") {
+                setStep("porteclef");
+              } else {
+                setStep("loading");
+              }
             }}
             onLivre={() => {
               setSelectedAudios(selectedAudios);
               setStep("livre");
             }}
-            ctaVocapsule={config.ctaVocapsule}
+            ctaVocapsule={
+              smartSearchEnabled && advanceCapsuleId
+                ? "Valider définitivement ma Vocapsule et mes marque-pages"
+                : config.ctaVocapsule
+            }
             ctaLivre={config.ctaLivre}
             showLivre={false}
+            initialOrderedAudioIds={currentManifest?.selectedAudios.map((a) => a.audioId)}
+            initialBookmarks={currentManifest?.bookmarks}
           />
         )}
         {step === "loading" && (
@@ -225,6 +453,7 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
             audios={selectedAudios}
             theme={theme}
             coverPhoto={coverPhoto}
+            manifest={currentManifest}
             onUnlock={() => { /* paiement redirige directement vers /capsule/[id] */ }}
           />
         )}
@@ -234,7 +463,13 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
             audios={selectedAudios}
             theme={theme}
             coverPhoto={coverPhoto}
-            initialFormat={initialFormat}
+            initialFormat={advanceEngraveConfig?.format ?? initialFormat}
+            manifest={currentManifest}
+            alreadyPaidCapsuleId={advanceCapsuleId}
+            initialEngraveName={advanceEngraveConfig?.engraveName ?? ""}
+            initialEngravingFont={advanceEngraveConfig?.engravingFont}
+            initialNfcEnabled={advanceEngraveConfig?.nfcEnabled ?? false}
+            onAlreadyPaidFinalize={(cfg) => handleFinalizeAdvanceInPlace(currentManifest, cfg)}
           />
         )}
         {step === "livre" && (
@@ -445,38 +680,30 @@ function CapsuleScreen({
   audios,
   theme,
   coverPhoto,
+  manifest,
   onUnlock,
 }: {
   config: typeof themeConfig["deuil"] & { blobVariant?: string };
   audios: File[];
   theme: string;
   coverPhoto?: File | null;
+  manifest?: CapsuleManifest;
   onUnlock: () => void;
 }) {
   const [status, setStatus] = useState<"idle" | "uploading" | "redirecting">("idle");
   const [showAuth, setShowAuth] = useState(false);
+  const [pendingPayAfterAuth, setPendingPayAfterAuth] = useState(false);
   const [storageOption, setStorageOption] = useState<0 | 100 | 200>(0);
   const [consentChecked, setConsentChecked] = useState(false);
   const { user } = useAuth();
   const variant = config.blobVariant ?? theme;
   const texts = capsuleTexts[variant] ?? capsuleTexts.deuil;
 
-  // Fermer la modale dès que l'user est connecté
-  useEffect(() => {
-    if (user && showAuth) {
-      setShowAuth(false);
-    }
-  }, [user, showAuth]);
-
   const storageLabel = storageOption === 100 ? "1 an" : storageOption === 200 ? "2 ans" : null;
   const totalLabel = storageOption === 0 ? "9,99 €" : storageOption === 100 ? "10,99 €" : "11,99 €";
   const totalLabelBarred = storageOption === 0 ? "19,99 €" : storageOption === 100 ? "20,99 €" : "21,99 €";
 
-  const handlePay = async () => {
-    if (!user) {
-      setShowAuth(true);
-      return;
-    }
+  const executePay = async (activeUser: NonNullable<typeof user>) => {
     if (!consentChecked) return;
     setStatus("uploading");
     try {
@@ -484,7 +711,9 @@ function CapsuleScreen({
       setStatus("redirecting");
 
       // ── Bypass dev : sauter Stripe si c'est le compte dev ──
-      const isDevUser = process.env.NEXT_PUBLIC_DEV_UID && user?.uid === process.env.NEXT_PUBLIC_DEV_UID;
+      const isDevUser =
+        process.env.NODE_ENV === "development" ||
+        (!!process.env.NEXT_PUBLIC_DEV_UID && activeUser.uid === process.env.NEXT_PUBLIC_DEV_UID);
       if (isDevUser) {
         const devRes = await fetch("/api/stripe/checkout", {
           method: "POST",
@@ -494,9 +723,10 @@ function CapsuleScreen({
             uploadId,
             storage: storageOption,
             storageLabel,
-            uid: user?.uid ?? "",
+            uid: activeUser.uid ?? "",
             accentColor: config.accent,
-            email: user?.email ?? "",
+            email: activeUser.email ?? "",
+            manifest,
             devBypass: true,
           }),
         });
@@ -530,10 +760,11 @@ function CapsuleScreen({
           uploadId,
           storage: storageOption,
           storageLabel,
-          uid: user?.uid ?? "",
+          uid: activeUser.uid ?? "",
           accentColor: config.accent,
-          email: user?.email ?? "",
+          email: activeUser.email ?? "",
           coverPhotoName: coverPhoto?.name ?? null,
+          manifest,
         }),
       });
       const data = await res.json();
@@ -558,6 +789,27 @@ function CapsuleScreen({
       console.error("handlePay error:", err);
       setStatus("idle");
     }
+  };
+
+  // Fermer la modale dès que l'user est connecté et enchaîner le paiement automatiquement
+  useEffect(() => {
+    if (user && showAuth) {
+      setShowAuth(false);
+      if (pendingPayAfterAuth) {
+        setPendingPayAfterAuth(false);
+        executePay(user);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, showAuth, pendingPayAfterAuth]);
+
+  const handlePay = async () => {
+    if (!user) {
+      setPendingPayAfterAuth(true);
+      setShowAuth(true);
+      return;
+    }
+    await executePay(user);
   };
 
   if (showAuth) {
@@ -1477,27 +1729,51 @@ export function EchoRevealScreen({
   echoId,
   audioUrl,
   uid,
+  bookmarks: initialBookmarks,
 }: {
   config: { accent: string; accentDim: string };
   echoId: string;
   audioUrl: string;
   uid?: string;
   theme?: string;
+  bookmarks?: Array<{ id: string; title: string; timeSec: number }>;
 }) {
   const [phase, setPhase] = useState<"unlock" | "reveal">("unlock");
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [bookmarks, setBookmarks] = useState<Array<{ id: string; title: string; timeSec: number }>>(
+    initialBookmarks ?? []
+  );
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     if (!echoId) return;
     fetch(`/api/storage/echo?echo_id=${echoId}`)
       .then(r => r.json())
-      .then(d => { if (d.coverUrl) setCoverUrl(d.coverUrl); })
+      .then(d => {
+        if (d.coverUrl) setCoverUrl(d.coverUrl);
+        if (Array.isArray(d.bookmarks) && d.bookmarks.length > 0) {
+          setBookmarks([...d.bookmarks].sort((a, b) => Number(a.timeSec) - Number(b.timeSec)));
+        }
+      })
       .catch(() => {});
   }, [echoId]);
+
+  // Si l'utilisateur est en mode plein écran et clique sur le bouton "Retour" du navigateur,
+  // fermer simplement le plein écran au lieu de quitter la page vers un écran de chargement vide !
+  useEffect(() => {
+    if (!fullscreen || typeof window === "undefined") return;
+    window.history.pushState({ ekkoFullscreen: true }, "");
+    const onPopState = () => {
+      setFullscreen(false);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [fullscreen]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const pageUrl = typeof window !== "undefined" ? `${window.location.origin}/v/${echoId}` : `/v/${echoId}`;
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pageUrl)}&bgcolor=0d0a0f&color=${config.accent.replace("#", "")}&margin=8`;
@@ -1518,6 +1794,26 @@ export function EchoRevealScreen({
   const formatTime = (s: number) => {
     if (!isFinite(s) || isNaN(s)) return "0:00";
     return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  };
+
+  const currentSec = duration > 0 ? (duration * progress) / 100 : 0;
+  const activeBookmarkId = (() => {
+    if (bookmarks.length === 0) return null;
+    let active: string | null = null;
+    for (const bm of bookmarks) {
+      if (currentSec + 0.35 >= bm.timeSec) active = bm.id;
+      else break;
+    }
+    return active;
+  })();
+
+  const jumpToBookmark = (timeSec: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.currentTime = Math.max(0, timeSec);
+    if (duration > 0) setProgress((Math.max(0, timeSec) / duration) * 100);
+    a.play().catch(() => {});
+    setIsPlaying(true);
   };
 
   return (
@@ -1616,7 +1912,7 @@ export function EchoRevealScreen({
                 </div>
               </div>
               <div
-                style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
+                style={{ position: "relative", height: 5, borderRadius: 3, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   const a = audioRef.current;
@@ -1625,7 +1921,48 @@ export function EchoRevealScreen({
                   a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
                 }}
               >
-                <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                <div style={{ height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                {duration > 0 && bookmarks.map((bm) => {
+                  const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
+                  const isActive = activeBookmarkId === bm.id;
+                  return (
+                    <button
+                      key={bm.id}
+                      type="button"
+                      title={`${bm.title} (${formatTime(bm.timeSec)})`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        jumpToBookmark(bm.timeSec);
+                      }}
+                      style={{
+                        position: "absolute",
+                        left: `${pct}%`,
+                        top: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: 20,
+                        height: 22,
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 3,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: isActive ? 5 : 3,
+                          height: isActive ? 13 : 10,
+                          borderRadius: 2,
+                          background: isActive ? "#ffffff" : config.accent,
+                          boxShadow: `0 0 6px ${config.accent}`,
+                        }}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
             {!coverUrl && (
@@ -1636,6 +1973,54 @@ export function EchoRevealScreen({
               </div>
             )}
           </div>
+
+          {/* Liste des marque-pages directement sous le lecteur */}
+          {bookmarks.length > 0 && (
+            <div style={{
+              padding: "14px 16px",
+              borderRadius: 16,
+              background: "rgba(255,255,255,0.025)",
+              border: `1px solid ${config.accent}30`,
+            }}>
+              <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: config.accent, margin: "0 0 10px" }}>
+                ✦ Mes marque-pages
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {bookmarks.map((bm) => {
+                  const isActive = activeBookmarkId === bm.id;
+                  return (
+                    <button
+                      key={bm.id}
+                      type="button"
+                      onClick={() => jumpToBookmark(bm.timeSec)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        background: isActive ? `${config.accent}22` : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${isActive ? config.accent + "65" : "rgba(255,255,255,0.08)"}`,
+                        color: "#f0e8d8",
+                        fontFamily: "Georgia, serif",
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400 }}>
+                        {isActive ? "▶ " : ""}{bm.title}
+                      </span>
+                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: config.accent }}>
+                        {formatTime(bm.timeSec)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Mode plein écran immersif */}
           {fullscreen && (
@@ -1663,7 +2048,22 @@ export function EchoRevealScreen({
                 </>
               )}
 
-              {/* Bouton fermer */}
+              {/* Bouton fermer / Retour */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFullscreen(false);
+                }}
+                style={{
+                  position: "absolute", top: 20, left: 20, zIndex: 2,
+                  padding: "8px 16px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer",
+                  background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)",
+                  display: "flex", alignItems: "center", gap: 6,
+                  color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 12,
+                }}
+              >
+                ← Retour à ma Vocapsule
+              </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setFullscreen(false); }}
                 style={{

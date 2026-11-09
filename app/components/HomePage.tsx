@@ -635,7 +635,7 @@ export default function HomePage() {
                   fontFamily: font, fontSize: 16, lineHeight: 1.8,
                   color: "rgba(240,232,216,0.65)", margin: 0,
                 }}>
-                  Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
+                  Choisissez les voix qui comptent. Grâce à une IA qui comprend le contenu de vos messages, retrouvez en quelques mots les audios que vous cherchez, sans fouiller pendant des heures. Transformez vos messages vocaux préférés en{" "}
                   <a href="/comment-ca-marche" style={{ color: "rgb(87, 212, 147)", textDecoration: "none", fontWeight: 600, borderBottom: "1px solid rgba(87, 212, 147, 0.45)", transition: "border-color 0.2s, opacity 0.2s" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgb(87, 212, 147)"; (e.currentTarget as HTMLElement).style.opacity = "0.85"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgba(87, 212, 147, 0.45)"; (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
                     vocapsule
                   </a>

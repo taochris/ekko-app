@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
-import { markCapsulePaid, updateCapsule } from "../../../lib/capsules";
+import { getCapsule, markCapsulePaid, markCapsulePaidAwaitingSelection, updateCapsule } from "../../../lib/capsules";
 import { buildKeychainEmail, buildAdminOrderEmail, generateLightBurnSVG, sendPushover } from "../../../lib/order-emails";
 
 export const runtime = "nodejs";
@@ -136,7 +136,8 @@ export async function POST(req: NextRequest) {
     // ── Adresse & téléphone Stripe ──
     type ShippingDetails = { name?: string; address?: { line1?: string; line2?: string; postal_code?: string; city?: string; country?: string } };
     const sessionAny = session as unknown as Record<string, unknown>;
-    const shipping = (sessionAny.shipping_details ?? sessionAny.shipping ?? null) as ShippingDetails | null;
+    const collected = sessionAny.collected_information as { shipping_details?: ShippingDetails } | null | undefined;
+    const shipping = (collected?.shipping_details ?? sessionAny.shipping_details ?? sessionAny.shipping ?? null) as ShippingDetails | null;
     const shippingName    = shipping?.name ?? session.customer_details?.name ?? "";
     const shippingAddr    = shipping?.address;
     const shippingAddress = shippingAddr
@@ -146,6 +147,42 @@ export async function POST(req: NextRequest) {
     const customerPhone = session.customer_details?.phone ?? "";
 
     try {
+      const existingCapsule = await getCapsule(capsuleId);
+      if (existingCapsule && existingCapsule.status !== "pending") {
+        // Idempotence : déjà traitée par claim ou un webhook précédent
+        return NextResponse.json({ received: true, idempotent: true });
+      }
+
+      const isAdvancePayment =
+        session.metadata?.advancePayment === "true" || existingCapsule?.advancePayment === true;
+
+      if (isAdvancePayment) {
+        await markCapsulePaidAwaitingSelection(capsuleId, session.id);
+        if (isPorteClef && (shippingAddress || customerPhone)) {
+          await updateCapsule(capsuleId, {
+            shippingName,
+            shippingAddress,
+            customerPhone,
+            shippingStatus: "pending", // La gravure ne démarrera qu'après validation finale de la sélection
+          });
+        }
+        console.log("[stripe/webhook] capsule marquée paid_awaiting_selection:", capsuleId);
+
+        if (process.env.RESEND_API_KEY && customerEmail) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const resumeUrl = `${origin}/capsule/${capsuleId}?mode=select`;
+          resend.emails.send({
+            from: "EKKO <ekko@vosekko.com>",
+            to: customerEmail,
+            subject: "Paiement confirmé · Sélectionnez vos souvenirs intelligents EKKO ✦",
+            html: buildConfirmationEmail({ capsuleUrl: resumeUrl, capsuleId }),
+          }).catch((e: unknown) => console.error("[webhook] email advancePayment:", e));
+        }
+
+        // Ne PAS lancer /process ni envoyer le SVG LightBurn tant que l'utilisateur n'a pas validé sa sélection
+        return NextResponse.json({ received: true, awaitingSelection: true });
+      }
+
       await markCapsulePaid(capsuleId, session.id);
 
       // Sauvegarder adresse + téléphone en Firestore (pour porteClef)
