@@ -250,6 +250,7 @@ export default function HomePage() {
   const [openCat, setOpenCat] = useState<number | null>(null);
   const [openProduits, setOpenProduits] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"porte-clef" | "numerique">("porte-clef");
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 700);
@@ -322,6 +323,14 @@ export default function HomePage() {
           .hp-features-bar > div { flex: 1 1 140px !important; }
           .hp-steps-grid { flex-direction: column !important; gap: 32px !important; padding: 0 20px !important; }
           .hp-step-arrow { display: none !important; }
+        }
+        .hp-hero-btn-primary { margin-bottom: 0 !important; }
+        @media (max-width: 768px) {
+          .hp-hero-copy { padding: 32px 22px 90px !important; text-align: center !important; }
+          .hp-hero-copy-col { margin-left: auto !important; margin-right: auto !important; }
+          .hp-hero-links { justify-content: center !important; flex-direction: column !important; }
+          .hp-demo { grid-template-columns: 1fr !important; gap: 36px !important; padding: 60px 22px 20px !important; text-align: center !important; }
+          .hp-demo p { margin-left: auto !important; margin-right: auto !important; }
         }
         .hp-step-card {
           transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
@@ -596,86 +605,59 @@ export default function HomePage() {
 
         {/* Conteneur héro */}
         <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "60px 56px" }} className="hp-hero-inner">
-            {/* Ligne 1 : vidéo + texte côte à côte */}
-            <div className="hp-hero-main-row" style={{ display: "flex", gap: 24, alignItems: "stretch", marginLeft: 300, marginTop: 50 }}>
-              {/* Vidéo */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.9 }}
-                className="hp-hero-visual"
-              >
-                <div className="hp-hero-visual-frame" style={{
-                  width: 240, height: 290, borderRadius: 20, overflow: "hidden",
-                  border: "1px solid rgba(201,169,110,0.22)",
-                  boxShadow: "0 0 40px rgba(201,169,110,0.08)",
-                }}>
-                  <video
-                    autoPlay muted loop playsInline preload="metadata"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  >
-                    <source src="/images/video/Replace_name_on_smartphone_screen_202606022004.mp4" type="video/mp4" />
-                  </video>
-                </div>
-              </motion.div>
-              {/* Texte */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.9 }}
-                className="hp-hero-text"
-                style={{
-                  width: 290, height: 290, marginLeft: 50,
-                  display: "flex", alignItems: "center", padding: "0 8px",
-                  boxSizing: "border-box",
-                }}
-              >
-                <p style={{
-                  fontFamily: font, fontSize: 16, lineHeight: 1.8,
-                  color: "rgba(240,232,216,0.65)", margin: 0,
-                }}>
-                  Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
-                  <a href="/comment-ca-marche" style={{ color: "rgb(87, 212, 147)", textDecoration: "none", fontWeight: 600, borderBottom: "1px solid rgba(87, 212, 147, 0.45)", transition: "border-color 0.2s, opacity 0.2s" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgb(87, 212, 147)"; (e.currentTarget as HTMLElement).style.opacity = "0.85"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgba(87, 212, 147, 0.45)"; (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
-                    vocapsule
-                  </a>
-                  {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
-                </p>
-              </motion.div>
-            </div>
-            {/* Ligne 2 : boutons */}
+          <div className="hp-hero-copy" style={{ padding: "60px 56px 150px" }}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.2 }}
-              className="hp-hero-actions"
-              style={{ display: "flex", flexDirection: "column", gap: 12, width: 454, alignItems: "stretch", marginTop: 50, alignSelf: "center" }}
+              transition={{ duration: 0.9 }}
+              className="hp-hero-copy-col"
+              style={{ width: "100%", maxWidth: 460 }}
             >
-              <a href="/produit" className="hp-hero-btn-primary">
-                Créer mon porte-clé
-              </a>
-              <a href="/numerique" className="hp-hero-btn-secondary-outline">
-                Créer mon fichier numérique
-              </a>
-              <a href="/inspirations" className="hp-hero-inspirations">
-                <span className="hp-hero-inspirations-plus" style={{
-                  width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(87,212,147,0.45)",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 15,
-                }}>+</span>
-                Mille &amp; une occasions
-              </a>
+              <p style={{ fontFamily: font, fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(201,169,110,0.8)", margin: "0 0 22px" }}>
+                Porte-clé en bois gravé · Messages vocaux
+              </p>
+              <h1 style={{ fontFamily: font, fontWeight: 300, fontSize: "clamp(2.6rem, 5.4vw, 4.2rem)", lineHeight: 1.08, margin: "0 0 24px", color: cream, textShadow: "0 2px 18px rgba(0,0,0,0.7)" }}>
+                La voix qu&apos;on garde{" "}
+                <em style={{ fontStyle: "italic", background: "linear-gradient(135deg, #ecd5a0 0%, #c9a96e 50%, #b08940 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: gold }}>sur soi.</em>
+              </h1>
+              <p style={{ fontFamily: font, fontSize: 20, lineHeight: 1.6, color: "rgba(240,232,216,0.92)", margin: "0 0 20px", maxWidth: 400, textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}>
+                Transformez vos messages vocaux préférés en porte-clés gravés.
+              </p>
+              <div style={{ width: 46, height: 1, background: "linear-gradient(90deg, #c9a96e, transparent)", margin: "0 0 18px" }} className="hp-hero-copy-col" />
+              <p style={{ fontFamily: font, fontSize: 16, lineHeight: 1.7, fontStyle: "italic", color: "rgba(236,213,160,0.85)", margin: "0 0 " + (infoOpen ? 16 : 40) + "px", textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}>
+                La voix de ceux qu&apos;on aime s&apos;écoute en un{" "}
+                <span style={{ whiteSpace: "nowrap" }}>geste.<button
+                  type="button"
+                  onClick={() => setInfoOpen((v) => !v)}
+                  aria-expanded={infoOpen}
+                  aria-label="Information"
+                  title="Information"
+                  style={{ marginLeft: 3, background: "none", border: "none", padding: 0, cursor: "pointer", color: gold, fontFamily: font, fontSize: 20, lineHeight: 1, verticalAlign: "super" }}
+                >*</button></span>
+              </p>
+              {infoOpen && (
+                <div style={{ margin: "0 0 30px", padding: "18px 20px", borderRadius: 16, background: "rgba(0,0,0,0.58)", border: "1px solid rgba(201,169,110,0.18)", boxShadow: "0 16px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", textAlign: "left" }}>
+                  <p style={{ fontFamily: font, margin: 0, fontSize: 15, lineHeight: 1.8, color: "rgba(240,232,216,0.92)" }}>
+                    Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
+                    <a href="/comment-ca-marche" style={{ color: "rgb(87, 212, 147)", textDecoration: "none", fontWeight: 600, borderBottom: "1px solid rgba(87, 212, 147, 0.45)" }}>vocapsule</a>
+                    {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
+                  </p>
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                <a href="/produit" className="hp-hero-btn-primary">Créer mon porte-clé</a>
+                <div className="hp-hero-links" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                  <a href="/numerique" style={{ fontFamily: font, color: "rgba(240,232,216,0.7)", fontSize: 13.5, textDecoration: "none", borderBottom: "1px solid rgba(240,232,216,0.25)", paddingBottom: 2 }}>
+                    ou en fichier numérique, dès 9,99 € →
+                  </a>
+                  <a href="#demo" style={{ fontFamily: font, color: "rgb(87, 212, 147)", fontSize: 13.5, textDecoration: "none" }}>
+                    ▶ Voir la démo
+                  </a>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
-
-        {/* Note bas droite */}
-        <p className="hp-hero-note" style={{
-          position: "absolute", right: 32, bottom: 24, zIndex: 2, maxWidth: 180,
-          fontFamily: font, fontSize: 11, fontStyle: "italic", lineHeight: 1.6,
-          color: "rgba(240,232,216,0.3)", textAlign: "right", margin: 0,
-        }}>
-          Scannez le QR code ou, avec une puce NFC au dos, approchez un smartphone compatible.
-        </p>
       </section>
       </div>{/* fin bloc unifié */}
 
@@ -716,6 +698,27 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ═══════════════ DÉMO VIDÉO ═══════════════ */}
+      <section id="demo" className="hp-demo" style={{ position: "relative", zIndex: 10, maxWidth: 980, margin: "0 auto", padding: "84px 40px 30px", display: "grid", gridTemplateColumns: "minmax(0,1fr) 270px", gap: 64, alignItems: "center" }}>
+        <div>
+          <p style={{ fontFamily: font, fontSize: 11, letterSpacing: "0.42em", textTransform: "uppercase", color: "rgba(201,169,110,0.8)", margin: "0 0 16px" }}>Ce que reçoit la personne</p>
+          <h2 style={{ fontFamily: font, fontWeight: 300, fontSize: "clamp(1.9rem, 4.4vw, 2.6rem)", lineHeight: 1.2, margin: "0 0 18px", color: cream }}>
+            Un geste, et <em style={{ fontStyle: "italic", color: gold }}>la voix revient.</em>
+          </h2>
+          <p style={{ fontFamily: font, fontSize: 15.5, lineHeight: 1.8, color: "rgba(240,232,216,0.68)", margin: 0, maxWidth: 440 }}>
+            Il suffit de scanner le QR code gravé ou d&apos;approcher le téléphone de la puce NFC. Le lecteur s&apos;ouvre aussitôt, sans application à installer, avec la photo et les messages que vous avez choisis.
+          </p>
+        </div>
+        <div style={{ position: "relative", justifySelf: "center", width: 250 }}>
+          <div style={{ position: "absolute", inset: -30, background: "radial-gradient(circle, rgba(201,169,110,0.2), transparent 65%)", filter: "blur(10px)" }} />
+          <div style={{ position: "relative", aspectRatio: "240 / 290", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(201,169,110,0.3)", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+            <video autoPlay muted loop playsInline preload="metadata" aria-label="Démonstration : le lecteur VOSEKKO s'ouvre sur un smartphone après le scan du porte-clé" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
+              <source src="/images/video/Replace_name_on_smartphone_screen_202606022004.mp4" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════ THÈMES : VOS UNIVERS ═══════════════ */}
       <section style={{
         position: "relative", zIndex: 10,
@@ -733,13 +736,19 @@ export default function HomePage() {
             fontSize: "clamp(2.2rem, 5vw, 3.2rem)", lineHeight: 1.15,
             color: cream, margin: "0 0 12px",
           }}>
-            La voix qu&apos;on garde{" "}
-            <em style={{ fontStyle: "italic", color: gold }}>sur soi.</em>
+            Pour quelle <em style={{ fontStyle: "italic", color: gold }}>occasion ?</em>
           </h2>
           <p style={{
             fontFamily: font, fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase",
             color: "rgba(201,169,110,0.5)", marginBottom: 0,
           }}>Vos univers. Vos émotions.</p>
+          <a href="/inspirations" className="hp-hero-inspirations" style={{ marginTop: 26 }}>
+            <span className="hp-hero-inspirations-plus" style={{
+              width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(87,212,147,0.45)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 15,
+            }}>+</span>
+            Mille &amp; une occasions
+          </a>
         </motion.div>
 
         <div style={{
@@ -1074,10 +1083,10 @@ export default function HomePage() {
           transition={{ duration: 0.8 }}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}
         >
-          {/* Logo EKKO */}
+          {/* Logo VOSEKKO */}
           <img
-            src="/ekko-logo.png"
-            alt="EKKO"
+            src="/vosekko-logo.png"
+            alt="VOSEKKO"
             style={{ height: 108, width: "auto", opacity: 0.7, marginBottom: 4 }}
           />
           <h2 style={{
@@ -1103,7 +1112,7 @@ export default function HomePage() {
         }} className="hp-footer-inner">
           {/* Branding */}
           <div style={{ flex: "0 0 240px" }}>
-            <img src="/ekko-logo.png" alt="EKKO" style={{ height: 40, mixBlendMode: "screen", marginBottom: 16 }} />
+            <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 40, mixBlendMode: "screen", marginBottom: 16 }} />
             <p style={{
               fontFamily: font, fontSize: 12, lineHeight: 1.6,
               color: "rgba(240,232,216,0.3)",
@@ -1114,7 +1123,7 @@ export default function HomePage() {
             <p style={{
               fontFamily: font, fontSize: 10, color: "rgba(240,232,216,0.2)", marginTop: 20,
             }}>
-              © 2025 EKKO. Tous droits réservés.
+              © 2026 VOSEKKO. Tous droits réservés.
             </p>
           </div>
 
@@ -1136,11 +1145,6 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Réseaux sociaux */}
-          <div style={{ paddingTop: 4, fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.3)" }}>
-            Réseaux sociaux à venir
           </div>
         </div>
       </footer>
