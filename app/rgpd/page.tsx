@@ -56,7 +56,7 @@ export default function RGPDPage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.back()}
@@ -82,7 +82,7 @@ export default function RGPDPage() {
               Politique de confidentialité
             </h1>
             <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.35)" }}>
-              En vigueur au 5 mai 2026 — Service EKKO · vosekko.com
+              En vigueur au 5 mai 2026 — Service VOSEKKO · vosekko.com
             </p>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginTop: 28 }} />
           </div>
@@ -112,7 +112,7 @@ export default function RGPDPage() {
 
         <Section title="1 — Responsable du traitement">
           <P>
-            Le service EKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong> (SAS en cours d&apos;immatriculation au RCS), accessible à l&apos;adresse{" "}
+            Le service VOSEKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong> (SAS en cours d&apos;immatriculation au RCS), accessible à l&apos;adresse{" "}
             <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>vosekko.com</a>.
           </P>
           <P>
@@ -240,7 +240,7 @@ export default function RGPDPage() {
 
         <Section title="7 — Cookies et traceurs">
           <P>
-            EKKO n&apos;utilise aucun cookie publicitaire ni traceur tiers à des fins de revente ou de ciblage commercial.
+            VOSEKKO n&apos;utilise aucun cookie publicitaire ni traceur tiers à des fins de revente ou de ciblage commercial.
           </P>
           <P>
             Deux catégories d&apos;éléments sont utilisées sur le site :

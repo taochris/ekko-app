@@ -273,6 +273,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
             audioId: bm.audioId,
             offsetInAudioSec: Number(clampedOffset.toFixed(2)),
             displayOrder: 0,
+            ...(bm.color ? { color: bm.color } : {}),
           });
         }
       }
@@ -317,7 +318,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await destFile.makePublic();
     const audioUrl = `https://storage.googleapis.com/${bucket.name}/${destPath}`;
 
-    // Sauvegarder les marque-pages dans le dossier de l'écho sur Firebase Storage
+    // Sauvegarder les marque-pages dans le dossier de la vocapsule sur Firebase Storage
     if (computedBookmarks.length > 0) {
       const bmPath = `echos/${capsule.uid}/${echoId}/bookmarks.json`;
       const bmFile = bucket.file(bmPath);

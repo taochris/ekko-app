@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       shippingAddress: capsule.shippingAddress ?? "",
       customerPhone: capsule.customerPhone ?? "",
       customerEmail: capsule.customerEmail ?? "",
-      amount: capsule.nfcEnabled ? 2790 : 2490,
+      amount: (capsule.nfcEnabled ? 2790 : 2490) + (capsule.smartSearchEnabled ? 300 : 0),
       engravingFont: capsule.engravingFont ?? "Georgia, serif",
       nfcEnabled: capsule.nfcEnabled ?? false,
     }).catch((e) => console.error("[dev-claim] sendKeychainOrderEmails:", e));

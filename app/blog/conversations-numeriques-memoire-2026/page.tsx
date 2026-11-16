@@ -100,7 +100,7 @@ export default function ConversationsMemoire2026Page() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -237,7 +237,7 @@ export default function ConversationsMemoire2026Page() {
           <P>C&apos;est là que l&apos;enjeu devient moins technique que symbolique : comment transformer une masse de traces numériques en souvenir signifiant ?</P>
 
           <P>Aujourd&apos;hui, certaines applications proposent de créer des capsules audio à partir de messages vocaux sélectionnés. L&apos;intérêt n&apos;est pas de dupliquer toute sa mémoire numérique, déjà trop pleine, mais d&apos;en extraire l&apos;essence : quelques voix, quelques instants, quelques messages qui portent vraiment quelque chose.</P>
-          <P>C&apos;est précisément ce que permet{" "}<a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>EKKO</a>{" "}: créer une capsule audio à partir de messages vocaux importants, pour garder une mémoire plus intime, plus courte, plus accessible, et surtout plus incarnée, parce qu&apos;elle est portée par la voix.</P>
+          <P>C&apos;est précisément ce que permet{" "}<a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>VOSEKKO</a>{" "}: créer une capsule audio à partir de messages vocaux importants, pour garder une mémoire plus intime, plus courte, plus accessible, et surtout plus incarnée, parce qu&apos;elle est portée par la voix.</P>
 
           <Separator />
 
@@ -270,7 +270,7 @@ export default function ConversationsMemoire2026Page() {
           <P>Choisir un échange, une voix, une période, une relation, c&apos;est déjà produire du sens. C&apos;est décider qu&apos;un fragment de vie ne doit pas rester perdu dans une archive immense. C&apos;est lui donner une forme, une place, une intention.</P>
           <P>Cela rapproche les conversations numériques des anciennes pratiques de mémoire familiale : choisir les photos d&apos;un album, garder une lettre dans une boîte, recopier une phrase dans un carnet. La différence, c&apos;est que les fragments d&apos;aujourd&apos;hui sont souvent vivants, sonores, conversationnels.</P>
 
-          <P>Une capsule audio répond à cette logique : elle ne cherche pas à tout conserver, mais à isoler quelques fragments qui méritent d&apos;être réécoutés.{" "}<a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>EKKO</a>{" "}peut être compris comme un outil de sélection et de mise à part : une manière de sortir certains messages vocaux du bruit numérique pour les transformer en souvenir vivant, choisi, réécoutable.</P>
+          <P>Une capsule audio répond à cette logique : elle ne cherche pas à tout conserver, mais à isoler quelques fragments qui méritent d&apos;être réécoutés.{" "}<a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>VOSEKKO</a>{" "}peut être compris comme un outil de sélection et de mise à part : une manière de sortir certains messages vocaux du bruit numérique pour les transformer en souvenir vivant, choisi, réécoutable.</P>
           <P>Ils ne disent pas seulement : &laquo;&nbsp;souviens-toi de ce moment.&nbsp;&raquo;<br />Ils disent : &laquo;&nbsp;souviens-toi de cette manière d&apos;être ensemble.&nbsp;&raquo;</P>
 
         </motion.div>

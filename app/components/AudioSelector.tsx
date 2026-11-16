@@ -198,7 +198,13 @@ export default function AudioSelector({
   // État Recherche intelligente EmbeddingGemma 2
   const [indexingStatus, setIndexingStatus] = useState<"idle" | "indexing" | "ready" | "error">("idle");
   const [indexedCount, setIndexedCount] = useState(0);
+  const [visualIndexedCount, setVisualIndexedCount] = useState(0);
+  const [currentBatchTarget, setCurrentBatchTarget] = useState(0);
+  const [etaSeconds, setEtaSeconds] = useState<number | null>(null);
+  const [demoProgressActive, setDemoProgressActive] = useState(false);
   const indexedAudioIdsRef = useRef<Set<string>>(new Set());
+  const indexingStartRef = useRef<number>(0);
+  const pendingSearchQueryRef = useRef<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchHits, setSearchHits] = useState<SearchHit[] | null>(null);
@@ -248,17 +254,39 @@ export default function AudioSelector({
       if (pendingIndices.length === 0) {
         setIndexingStatus("ready");
         setIndexedCount(audios.length);
+        setVisualIndexedCount(audios.length);
+        setEtaSeconds(0);
         return;
       }
 
       setIndexingStatus("indexing");
       setSearchError(null);
-      const BATCH_SIZE = 20;
+      indexingStartRef.current = Date.now();
+      // Estimation initiale : ~12 s de réveil GPU + ~0.18 s par vocal
+      setEtaSeconds(Math.max(4, Math.round(12 + pendingIndices.length * 0.18)));
 
-      for (let start = 0; start < pendingIndices.length; start += BATCH_SIZE) {
+      // Découper en lots de max 20 fichiers ET max 3.5 Mo (limite requête Vercel = 4.5 Mo)
+      const batches: number[][] = [];
+      let curBatch: number[] = [];
+      let curBytes = 0;
+      const MAX_BATCH_FILES = 20;
+      const MAX_BATCH_BYTES = 3.5 * 1024 * 1024;
+      for (const idx of pendingIndices) {
+        const fSize = audios[idx]?.size ?? 0;
+        if (curBatch.length >= MAX_BATCH_FILES || (curBatch.length > 0 && curBytes + fSize > MAX_BATCH_BYTES)) {
+          batches.push(curBatch);
+          curBatch = [];
+          curBytes = 0;
+        }
+        curBatch.push(idx);
+        curBytes += fSize;
+      }
+      if (curBatch.length > 0) batches.push(curBatch);
+
+      for (const slice of batches) {
         if (cancelled) return;
-        const slice = pendingIndices.slice(start, start + BATCH_SIZE);
         const batchIds = slice.map((i) => audioIds[i]);
+        setCurrentBatchTarget(indexedAudioIdsRef.current.size + slice.length);
         const form = new FormData();
         form.append("capsuleId", capsuleId);
         form.append("audioIds", JSON.stringify(batchIds));
@@ -272,7 +300,13 @@ export default function AudioSelector({
           }
           batchIds.forEach((id) => indexedAudioIdsRef.current.add(id));
           if (!cancelled) {
-            setIndexedCount(indexedAudioIdsRef.current.size);
+            const doneCount = indexedAudioIdsRef.current.size;
+            setIndexedCount(doneCount);
+            setVisualIndexedCount((prev) => Math.max(prev, doneCount));
+            const remaining = Math.max(0, audios.length - doneCount);
+            const elapsedSec = (Date.now() - indexingStartRef.current) / 1000;
+            const secPerFile = doneCount > 0 ? Math.min(0.8, Math.max(0.12, elapsedSec / doneCount)) : 0.22;
+            setEtaSeconds(remaining > 0 ? Math.max(2, Math.round(remaining * secPerFile)) : 0);
           }
         } catch (err) {
           if (!cancelled) {
@@ -285,6 +319,8 @@ export default function AudioSelector({
 
       if (!cancelled) {
         setIndexingStatus("ready");
+        setVisualIndexedCount(audios.length);
+        setEtaSeconds(0);
       }
     };
 
@@ -292,13 +328,37 @@ export default function AudioSelector({
     return () => { cancelled = true; };
   }, [smartSearchEnabled, capsuleId, audios, audioIds, indexingTrigger]);
 
-  const handleRunSearch = async () => {
-    const q = searchQuery.trim();
-    if (!q || !capsuleId || !smartSearchEnabled) return;
-    // Si l'indexation avait échoué ou n'était pas terminée, la relancer d'abord
-    if (indexingStatus !== "ready") {
-      setIndexingTrigger((v) => v + 1);
-    }
+  // Progression visuelle fluide entre les lots pour que le % et le compteur X / N avancent régulièrement
+  useEffect(() => {
+    if (indexingStatus !== "indexing" && !demoProgressActive) return;
+    const total = Math.max(1, audios.length);
+    const target = demoProgressActive ? total : Math.min(total - 1, Math.max(indexedCount, currentBatchTarget - 1));
+    const timer = setInterval(() => {
+      setVisualIndexedCount((prev) => {
+        if (demoProgressActive) {
+          const step = Math.max(1, Math.ceil(total / 35));
+          const next = prev + step;
+          if (next >= total) {
+            setDemoProgressActive(false);
+            setEtaSeconds(0);
+            return total;
+          }
+          const rem = total - next;
+          setEtaSeconds(Math.max(1, Math.round((rem / total) * 18)));
+          return next;
+        }
+        if (prev < target) return prev + 1;
+        return prev;
+      });
+      if (!demoProgressActive) {
+        setEtaSeconds((prev) => (prev !== null && prev > 2 ? prev - 1 : prev));
+      }
+    }, 380);
+    return () => clearInterval(timer);
+  }, [indexingStatus, demoProgressActive, indexedCount, currentBatchTarget, audios.length]);
+
+  const executeQueryNow = async (q: string) => {
+    if (!q || !capsuleId) return;
     setSearching(true);
     setSearchError(null);
     try {
@@ -318,6 +378,31 @@ export default function AudioSelector({
     } finally {
       setSearching(false);
     }
+  };
+
+  // Si l'utilisateur avait cliqué sur « Rechercher » pendant la 1re analyse, lancer la requête dès que l'analyse se termine
+  useEffect(() => {
+    if (indexingStatus === "ready" && pendingSearchQueryRef.current) {
+      const q = pendingSearchQueryRef.current;
+      pendingSearchQueryRef.current = null;
+      executeQueryNow(q);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [indexingStatus]);
+
+  const handleRunSearch = async () => {
+    const q = searchQuery.trim();
+    if (!q || !capsuleId || !smartSearchEnabled) return;
+    setSearchError(null);
+    if (indexingStatus !== "ready") {
+      pendingSearchQueryRef.current = q;
+      setSearching(true);
+      if (indexingStatus !== "indexing") {
+        setIndexingTrigger((v) => v + 1);
+      }
+      return;
+    }
+    await executeQueryNow(q);
   };
 
   const clearSearch = () => {
@@ -492,29 +577,28 @@ export default function AudioSelector({
       {smartSearchEnabled ? (
         <div
           style={{
-            marginBottom: 26,
-            padding: "18px 18px",
-            borderRadius: 18,
-            background: `linear-gradient(135deg, ${config.accent}12, rgba(255,255,255,0.025))`,
-            border: `1px solid ${config.accent}40`,
+            marginBottom: 28,
+            padding: "24px 26px",
+            borderRadius: 16,
+            background: "rgba(18, 13, 12, 0.82)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
             <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: config.accent }}>
               ✦ Souvenirs intelligents · Recherche vocale IA
             </span>
-            <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>
-              {indexingStatus === "indexing"
-                ? `Analyse cloud de vos vocaux en cours (${indexedCount}/${audios.length})…`
-                : indexingStatus === "ready"
-                  ? `${audios.length} vocaux indexés et prêts`
-                  : indexingStatus === "error"
-                    ? "Service cloud en reconnexion"
-                    : ""}
+            <span style={{ fontFamily: "sans-serif", fontSize: 12, color: "rgba(240,232,216,0.5)" }}>
+              {indexingStatus === "ready"
+                ? `✓ ${audios.length} vocaux prêts pour la recherche`
+                : indexingStatus === "error"
+                  ? "Service cloud en reconnexion"
+                  : ""}
             </span>
           </div>
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input
               type="text"
               value={searchQuery}
@@ -524,29 +608,29 @@ export default function AudioSelector({
               style={{
                 flex: "1 1 260px",
                 padding: "12px 16px",
-                borderRadius: 12,
-                background: "rgba(13,10,15,0.65)",
-                border: `1px solid ${config.accent}45`,
+                borderRadius: 10,
+                background: "#0d090b",
+                border: "1px solid rgba(255,255,255,0.13)",
                 color: "#f0e8d8",
-                fontFamily: "Georgia, serif",
-                fontSize: 13,
+                fontFamily: "sans-serif",
+                fontSize: 13.5,
                 outline: "none",
               }}
             />
             <button
               type="button"
               onClick={handleRunSearch}
-              disabled={searching || indexingStatus === "indexing" || !searchQuery.trim()}
+              disabled={searching || !searchQuery.trim()}
               style={{
-                padding: "12px 20px",
-                borderRadius: 12,
-                border: `1px solid ${config.accent}`,
-                background: `linear-gradient(135deg, ${config.accent}40, ${config.accent}80)`,
-                color: "#fff",
-                fontFamily: "Georgia, serif",
-                fontSize: 13,
-                cursor: searching || indexingStatus === "indexing" || !searchQuery.trim() ? "not-allowed" : "pointer",
-                opacity: searching || indexingStatus === "indexing" || !searchQuery.trim() ? 0.5 : 1,
+                padding: "12px 22px",
+                borderRadius: 10,
+                border: "none",
+                background: searching || !searchQuery.trim() ? "rgba(207,163,88,0.28)" : "#cfa358",
+                color: searching || !searchQuery.trim() ? "rgba(240,232,216,0.4)" : "#1a130c",
+                fontFamily: "sans-serif",
+                fontSize: 13.5,
+                fontWeight: 600,
+                cursor: searching || !searchQuery.trim() ? "not-allowed" : "pointer",
               }}
             >
               {searching ? "Recherche…" : "Rechercher"}
@@ -557,12 +641,12 @@ export default function AudioSelector({
                 onClick={clearSearch}
                 style={{
                   padding: "12px 16px",
-                  borderRadius: 12,
+                  borderRadius: 10,
                   border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.05)",
+                  background: "rgba(255,255,255,0.04)",
                   color: "rgba(240,232,216,0.75)",
-                  fontFamily: "Georgia, serif",
-                  fontSize: 12,
+                  fontFamily: "sans-serif",
+                  fontSize: 12.5,
                   cursor: "pointer",
                 }}
               >
@@ -570,6 +654,172 @@ export default function AudioSelector({
               </button>
             )}
           </div>
+
+          {/* Barre de progression fluide colorée (liée au nombre exact de vocaux en dessous) */}
+          {(indexingStatus === "indexing" || demoProgressActive) && (() => {
+            const total = Math.max(1, audios.length);
+            const current = Math.min(total, Math.max(0, visualIndexedCount));
+            const pct = Math.min(100, Math.round((current / total) * 100));
+            const etaLabel =
+              etaSeconds !== null && etaSeconds > 0
+                ? etaSeconds >= 60
+                  ? `~${Math.floor(etaSeconds / 60)} min ${String(etaSeconds % 60).padStart(2, "0")} s restantes`
+                  : `~${etaSeconds} s restantes`
+                : "Finalisation…";
+
+            return (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  background: "rgba(13,10,15,0.55)",
+                  border: `1px solid ${config.accent}35`,
+                }}
+              >
+                {/* Barre colorée avec pourcentage à l'intérieur */}
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: 22,
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,0.07)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.max(6, pct)}%`,
+                      height: "100%",
+                      borderRadius: 999,
+                      background: `linear-gradient(90deg, ${config.accent}95, ${config.accent})`,
+                      boxShadow: `0 0 16px ${config.accent}66`,
+                      transition: "width 0.35s ease-out",
+                    }}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "Georgia, serif",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#fff",
+                      textShadow: "0 1px 3px rgba(0,0,0,0.75)",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    {pct} %
+                  </span>
+                </div>
+
+                {/* Nombre de vocaux relié au % + Temps restant estimé */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    marginTop: 8,
+                  }}
+                >
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#f0e8d8" }}>
+                    <strong>{current}</strong> sur <strong>{total}</strong> vocaux analysés ({pct} %)
+                  </span>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: config.accent }}>
+                    Temps estimé : {etaLabel}
+                  </span>
+                </div>
+
+                {/* Mention rassurante : seule la 1re analyse prend du temps */}
+                <p
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: 11,
+                    color: "rgba(240,232,216,0.55)",
+                    margin: "8px 0 0",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  ✦ Cette première analyse prépare tous vos vocaux (~15 s pour 1 h d&apos;audios, jusqu&apos;à ~2 min pour 10 h) — vos recherches suivantes n&apos;auront plus besoin de ré-analyser vos fichiers.
+                </p>
+              </div>
+            );
+          })()}
+
+          {/* Indicateur visuel quand une recherche est lancée après la 1re analyse */}
+          {searching && indexingStatus !== "indexing" && !demoProgressActive && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                marginTop: 14,
+                padding: "14px 16px",
+                borderRadius: 14,
+                background: "rgba(13,10,15,0.6)",
+                border: `1px solid ${config.accent}45`,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {/* Ondes vocales animées */}
+                <div style={{ display: "flex", alignItems: "center", gap: 3, height: 18 }}>
+                  {[0, 1, 2, 3, 4].map((bar) => (
+                    <motion.span
+                      key={bar}
+                      animate={{ height: [6, 18, 8, 16, 6] }}
+                      transition={{ duration: 0.9, repeat: Infinity, delay: bar * 0.12, ease: "easeInOut" }}
+                      style={{
+                        width: 3,
+                        borderRadius: 999,
+                        background: config.accent,
+                        display: "inline-block",
+                      }}
+                    />
+                  ))}
+                </div>
+                <div>
+                  <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", margin: 0, fontWeight: 500 }}>
+                    Recherche dans vos vocaux en cours…
+                  </p>
+                  <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.55)", margin: "2px 0 0" }}>
+                    L&apos;IA compare le sens de « {searchQuery.trim()} » parmi vos {audios.length} messages vocaux.
+                  </p>
+                </div>
+              </div>
+
+              {/* Barre lumineuse de réflexion en mouvement */}
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: 6,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.07)",
+                  overflow: "hidden",
+                }}
+              >
+                <motion.div
+                  animate={{ x: ["-40%", "140%"] }}
+                  transition={{ duration: 1.15, repeat: Infinity, ease: "easeInOut" }}
+                  style={{
+                    width: "45%",
+                    height: "100%",
+                    borderRadius: 999,
+                    background: `linear-gradient(90deg, transparent, ${config.accent}, transparent)`,
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
 
           {searchError && (
             <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#ff8888", margin: "10px 0 0" }}>
@@ -579,14 +829,14 @@ export default function AudioSelector({
 
           {/* Résultats de recherche */}
           {searchHits !== null && (
-            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
               {noRelevantMatch || searchHits.length === 0 ? (
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.55)", fontStyle: "italic", margin: 0 }}>
+                <p style={{ fontFamily: "sans-serif", fontSize: 13, color: "rgba(240,232,216,0.55)", fontStyle: "italic", margin: 0 }}>
                   Aucun message vocal pertinent n&apos;a été trouvé pour « {searchQuery} ». Essayez d&apos;autres mots-clés.
                 </p>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)", margin: "0 0 4px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p style={{ fontFamily: "sans-serif", fontSize: 12, color: "rgba(240,232,216,0.5)", margin: "0 0 4px" }}>
                     {searchHits.length} souvenir{searchHits.length > 1 ? "s" : ""} pertinent{searchHits.length > 1 ? "s" : ""} trouvé{searchHits.length > 1 ? "s" : ""} (classés du plus proche au moins proche) :
                   </p>
                   {searchHits.map((hit) => {
@@ -600,9 +850,9 @@ export default function AudioSelector({
                     const cleanName = file.name.replace(/\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|3gp|amr|mp4|mpeg)$/i, "");
                     const badgeColor =
                       hit.relevanceLabel === "Très pertinent"
-                        ? "#8ac96e"
+                        ? "#57c88a"
                         : hit.relevanceLabel === "Pertinent"
-                          ? config.accent
+                          ? "#cfa358"
                           : "rgba(240,232,216,0.55)";
 
                     return (
@@ -613,33 +863,35 @@ export default function AudioSelector({
                           alignItems: "center",
                           justifyContent: "space-between",
                           flexWrap: "wrap",
-                          gap: 10,
-                          padding: "10px 14px",
+                          gap: 12,
+                          padding: "12px 16px",
                           borderRadius: 12,
-                          background: inOrder ? `${config.accent}15` : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${inOrder ? config.accent + "65" : "rgba(255,255,255,0.08)"}`,
+                          background: "#151011",
+                          border: `1px solid ${inOrder ? "rgba(87, 200, 138, 0.55)" : "rgba(201, 169, 110, 0.34)"}`,
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.28)",
                         }}
                       >
                         <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                             <span
                               style={{
-                                fontFamily: "Georgia, serif",
-                                fontSize: 10,
-                                padding: "2px 8px",
-                                borderRadius: 10,
-                                background: `${badgeColor}20`,
-                                border: `1px solid ${badgeColor}50`,
+                                fontFamily: "sans-serif",
+                                fontSize: 11,
+                                fontWeight: 500,
+                                padding: "2px 9px",
+                                borderRadius: 999,
+                                background: `${badgeColor}18`,
+                                border: `1px solid ${badgeColor}55`,
                                 color: badgeColor,
                               }}
                             >
                               {hit.relevanceLabel}
                             </span>
-                            <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", fontWeight: 500 }}>
+                            <span style={{ fontFamily: "sans-serif", fontSize: 13.5, color: "#f0e8d8", fontWeight: 500 }}>
                               {cleanName}
                             </span>
                           </div>
-                          <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.45)", margin: "4px 0 0" }}>
+                          <p style={{ fontFamily: "sans-serif", fontSize: 11.5, color: "rgba(240,232,216,0.45)", margin: "5px 0 0" }}>
                             {dateKey ? friendlyDate(dateKey) : "Date inconnue"} · Durée : {formatDuration(dur)}
                             {hit.bestSegmentStartSec > 0 ? ` · Passage détecté vers ${formatDuration(hit.bestSegmentStartSec)}` : ""}
                           </p>
@@ -653,7 +905,7 @@ export default function AudioSelector({
                               <audio
                                 src={hit.bestSegmentStartSec > 0 ? `${url}#t=${Math.floor(hit.bestSegmentStartSec)}` : url}
                                 controls
-                                style={{ width: 170, height: 28, borderRadius: 6, accentColor: config.accent }}
+                                style={{ width: 175, height: 30, borderRadius: 6, accentColor: config.accent }}
                               />
                             )}
                           </div>
@@ -671,14 +923,15 @@ export default function AudioSelector({
                             }
                           }}
                           style={{
-                            padding: "7px 14px",
-                            borderRadius: 10,
+                            padding: "8px 15px",
+                            borderRadius: 9,
                             cursor: "pointer",
-                            fontFamily: "Georgia, serif",
-                            fontSize: 12,
-                            background: inOrder ? "rgba(255,255,255,0.06)" : `${config.accent}30`,
-                            border: `1px solid ${inOrder ? "rgba(255,255,255,0.15)" : config.accent}`,
-                            color: "#f0e8d8",
+                            fontFamily: "sans-serif",
+                            fontSize: 12.5,
+                            fontWeight: 500,
+                            background: inOrder ? "rgba(87, 200, 138, 0.14)" : "rgba(207, 163, 88, 0.16)",
+                            border: `1px solid ${inOrder ? "rgba(87, 200, 138, 0.55)" : "#cfa358"}`,
+                            color: inOrder ? "#57c88a" : "#f0e8d8",
                           }}
                         >
                           {inOrder ? "✓ Dans la sélection" : "+ Ajouter à la sélection"}
@@ -824,8 +1077,8 @@ export default function AudioSelector({
                       onDragEnd={() => { setDragging(null); setDropPos(null); }}
                       style={{
                         borderRadius: 14, padding: inOrder ? "10px 42px 8px 12px" : "10px 12px 8px", position: "relative",
-                        background: isDraggingThis ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${inOrder ? config.accent + "70" : isDraggingThis ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)"}`,
+                        background: isDraggingThis ? "rgba(255,255,255,0.02)" : "rgba(18, 13, 12, 0.80)",
+                        border: `1px solid ${inOrder ? config.accent + "85" : isDraggingThis ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.15)"}`,
                         opacity: isDraggingThis ? 0.5 : 1,
                         cursor: "pointer",
                         transition: "opacity 0.2s, border-color 0.2s, padding 0.2s",
@@ -897,9 +1150,10 @@ export default function AudioSelector({
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setZone2Over(false); setDropPos(null); } }}
           onDrop={(e) => { e.preventDefault(); handleDrop(dropPos ?? orderedSelected.length); setZone2Over(false); }}
           style={{
-            minHeight: 120, borderRadius: 18, padding: 16,
-            background: zone2Over && orderedSelected.length === 0 ? `${config.accent}08` : "rgba(255,255,255,0.025)",
-            border: `1px dashed ${zone2Over && orderedSelected.length === 0 ? config.accent + "50" : "rgba(255,255,255,0.08)"}`,
+            minHeight: 120, borderRadius: 18, padding: "20px 22px",
+            background: zone2Over && orderedSelected.length === 0 ? `${config.accent}10` : "rgba(18, 13, 12, 0.84)",
+            border: `1px solid ${zone2Over && orderedSelected.length === 0 ? config.accent + "60" : "rgba(255,255,255,0.11)"}`,
+            boxShadow: "0 12px 32px rgba(0,0,0,0.42)",
             transition: "background 0.2s, border-color 0.2s",
           }}
         >
@@ -930,26 +1184,27 @@ export default function AudioSelector({
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragging({ zone: "order", audioIdx }); setDropPos(null); }}
                       onDragEnd={() => { setDragging(null); setDropPos(null); }}
                       style={{
-                        display: "flex", alignItems: "center", gap: 10,
-                        padding: "10px 12px", borderRadius: 12,
-                        background: isDraggingThis ? "rgba(255,255,255,0.02)" : `${config.accent}08`,
-                        border: `1px solid ${isDraggingThis ? "rgba(255,255,255,0.04)" : config.accent + "20"}`,
+                        display: "flex", alignItems: "center", gap: 12,
+                        padding: "12px 16px", borderRadius: 12,
+                        background: isDraggingThis ? "rgba(255,255,255,0.02)" : "#151011",
+                        border: `1px solid ${isDraggingThis ? "rgba(255,255,255,0.06)" : "rgba(201, 169, 110, 0.34)"}`,
+                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.28)",
                         opacity: isDraggingThis ? 0.4 : 1,
                         cursor: "grab", userSelect: "none",
-                        transition: "opacity 0.15s",
+                        transition: "opacity 0.15s, border-color 0.15s",
                       }}
                     >
-                      <div style={{ width: 24, height: 24, borderRadius: "50%", flexShrink: 0, background: `${config.accent}22`, border: `1.5px solid ${config.accent}45`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontFamily: "Georgia, serif", fontSize: 11, fontWeight: 700, color: config.accent }}>{pos + 1}</span>
+                      <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: `${config.accent}18`, border: `1.5px solid ${config.accent}60`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontFamily: "Georgia, serif", fontSize: 11.5, fontWeight: 700, color: config.accent }}>{pos + 1}</span>
                       </div>
-                      <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 10, height: 10, color: "rgba(240,232,216,0.18)", flexShrink: 0 }}>
+                      <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 10, height: 10, color: "rgba(240,232,216,0.28)", flexShrink: 0 }}>
                         <rect x="2" y="3" width="12" height="1.5" rx="0.5"/><rect x="2" y="7" width="12" height="1.5" rx="0.5"/><rect x="2" y="11" width="12" height="1.5" rx="0.5"/>
                       </svg>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "Georgia, serif", fontSize: 12, margin: 0, color: "#f0e8d8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanName}</p>
-                        <div style={{ display: "flex", gap: 6, marginTop: 2, alignItems: "center" }}>
-                          <span style={{ fontFamily: "Georgia, serif", fontSize: 9, color: srcColor }}>{source}</span>
-                          {dur !== undefined && dur > 0 && <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: "rgba(240,232,216,0.3)" }}>{formatDuration(dur)}</span>}
+                        <p style={{ fontFamily: "Georgia, serif", fontSize: 13.5, margin: 0, color: "#f0e8d8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanName}</p>
+                        <div style={{ display: "flex", gap: 6, marginTop: 3, alignItems: "center" }}>
+                          <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: srcColor }}>{source}</span>
+                          {dur !== undefined && dur > 0 && <span style={{ fontFamily: "Georgia, serif", fontSize: 10.5, color: "rgba(240,232,216,0.42)" }}>{formatDuration(dur)}</span>}
                         </div>
                       </div>
                       {url && (
@@ -1003,6 +1258,15 @@ export default function AudioSelector({
           selectedAudios={selectedAudiosForBookmarks}
           bookmarks={bookmarks}
           onChangeBookmarks={setBookmarks}
+          onReorderAudios={(newOrderedIds) => {
+            const nextIndices = newOrderedIds
+              .map((id) => audioIdToIndex.get(id))
+              .filter((idx): idx is number => idx !== undefined);
+            if (nextIndices.length === orderedSelected.length) {
+              setOrderedSelected(nextIndices);
+              onSelect(nextIndices.map((i) => audios[i]));
+            }
+          }}
           accent={config.accent}
         />
       )}

@@ -64,7 +64,7 @@ export default function CGVPage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.back()}
@@ -107,7 +107,7 @@ export default function CGVPage() {
             Conditions Générales de Vente
           </h1>
           <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.35)" }}>
-            Version du 25 septembre 2026 — EKKO · vosekko.com
+            Version du 25 septembre 2026 — VOSEKKO · vosekko.com
           </p>
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginTop: 28 }} />
         </div>
@@ -115,7 +115,7 @@ export default function CGVPage() {
         {/* Article 1 */}
         <Section title="Article 1 — Identification de l'entreprise">
           <P>
-            Le service EKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, Société par Actions Simplifiée (SAS) en cours d&apos;immatriculation au Registre du Commerce et des Sociétés (RCS), accessible à l&apos;adresse{" "}
+            Le service VOSEKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, Société par Actions Simplifiée (SAS) en cours d&apos;immatriculation au Registre du Commerce et des Sociétés (RCS), accessible à l&apos;adresse{" "}
             <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               vosekko.com
             </a>.
@@ -143,7 +143,7 @@ export default function CGVPage() {
 
         {/* Article 3 */}
         <Section title="Article 3 — Produits et services proposés">
-          <P>EKKO propose :</P>
+          <P>VOSEKKO propose :</P>
           <Ul>
             <Li>
               <strong style={{ color: "#f0e8d8" }}>Vocapsule numérique</strong> : assemblage et fusion de messages vocaux fournis par le client, fichier audio téléchargeable et QR code d&apos;accès. La conservation en ligne dure 7 jours par défaut, ou 1 ou 2 ans selon l&apos;option payante choisie.

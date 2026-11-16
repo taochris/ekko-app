@@ -50,8 +50,10 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const sessionId = searchParams.get("session_id");
+  const modeParam = searchParams.get("mode");
 
   const [capsule, setCapsule] = useState<CapsuleState | null>(null);
+  const [forceEditSelection, setForceEditSelection] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
   const claimedRef = useRef(false);
@@ -157,7 +159,25 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
 
   const accent = capsule?.accentColor ?? "#c9a96e";
   const blobVariant = themeVariants[capsule?.theme ?? "deuil"] ?? "deuil";
-  const isAwaitingSelection = capsule?.status === "paid_awaiting_selection";
+  const isAwaitingSelection =
+    capsule?.status === "paid_awaiting_selection" ||
+    forceEditSelection ||
+    (modeParam === "select" && !!capsule && capsule.status !== "pending");
+
+  const handleBackToPreviousStep = async () => {
+    if (!capsule) return;
+    setForceEditSelection(true);
+    try {
+      await fetch(`/api/capsules/${id}/selection`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reopen: true }),
+      });
+      await fetchStatus();
+    } catch {
+      // ignore
+    }
+  };
 
   // Le QR/NFC du porte-clé pointe ici : seul l'acheteur voit l'écran de commande,
   // le destinataire est redirigé vers le lecteur public.
@@ -177,7 +197,26 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
       <div style={{ position: "relative", zIndex: 10, padding: "24px 20px 48px", maxWidth: isAwaitingSelection ? 840 : 520, margin: "0 auto" }}>
         <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 28 }}>
           <EkkoLogo />
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            {capsule && !isAwaitingSelection && !isPorteClefScan && (
+              <button
+                type="button"
+                onClick={handleBackToPreviousStep}
+                className="ekko-serif"
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: 20,
+                  background: "rgba(255,255,255,0.08)",
+                  border: `1px solid ${accent}55`,
+                  color: "#f0e8d8",
+                  fontSize: 11,
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                }}
+              >
+                ← Étape précédente (Modifier ma sélection)
+              </button>
+            )}
             <button
               type="button"
               onClick={() => router.push("/")}
@@ -194,7 +233,7 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
                 cursor: "pointer",
               }}
             >
-              ← Accueil
+              Accueil
             </button>
             <button
               type="button"
@@ -248,7 +287,13 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
           <AdvanceSelectionWorkspace
             capsule={capsule}
             accent={accent}
-            onFinalized={fetchStatus}
+            onFinalized={async () => {
+              setForceEditSelection(false);
+              if (modeParam === "select") {
+                window.history.replaceState(null, "", `/capsule/${id}`);
+              }
+              return fetchStatus();
+            }}
           />
         )}
 
@@ -260,10 +305,10 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
           <ProcessingScreen status={capsule.status} accent={accent} />
         )}
         {capsule && !isAwaitingSelection && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && (capsule.status !== "pending" || (!!sessionId && !capsule.advancePayment)) && capsule.status !== "failed" && (
-          <KeychainSuccessScreen capsule={capsule} accent={accent} />
+          <KeychainSuccessScreen capsule={capsule} accent={accent} onBackToSelection={handleBackToPreviousStep} />
         )}
         {capsule && !isAwaitingSelection && capsule.productType === "porteClef" && !isPorteClefScan && !(authLoading && !sessionId) && capsule.status === "ready" && capsule.echoId && capsule.audioUrl && (
-          <div style={{ marginTop: 8 }}>
+          <div id="montage-section" style={{ marginTop: 12, scrollMarginTop: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 480, margin: "0 auto 4px" }}>
               <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.08)" }} />
               <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: `${accent}90`, whiteSpace: "nowrap" }}>
@@ -424,9 +469,9 @@ function AdvanceSelectionWorkspace({
       if (!res.ok) {
         throw new Error(data.error || "Erreur lors de la validation finale");
       }
-      await clearDraft(capsule.id);
-      await clearDraft("current");
+      await saveDraftAudios(capsule.id, audios);
       await onFinalized();
+      setSubmitting(false);
     } catch (err) {
       setSubmitError((err as Error).message);
       setSubmitting(false);
@@ -591,7 +636,15 @@ function ConfettiRain({ accent }: { accent: string }) {
 }
 
 // ─── Page succès porte-clé ───────────────────────────────────────────────────
-function KeychainSuccessScreen({ capsule, accent }: { capsule: CapsuleState; accent: string }) {
+function KeychainSuccessScreen({
+  capsule,
+  accent,
+  onBackToSelection,
+}: {
+  capsule: CapsuleState;
+  accent: string;
+  onBackToSelection?: () => void;
+}) {
   const [showConfetti, setShowConfetti] = useState(true);
 
   useEffect(() => {
@@ -652,28 +705,138 @@ function KeychainSuccessScreen({ capsule, accent }: { capsule: CapsuleState; acc
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
           style={{
-            maxWidth: 380, margin: "0 auto 28px",
-            background: `${accent}08`, border: `1px solid ${accent}22`,
+            maxWidth: 400, margin: "0 auto 28px",
+            background: "rgba(18, 13, 12, 0.84)", border: `1px solid ${accent}35`,
             borderRadius: 16, padding: "22px 24px",
             display: "flex", flexDirection: "column", gap: 12, textAlign: "left",
           }}
         >
-          {[
-            ["Prénom gravé",  (capsule.engraveName ?? "—").toUpperCase()],
-            ["Format",        formatLabel[capsule.format ?? ""] ?? capsule.format ?? "—"],
-            ["Matière",       "Bois naturel · Gravure laser"],
-            ["Accès",         capsule.nfcEnabled ? "QR code + puce NFC au dos · 27,90 €" : "QR code gravé · 24,90 €"],
-            ["Livraison",     "5–7 jours ouvrés · Gratuite"],
-          ].map(([label, value]) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.4)", flexShrink: 0 }}>{label}</span>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#f0e8d8", textAlign: "right" }}>{value}</span>
-            </div>
-          ))}
+          {(() => {
+            const baseCents = capsule.nfcEnabled ? 2790 : 2490;
+            const smartCents = capsule.smartSearchEnabled ? 300 : 0;
+            const totalEuros = ((baseCents + smartCents) / 100).toFixed(2).replace(".", ",") + " €";
+            const baseEuros = (baseCents / 100).toFixed(2).replace(".", ",") + " €";
+            const rows: [string, string][] = [
+              ["Prénom gravé", capsule.engraveName?.trim() ? capsule.engraveName.toUpperCase() : "Sans prénom (QR code seul)"],
+              ["Format", formatLabel[capsule.format ?? ""] ?? capsule.format ?? "—"],
+              ["Matière", "Bois naturel · Gravure laser"],
+              ["Porte-clé", capsule.nfcEnabled ? `QR code + puce NFC · ${baseEuros}` : `QR code gravé · ${baseEuros}`],
+              ...(capsule.smartSearchEnabled
+                ? ([["Option IA", "Recherche intelligente & chapitres · 3,00 €"]] as [string, string][])
+                : []),
+              ["Livraison", "5–7 jours ouvrés · Gratuite"],
+            ];
+            return (
+              <>
+                {rows.map(([label, value]) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.45)", flexShrink: 0 }}>{label}</span>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#f0e8d8", textAlign: "right" }}>{value}</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, borderTop: `1px solid ${accent}25`, paddingTop: 10, marginTop: 2 }}>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 600, color: "#f0e8d8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Total réglé
+                  </span>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: accent }}>
+                    {totalEuros}
+                  </span>
+                </div>
+              </>
+            );
+          })()}
           <div style={{ borderTop: `1px solid ${accent}18`, paddingTop: 12, marginTop: 2 }}>
             <p style={{ fontFamily: "Georgia, serif", fontSize: 10, color: `${accent}55`, margin: "0 0 4px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Référence commande</p>
             <p style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "rgba(240,232,216,0.38)", margin: 0 }}>{capsule.id}</p>
           </div>
+        </motion.div>
+
+        {/* Indicateur visuel intuitif vers le fichier audio & QR code en bas (avec flèche animée) */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.65 }}
+          style={{ maxWidth: 400, margin: "0 auto 18px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+        >
+          {capsule.status === "ready" ? (
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("montage-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              style={{
+                width: "100%",
+                padding: "14px 18px",
+                borderRadius: 14,
+                background: `linear-gradient(135deg, ${accent}28, ${accent}14)`,
+                border: `1.5px solid ${accent}`,
+                boxShadow: `0 0 22px ${accent}33`,
+                color: "#f0e8d8",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span style={{ fontFamily: "sans-serif", fontSize: 13.5, fontWeight: 600, color: "#fff" }}>
+                Écouter votre fichier audio &amp; voir le QR code ci-dessous
+              </span>
+              <span style={{ fontFamily: "sans-serif", fontSize: 11.5, color: "rgba(240,232,216,0.65)" }}>
+                Votre Vocapsule, vos repères et le téléchargement sont disponibles juste en bas
+              </span>
+              <motion.div
+                animate={{ y: [0, 6, 0], opacity: [0.65, 1, 0.65] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 2, color: accent }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 10l5 5 5-5M7 5l5 5 5-5" />
+                </svg>
+              </motion.div>
+            </button>
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                padding: "14px 18px",
+                borderRadius: 14,
+                background: "rgba(18, 13, 12, 0.84)",
+                border: `1px solid ${accent}45`,
+                color: "#f0e8d8",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span style={{ fontFamily: "sans-serif", fontSize: 13, fontWeight: 500, color: accent }}>
+                ⏳ Préparation de votre fichier audio et de votre QR code…
+              </span>
+              <span style={{ fontFamily: "sans-serif", fontSize: 11.5, color: "rgba(240,232,216,0.55)" }}>
+                Le lecteur et le QR code vont s&apos;afficher juste ci-dessous dans quelques secondes ↓
+              </span>
+            </div>
+          )}
+
+          {onBackToSelection && (
+            <button
+              type="button"
+              onClick={onBackToSelection}
+              style={{
+                padding: "9px 16px",
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                color: "rgba(240,232,216,0.78)",
+                fontFamily: "sans-serif",
+                fontSize: 12.5,
+                cursor: "pointer",
+              }}
+            >
+              ← Revenir à l&apos;étape précédente (modifier mes audios ou mes étiquettes)
+            </button>
+          )}
         </motion.div>
 
         <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.25)", fontStyle: "italic", marginTop: 8 }}>
@@ -688,7 +851,7 @@ function KeychainSuccessScreen({ capsule, accent }: { capsule: CapsuleState; acc
 function ProcessingScreen({ status, accent }: { status: Status; accent: string }) {
   const message =
     status === "pending" ? "Confirmation du paiement…" :
-    status === "paid"    ? "Préparation de votre écho…" :
+    status === "paid"    ? "Préparation de votre vocapsule…" :
                            "Assemblage de vos voix…";
 
   return (
@@ -729,7 +892,7 @@ function ProcessingScreen({ status, accent }: { status: Status; accent: string }
           {message}
         </p>
         <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.45)", fontStyle: "italic", margin: 0 }}>
-          Paiement validé · Votre écho sera prêt dans quelques instants.
+          Paiement validé · Votre vocapsule sera prête dans quelques instants.
         </p>
       </div>
 
@@ -738,7 +901,7 @@ function ProcessingScreen({ status, accent }: { status: Status; accent: string }
       />
 
       <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0, maxWidth: 340 }}>
-        Vous pouvez fermer cette page, votre écho sera disponible depuis votre compte.
+        Vous pouvez fermer cette page, votre vocapsule sera disponible depuis votre compte.
       </p>
     </motion.div>
   );

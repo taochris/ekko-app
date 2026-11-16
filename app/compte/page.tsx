@@ -99,10 +99,10 @@ export default function ComptePage() {
             {mode === "login" ? "Connexion" : "Créer un compte"}
           </p>
           <h1 style={{ fontSize: 30, fontWeight: 300, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: 6 }}>
-            {mode === "login" ? "Bon retour" : "Rejoignez Ekko"}
+            {mode === "login" ? "Bon retour" : "Rejoignez VOSEKKO"}
           </h1>
           <p style={{ fontSize: 14, color: "rgba(240,232,216,0.35)", fontFamily: "Georgia, serif", fontStyle: "italic", marginBottom: 36 }}>
-            {mode === "login" ? "Accédez à vos échos sauvegardés." : "Créez votre espace personnel."}
+            {mode === "login" ? "Accédez à vos vocapsules sauvegardées." : "Créez votre espace personnel."}
           </p>
 
           {/* Google */}

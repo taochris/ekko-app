@@ -83,7 +83,7 @@ function EkkoBlock({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ padding: "22px 26px", borderRadius: 16, background: `${accent}0d`, border: `1px solid ${accent}35`, margin: "28px 0" }}>
       <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 12 }}>
-        ✦ EKKO
+        ✦ VOSEKKO
       </p>
       <div className="ekko-serif" style={{ fontSize: 16, color: "rgba(240,232,216,0.88)", lineHeight: 1.75 }}>
         {children}
@@ -102,7 +102,7 @@ export default function CadeauPasCherCouplePage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -240,7 +240,7 @@ export default function CadeauPasCherCouplePage() {
               <p style={{ marginBottom: 12 }}>
                 C'est exactement ce que propose{" "}
                 <a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 500 }}>
-                  EKKO
+                  VOSEKKO
                 </a>{" "}:
               </p>
               <BulletList items={[
@@ -277,7 +277,7 @@ export default function CadeauPasCherCouplePage() {
           <P>Et parfois, le plus beau cadeau…</P>
           <P>👉 c'est simplement de faire revivre ce que vous avez déjà vécu.</P>
 
-          <H3>À lire aussi sur le blog EKKO</H3>
+          <H3>À lire aussi sur le blog VOSEKKO</H3>
           <BulletList items={[
             "Comment exporter une conversation WhatsApp avec audios sur iPhone",
             "Comment exporter les audios Messenger sur Android",

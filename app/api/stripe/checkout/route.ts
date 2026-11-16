@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
             currency: "eur",
             unit_amount: withNfc ? 2790 : 2490,
             product_data: {
-              name: "Porte-clé EKKO en bois gravé",
+              name: "Porte-clé VOSEKKO en bois gravé",
               description:
                 "Porte-clé bois gravé au laser · QR code unique" +
                 (withNfc ? " · Puce NFC autocollante au dos" : "") +
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
             currency: "eur",
             unit_amount: 999 + validStorage,
             product_data: {
-              name: "Écho EKKO — Accès complet" + (storageLabel ? ` + ${storageLabel}` : ""),
+              name: "Vocapsule VOSEKKO — Accès complet" + (storageLabel ? ` + ${storageLabel}` : ""),
               description:
                 "Assemblage de vos voix · Téléchargement audio · QR code" +
                 (storageLabel ? ` · Conservation ${storageLabel}` : ""),

@@ -91,7 +91,7 @@ export default function ArticleMessengerIphone() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -201,7 +201,7 @@ export default function ArticleMessengerIphone() {
               "navigation beaucoup plus simple",
               "tri des audios beaucoup plus rapide",
             ]} />
-            <P>Puis importez le fichier dans <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a> — les audios des conversations classiques sont inclus directement.</P>
+            <P>Puis importez le fichier dans <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3 }}>VOSEKKO</a> — les audios des conversations classiques sont inclus directement.</P>
           </SolutionBlock>
 
           <Separator />
@@ -271,13 +271,13 @@ export default function ArticleMessengerIphone() {
 
           <Separator />
 
-          {/* EKKO */}
-          <H2>C&apos;est là que EKKO fait toute la différence</H2>
-          <P>EKKO a été conçu pour éviter de fouiller dans des dizaines de dossiers.</P>
+          {/* VOSEKKO */}
+          <H2>C&apos;est là que VOSEKKO fait toute la différence</H2>
+          <P>VOSEKKO a été conçu pour éviter de fouiller dans des dizaines de dossiers.</P>
 
           <EkkoBlock>
             <p className="ekko-serif" style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 16 }}>
-              Avec EKKO
+              Avec VOSEKKO
             </p>
             <BulletList items={[
               "vous importez votre archive Messenger",
@@ -362,7 +362,7 @@ export default function ArticleMessengerIphone() {
           </div>
           <P>Une fois cette différence comprise, tout devient beaucoup plus simple.</P>
           <P>
-            Et c&apos;est exactement là que <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a> intervient :
+            Et c&apos;est exactement là que <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3 }}>VOSEKKO</a> intervient :
             retrouver vos audios facilement… et leur redonner de la valeur.
           </P>
 
@@ -373,7 +373,7 @@ export default function ArticleMessengerIphone() {
               onClick={() => router.push("/")}
               style={{ padding: "14px 36px", borderRadius: 50, background: `linear-gradient(135deg, ${accent}33, ${accent}55)`, border: `1px solid ${accent}50`, color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 15, cursor: "pointer", letterSpacing: "0.05em" }}
             >
-              Créer ma vocapsule EKKO →
+              Créer ma vocapsule VOSEKKO →
             </motion.button>
           </div>
 

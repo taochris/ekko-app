@@ -25,7 +25,7 @@ export default function AnimationsPreview() {
             Preview · Animations
           </p>
           <h1 className="ekko-serif" style={{ fontSize: 28, color: "#f0e8d8", fontWeight: 300, margin: "8px 0 0" }}>
-            Nouvelles animations EKKO
+            Nouvelles animations VOSEKKO
           </h1>
         </div>
 

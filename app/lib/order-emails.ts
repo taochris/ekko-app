@@ -14,12 +14,14 @@ function escapeHtml(s: string): string {
 }
 
 // ─── Email client porte-clé ──────────────────────────────────────────────────
-export function buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled = false }: {
-  capsuleId: string; engraveName: string; format: string; shippingName: string; nfcEnabled?: boolean;
+export function buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled = false, smartSearchEnabled = false }: {
+  capsuleId: string; engraveName: string; format: string; shippingName: string; nfcEnabled?: boolean; smartSearchEnabled?: boolean;
 }): string {
-  const safeEngrave = escapeHtml(engraveName.toUpperCase());
+  const safeEngrave = engraveName.trim() ? escapeHtml(engraveName.toUpperCase()) : "Sans prénom (QR code seul)";
   const safeShippingName = escapeHtml(shippingName);
   const safeCapsuleId = escapeHtml(capsuleId);
+  const baseCents = nfcEnabled ? 2790 : 2490;
+  const totalEuros = ((baseCents + (smartSearchEnabled ? 300 : 0)) / 100).toFixed(2).replace(".", ",") + " €";
   const formatLabel: Record<string, string> = {
     "etiquette-rect":     "Rectangulaire · 50×30 mm",
     "etiquette-arrondie": "Arrondie · 50,8×31,8 mm",
@@ -27,13 +29,13 @@ export function buildKeychainEmail({ capsuleId, engraveName, format, shippingNam
   };
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Commande EKKO</title></head>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Commande VOSEKKO</title></head>
 <body style="margin:0;padding:0;background:#0d0a0f;font-family:Georgia,'Times New Roman',serif;color:#f0e8d8;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0a0f;padding:40px 0;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#141018;border-radius:20px;border:1px solid rgba(201,169,110,0.15);overflow:hidden;">
         <tr><td style="background:linear-gradient(135deg,rgba(201,169,110,0.12),rgba(201,169,110,0.05));padding:36px 40px 28px;border-bottom:1px solid rgba(201,169,110,0.12);text-align:center;">
-          <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#c9a96e;">EKKO</p>
+          <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#c9a96e;">VOSEKKO</p>
           <h1 style="margin:0;font-size:22px;font-weight:300;color:#f0e8d8;line-height:1.4;">Votre porte-clé est en cours de fabrication</h1>
         </td></tr>
         <tr><td style="padding:36px 40px;">
@@ -46,8 +48,10 @@ export function buildKeychainEmail({ capsuleId, engraveName, format, shippingNam
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Prénom gravé</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${safeEngrave}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Format</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${escapeHtml(formatLabel[format] ?? format)}</td></tr>
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Matière</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">Bois naturel · Gravure laser</td></tr>
-                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Accès</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${nfcEnabled ? "QR code + puce NFC au dos · 27,90 €" : "QR code gravé · 24,90 €"}</td></tr>
+                <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Porte-clé</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">${nfcEnabled ? "QR code + puce NFC au dos · 27,90 €" : "QR code gravé · 24,90 €"}</td></tr>
+                ${smartSearchEnabled ? `<tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Option IA</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">Recherche intelligente &amp; chapitres · 3,00 €</td></tr>` : ""}
                 <tr><td style="font-size:13px;color:rgba(240,232,216,0.5);padding:4px 0;">Livraison</td><td style="font-size:13px;color:#f0e8d8;text-align:right;padding:4px 0;">5–7 jours ouvrés · Gratuite</td></tr>
+                <tr><td style="font-size:14px;font-weight:bold;color:#f0e8d8;padding:10px 0 4px;border-top:1px solid rgba(201,169,110,0.2);">Total réglé</td><td style="font-size:16px;font-weight:bold;color:#c9a96e;text-align:right;padding:10px 0 4px;border-top:1px solid rgba(201,169,110,0.2);">${totalEuros}</td></tr>
               </table>
               <p style="margin:18px 0 4px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,169,110,0.6);">Référence</p>
               <p style="margin:0;font-family:ui-monospace,monospace;font-size:12px;color:rgba(240,232,216,0.4);">${safeCapsuleId}</p>
@@ -56,7 +60,7 @@ export function buildKeychainEmail({ capsuleId, engraveName, format, shippingNam
           <p style="margin:0;font-size:13px;color:rgba(240,232,216,0.5);line-height:1.75;font-style:italic;">Des questions ? Répondez à cet email ou écrivez-nous à <a href="mailto:vosekko@outlook.com" style="color:#c9a96e;">vosekko@outlook.com</a>.</p>
         </td></tr>
         <tr><td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-          <p style="margin:0;font-size:11px;color:rgba(240,232,216,0.25);">© EKKO · <a href="https://vosekko.com" style="color:rgba(240,232,216,0.35);text-decoration:none;">vosekko.com</a> · <a href="https://vosekko.com/cgv" style="color:rgba(240,232,216,0.35);text-decoration:none;">CGV</a></p>
+          <p style="margin:0;font-size:11px;color:rgba(240,232,216,0.25);">© VOSEKKO · <a href="https://vosekko.com" style="color:rgba(240,232,216,0.35);text-decoration:none;">vosekko.com</a> · <a href="https://vosekko.com/cgv" style="color:rgba(240,232,216,0.35);text-decoration:none;">CGV</a></p>
         </td></tr>
       </table>
     </td></tr>
@@ -87,13 +91,13 @@ export function buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, sh
   const fontLabel = FONT_LABELS[engravingFont ?? ""] ?? (engravingFont || "Classique (Georgia)");
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"/><title>Nouvelle commande EKKO</title></head>
+<head><meta charset="UTF-8"/><title>Nouvelle commande VOSEKKO</title></head>
 <body style="margin:0;padding:0;background:#0a0a14;font-family:Georgia,serif;color:#f0e8d8;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 0;">
     <tr><td align="center">
       <table width="540" cellpadding="0" cellspacing="0" style="max-width:540px;background:#141018;border-radius:16px;border:2px solid #c9a96e;overflow:hidden;">
         <tr><td style="background:#c9a96e;padding:20px 32px;">
-          <p style="margin:0;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#0d0a0f;">EKKO — ADMIN</p>
+          <p style="margin:0;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#0d0a0f;">VOSEKKO — ADMIN</p>
           <h1 style="margin:4px 0 0;font-size:20px;font-weight:700;color:#0d0a0f;">🔑 Nouvelle commande porte-clé</h1>
         </td></tr>
         <tr><td style="padding:28px 32px;">
@@ -233,7 +237,7 @@ export async function generateLightBurnSVG(capsuleId: string, engraveName: strin
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!-- LightBurn SVG — EKKO — ${escapeHtml(capsuleId)} -->
+<!-- LightBurn SVG — VOSEKKO — ${escapeHtml(capsuleId)} -->
 <!-- Format : ${escapeHtml(format)} | Prénom : ${escapeHtml(engraveName)} | Police : ${escapeHtml(engravingFont)} -->
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${dim.w} ${dim.h}"
@@ -289,10 +293,10 @@ export async function sendKeychainOrderEmails({
   if (customerEmail) {
     try {
       const { data, error } = await resend.emails.send({
-        from: "EKKO <ekko@vosekko.com>",
+        from: "VOSEKKO <ekko@vosekko.com>",
         to: customerEmail,
-        subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
-        html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled }),
+        subject: "Votre porte-clé VOSEKKO est en cours de fabrication ✦",
+        html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled, smartSearchEnabled: amount >= (nfcEnabled ? 3090 : 2790) }),
       });
       if (error) console.error("[order-emails] email client ERREUR:", JSON.stringify(error));
       else console.log("[order-emails] email client envoyé →", customerEmail, "id:", data?.id);
@@ -307,7 +311,7 @@ export async function sendKeychainOrderEmails({
     const shortUrl = shortQrUrl(capsuleId);
     const svg = await generateLightBurnSVG(capsuleId, engraveName, format, shortUrl, engravingFont);
     const { data, error } = await resend.emails.send({
-      from: "EKKO <ekko@vosekko.com>",
+      from: "VOSEKKO <ekko@vosekko.com>",
       to: adminEmail,
       subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
       html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl: shortUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
@@ -320,7 +324,7 @@ export async function sendKeychainOrderEmails({
     else console.log("[order-emails] email admin envoyé →", adminEmail, "id:", data?.id);
 
     sendPushover(
-      "🔑 Nouvelle commande EKKO",
+      "🔑 Nouvelle commande VOSEKKO",
       `Prénom : ${engraveName}\nFormat : ${format}\nNFC au dos : ${nfcEnabled ? "oui" : "non"}\nClient : ${shippingName}\n${shippingAddress}`
     ).catch((e) => console.error("[order-emails] pushover:", e));
   } catch (e) {

@@ -82,7 +82,7 @@ export default function AuthModal({ accent, onSuccess }: AuthModalProps) {
           fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.45em",
           textTransform: "uppercase", color: `${accent}60`, marginBottom: 6,
         }}>
-          EKKO
+          VOSEKKO
         </p>
         <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 300, fontSize: 28, color: "#f0e8d8", marginBottom: 6 }}>
           {mode === "login" ? "Connexion" : "Créer un compte"}
@@ -90,7 +90,7 @@ export default function AuthModal({ accent, onSuccess }: AuthModalProps) {
         <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.35)" }}>
           {mode === "login"
             ? "Accédez à vos vocapsules sauvegardées."
-            : "Rejoignez EKKO pour préserver vos souvenirs."}
+            : "Rejoignez VOSEKKO pour préserver vos souvenirs."}
         </p>
       </div>
 

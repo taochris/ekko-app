@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   if (tokenUid && queryUid && tokenUid !== queryUid) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
-  // Exiger le token d'authentification Firebase pour lister les échos d'un compte
+  // Exiger le token d'authentification Firebase pour lister les vocapsules d'un compte
   if (!tokenUid) {
     return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
   }
@@ -83,6 +83,7 @@ export async function GET(req: NextRequest) {
           : null,
         productType: String(meta.productType ?? "numerique"),
         nfcEnabled: false,
+        smartSearchEnabled: false,
         paidAt: null as string | null,
       };
     }).filter((e) => !e.expired);
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
     if (capsuleIds.length > 0) {
       const db = getFirestore();
       const snaps = await Promise.all(capsuleIds.map((id) => db.collection("capsules").doc(id).get()));
-      const capsuleMap: Record<string, { productType?: string; nfcEnabled?: boolean; paidAt?: string | null }> = {};
+      const capsuleMap: Record<string, { productType?: string; nfcEnabled?: boolean; smartSearchEnabled?: boolean; paidAt?: string | null }> = {};
       snaps.forEach((snap) => {
         if (snap.exists) {
           const d = snap.data() ?? {};
@@ -100,6 +101,7 @@ export async function GET(req: NextRequest) {
           capsuleMap[snap.id] = {
             productType: d.productType ?? "numerique",
             nfcEnabled: d.nfcEnabled === true,
+            smartSearchEnabled: d.smartSearchEnabled === true,
             paidAt: pt && typeof pt === "object" && "toDate" in pt
               ? (pt as { toDate: () => Date }).toDate().toISOString()
               : typeof pt === "string" ? pt : null,
@@ -111,6 +113,7 @@ export async function GET(req: NextRequest) {
         if (c) {
           e.productType = c.productType ?? "numerique";
           e.nfcEnabled = c.nfcEnabled ?? false;
+          e.smartSearchEnabled = c.smartSearchEnabled ?? false;
           e.paidAt = c.paidAt ?? e.createdApprox;
         }
       });

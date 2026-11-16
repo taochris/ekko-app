@@ -65,7 +65,7 @@ const ARTICLES: Article[] = [
     tag: "Guide WhatsApp · Android",
     tagColor: "#25d366",
     title: "Comment exporter une conversation WhatsApp avec audios sur Android en 2026",
-    excerpt: "Samsung, Xiaomi, Google, OnePlus… Ce guide concerne tous les smartphones Android. Récupérez vos messages vocaux et transformez-les en souvenir avec EKKO.",
+    excerpt: "Samsung, Xiaomi, Google, OnePlus… Ce guide concerne tous les smartphones Android. Récupérez vos messages vocaux et transformez-les en souvenir avec VOSEKKO.",
     date: "Avril 2026",
     readTime: "5 min",
     category: "guides",
@@ -76,7 +76,7 @@ const ARTICLES: Article[] = [
     tag: "Guide Telegram · iPhone",
     tagColor: "#2AABEE",
     title: "Comment exporter les audios d'une conversation Telegram sur iPhone en 2026",
-    excerpt: "Telegram Desktop uniquement — pas Telegram Web. Tout comprendre pour récupérer vos vocaux depuis iPhone via ordinateur, et comment EKKO simplifie la suite.",
+    excerpt: "Telegram Desktop uniquement — pas Telegram Web. Tout comprendre pour récupérer vos vocaux depuis iPhone via ordinateur, et comment VOSEKKO simplifie la suite.",
     date: "Avril 2026",
     readTime: "5 min",
     category: "guides",
@@ -118,7 +118,7 @@ const ARTICLES: Article[] = [
     tag: "Guide Instagram · iPhone",
     tagColor: "#e1306c",
     title: "Comment exporter les audios d'une conversation Instagram sur iPhone en 2026",
-    excerpt: "Instagram ne permet pas d'exporter une conversation directement. Voici comment récupérer vos audios via l'archive Meta, et comment EKKO simplifie toute cette étape.",
+    excerpt: "Instagram ne permet pas d'exporter une conversation directement. Voici comment récupérer vos audios via l'archive Meta, et comment VOSEKKO simplifie toute cette étape.",
     date: "Avril 2026",
     readTime: "5 min",
     category: "guides",
@@ -128,7 +128,7 @@ const ARTICLES: Article[] = [
     tag: "Guide Instagram · Android",
     tagColor: "#e1306c",
     title: "Comment exporter les audios d'une conversation Instagram sur Android en 2026",
-    excerpt: "Samsung, Xiaomi, Google… La méthode officielle Meta expliquée pas à pas. Et comment EKKO vous aide à retrouver facilement vos audios dans l'archive.",
+    excerpt: "Samsung, Xiaomi, Google… La méthode officielle Meta expliquée pas à pas. Et comment VOSEKKO vous aide à retrouver facilement vos audios dans l'archive.",
     date: "Avril 2026",
     readTime: "5 min",
     category: "guides",
@@ -201,7 +201,7 @@ export default function BlogPage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/")}
@@ -218,7 +218,7 @@ export default function BlogPage() {
       <div className="relative z-10 px-6 pt-6 pb-10 max-w-3xl mx-auto text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: `${accent}70`, marginBottom: 14 }}>
-            Le blog EKKO
+            Le blog VOSEKKO
           </p>
           <h1 className="ekko-serif" style={{ fontSize: 36, fontWeight: 300, color: "#f0e8d8", marginBottom: 12 }}>
             Guides &amp; inspirations

@@ -6,7 +6,7 @@ export default async function ThemePorteClef({ params, searchParams }: { params:
   const { format } = await searchParams;
   return (
     <Suspense>
-      <ThemePage theme={theme} hideImageUpload={true} variant="porteClef" initialFormat={format} />
+      <ThemePage theme={theme} hideImageUpload={false} variant="porteClef" initialFormat={format} />
     </Suspense>
   );
 }

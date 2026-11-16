@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const file = allFiles.find((f) => f.name.includes(`/${echoId}/`));
 
     if (!file) {
-      return NextResponse.json({ error: "Écho introuvable ou expiré" }, { status: 404 });
+      return NextResponse.json({ error: "Vocapsule introuvable ou expirée" }, { status: 404 });
     }
     const meta = file.metadata?.metadata ?? {};
 
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       const expires = new Date(meta.expiresAt as string);
       if (expires < new Date()) {
         await file.delete().catch(() => {});
-        return NextResponse.json({ error: "Écho expiré" }, { status: 410 });
+        return NextResponse.json({ error: "Vocapsule expirée" }, { status: 410 });
       }
     }
 

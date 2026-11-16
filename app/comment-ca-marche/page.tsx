@@ -16,7 +16,7 @@ export default function CommentCamarchePage() {
       {/* ── Nav ── */}
       <nav style={{ position: "relative", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid rgba(201,169,110,0.08)" }} className="main-nav">
         <a href="/" style={{ textDecoration: "none" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 52, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 52, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </a>
         <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "flex-end" }} className="nav-links">
           {[{ label: "La vocapsule", href: "/comment-ca-marche" }, { label: "L'objet", href: "/produit" }, { label: "Les usages", href: "/produit/themes" }, { label: "Créer", href: "/" }].map(({ label, href }) => (
@@ -109,7 +109,7 @@ export default function CommentCamarchePage() {
           Retrouver une voix <em style={{ fontStyle: "italic", color: gold }}>immédiatement</em>
         </h2>
         <p style={{ fontFamily: font, fontSize: 14, lineHeight: 1.8, color: "rgba(240,232,216,0.5)", maxWidth: 580, margin: "0 auto 36px" }}>
-          Avec Ekko, vous gardez seulement ce qui compte vraiment. Vous supprimez les audios parasites et créez un souvenir audio propre, clair et unique.
+          Avec VOSEKKO, vous gardez seulement ce qui compte vraiment. Vous supprimez les audios parasites et créez un souvenir audio propre, clair et unique.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
           {["Jusqu'à 2 h d'audio", "Audios réunis au même endroit", "QR gravé · NFC en option", "Écoute en une seconde"].map((label) => (
@@ -129,7 +129,7 @@ export default function CommentCamarchePage() {
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "stretch", marginBottom: 32 }} className="avant-grid">
           <div style={{ background: "rgba(28,24,24,0.85)", border: "2px solid rgba(220,60,60,0.45)", borderRadius: 20, padding: "24px 20px" }}>
-            <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(252,157,157,0.85)", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avant Ekko</p>
+            <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(252,157,157,0.85)", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avant VOSEKKO</p>
             {["Chercher dans plusieurs applications", "Faire défiler des années de messages", "Devoir écouter les audios 1 par 1", "Ouvrir des audios inutiles", "Dépendre d'un ancien téléphone", "Risque de perte ou de suppression"].map((item) => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12, fontFamily: font, fontSize: 13, color: "rgb(252,157,157)", lineHeight: 1.5 }}>
                 <span style={{ flexShrink: 0, minWidth: 14, marginTop: 3, color: "rgba(252,157,157,0.45)", display: "inline-block" }}>—</span>{item}
@@ -137,7 +137,7 @@ export default function CommentCamarchePage() {
             ))}
           </div>
           <div style={{ background: "rgba(22,28,26,0.85)", border: "2px solid rgba(72,231,204,0.5)", borderRadius: 20, padding: "24px 20px", boxShadow: "0 0 18px rgba(72,231,204,0.07)" }}>
-            <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "#4ee6d1", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avec Ekko</p>
+            <p style={{ fontFamily: font, fontSize: 13, letterSpacing: "0.25em", textTransform: "uppercase", color: "#4ee6d1", marginBottom: 20, textAlign: "center", fontWeight: 600 }}>Avec VOSEKKO</p>
             {["Les bons audios sont réunis", "Le souvenir reste toujours au même endroit", "Le QR code ouvre directement l'écoute", "Avec l’option NFC, approchez un téléphone compatible", "Toujours avec soi, partout où vous allez", "Une seconde suffit"].map((item, idx) => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12, fontFamily: font, fontSize: 13, color: "#c8ffe9", lineHeight: 1.5 }}>
                 <span style={{ minWidth: 14, display: "inline-flex", alignItems: "center", justifyContent: "flex-start", flexShrink: 0, marginTop: 4 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: idx === 4 ? "#ff9f7a" : "#4ee6d1", display: "inline-block" }} /></span>{item}
@@ -260,7 +260,7 @@ export default function CommentCamarchePage() {
           </div>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ width: "100%", maxWidth: 320, aspectRatio: "1", borderRadius: 24, overflow: "hidden", background: "rgba(20,14,18,0.8)", border: `1px solid ${gold}22` }}>
-              <img src={encodeURI("/images/produit/porteclef_format_arrondie/etiquette_dimension.png")} alt="Porte-clé EKKO en bois gravé"
+              <img src={encodeURI("/images/produit/porteclef_format_arrondie/etiquette_dimension.png")} alt="Porte-clé VOSEKKO en bois gravé"
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
             </div>
@@ -295,8 +295,8 @@ export default function CommentCamarchePage() {
 
       {/* Footer */}
       <footer style={{ position: "relative", zIndex: 10, borderTop: "1px solid rgba(201,169,110,0.08)", padding: "24px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 32, mixBlendMode: "screen" }} />
-        <p style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.25)" }}>© 2025 EKKO. Tous droits réservés.</p>
+        <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 32, mixBlendMode: "screen" }} />
+        <p style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.25)" }}>© 2026 VOSEKKO. Tous droits réservés.</p>
       </footer>
 
       <style>{`

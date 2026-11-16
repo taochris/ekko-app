@@ -25,6 +25,7 @@ export interface BookmarkDraftItem {
   title: string;
   audioId: string;
   offsetInAudioSec: number;
+  color?: string;
 }
 
 export interface CapsuleBookmark {
@@ -34,6 +35,7 @@ export interface CapsuleBookmark {
   audioId: string;
   offsetInAudioSec?: number;
   displayOrder: number;
+  color?: string;
 }
 
 export interface CapsuleManifest {

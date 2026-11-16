@@ -8,6 +8,7 @@ interface PlayerBookmark {
   timeSec: number;
   audioId?: string;
   displayOrder?: number;
+  color?: string;
 }
 
 const THEME_LABELS: Record<string, string> = {
@@ -65,6 +66,14 @@ export default function VocapsulePage() {
       .catch(() => setNotFound(true));
   }, [id]);
 
+  useEffect(() => {
+    const onPopState = () => {
+      if (fullscreen) setFullscreen(false);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [fullscreen]);
+
   const togglePlay = () => {
     const a = audioRef.current;
     if (!a) return;
@@ -74,7 +83,14 @@ export default function VocapsulePage() {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     } else {
       a.play();
-      setFullscreen(true);
+      if (!fullscreen) {
+        try {
+          window.history.pushState({ ekkoFullscreen: true }, "");
+        } catch {
+          // ignore
+        }
+        setFullscreen(true);
+      }
       resetHideTimer();
     }
     setIsPlaying(!isPlaying);
@@ -121,7 +137,7 @@ export default function VocapsulePage() {
     // Sur mobile, utiliser l'API Web Share native
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Écho sonore · EKKO", url });
+        await navigator.share({ title: "Vocapsule sonore · VOSEKKO", url });
         return;
       } catch { /* annulé par l'utilisateur */ }
     }
@@ -156,7 +172,7 @@ export default function VocapsulePage() {
         </div>
         <div style={{ textAlign: "center" }}>
           <p style={{ fontFamily: "Georgia, serif", fontSize: 17, color: "rgba(240,232,216,0.7)", margin: "0 0 8px" }}>
-            Écho introuvable
+            Vocapsule introuvable
           </p>
           <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.35)", margin: 0, fontStyle: "italic" }}>
             Ce lien a peut-être expiré ou n&apos;existe pas.
@@ -167,7 +183,7 @@ export default function VocapsulePage() {
           textDecoration: "none", padding: "10px 24px", borderRadius: 12,
           border: "1px solid rgba(201,169,110,0.3)", background: "rgba(201,169,110,0.06)",
         }}>
-          Découvrir Ekko
+          Découvrir VOSEKKO
         </a>
       </div>
     );
@@ -214,7 +230,7 @@ export default function VocapsulePage() {
           background: `${accent}12`, border: `1px solid ${accent}30`,
         }}>
           <p style={{ fontSize: 11, letterSpacing: "0.5em", textTransform: "uppercase", color: accent, margin: 0, fontWeight: 500 }}>
-            EKKO
+            VOSEKKO
           </p>
         </a>
 
@@ -262,7 +278,7 @@ export default function VocapsulePage() {
                 </p>
               )}
               <h1 style={{ fontSize: 24, fontWeight: 300, color: "#f0e8d8", margin: "0 0 6px", lineHeight: 1.2 }}>
-                Écho sonore
+                Vocapsule sonore
               </h1>
               <p style={{ fontSize: 13, color: `${accent}`, margin: 0, fontStyle: "italic" }}>
                 Un souvenir vous attend
@@ -328,6 +344,7 @@ export default function VocapsulePage() {
               {duration > 0 && bookmarks.map((bm) => {
                 const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
                 const isActive = activeBookmarkId === bm.id;
+                const bmColor = bm.color || accent;
                 return (
                   <button
                     key={bm.id}
@@ -356,11 +373,11 @@ export default function VocapsulePage() {
                   >
                     <span
                       style={{
-                        width: isActive ? 5 : 3,
-                        height: isActive ? 14 : 11,
-                        borderRadius: 2,
-                        background: isActive ? "#ffffff" : accent,
-                        boxShadow: `0 0 6px ${accent}`,
+                        width: isActive ? 6 : 4,
+                        height: isActive ? 15 : 12,
+                        borderRadius: 3,
+                        background: isActive ? "#ffffff" : bmColor,
+                        boxShadow: `0 0 8px ${bmColor}`,
                         transition: "all 0.2s",
                       }}
                     />
@@ -375,7 +392,7 @@ export default function VocapsulePage() {
                 marginBottom: 24,
                 padding: "14px 14px",
                 borderRadius: 16,
-                background: "rgba(13,10,15,0.55)",
+                background: "rgba(13,10,15,0.65)",
                 border: `1px solid ${accent}28`,
               }}>
                 <p style={{
@@ -390,6 +407,7 @@ export default function VocapsulePage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 190, overflowY: "auto" }}>
                   {bookmarks.map((bm) => {
                     const isActive = activeBookmarkId === bm.id;
+                    const bmColor = bm.color || accent;
                     return (
                       <button
                         key={bm.id}
@@ -405,17 +423,29 @@ export default function VocapsulePage() {
                           borderRadius: 11,
                           cursor: "pointer",
                           textAlign: "left",
-                          background: isActive ? `${accent}25` : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${isActive ? accent + "65" : "rgba(255,255,255,0.08)"}`,
+                          background: isActive ? `${bmColor}22` : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${isActive ? bmColor : bmColor + "45"}`,
                           color: "#f0e8d8",
                           fontFamily: "Georgia, serif",
                           transition: "all 0.2s",
                         }}
                       >
-                        <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {isActive ? "▶ " : ""}{bm.title}
+                        <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0, flex: 1 }}>
+                          <span
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              background: bmColor,
+                              boxShadow: `0 0 8px ${bmColor}`,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {isActive ? "▶ " : ""}{bm.title}
+                          </span>
                         </span>
-                        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: accent, flexShrink: 0 }}>
+                        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: bmColor, flexShrink: 0 }}>
                           {formatTime(bm.timeSec)}
                         </span>
                       </button>
@@ -430,7 +460,7 @@ export default function VocapsulePage() {
               <a
                 className="action-btn"
                 href={`/api/storage/proxy?echoId=${id}&download=1`}
-                download={`echo-ekko-${id.slice(0, 8)}.mp4`}
+                download={`vosekko-${id.slice(0, 8)}.mp4`}
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   padding: "14px 0", borderRadius: 14, textDecoration: "none",
@@ -483,7 +513,7 @@ export default function VocapsulePage() {
         </div>
 
         <p style={{ marginTop: 32, fontSize: 9, color: "rgba(240,232,216,0.4)", letterSpacing: "0.3em", textTransform: "uppercase" }}>
-          Ekko · Mémoires Sonores
+          VOSEKKO · Mémoires Sonores
         </p>
 
         {/* Mode plein écran immersif */}
@@ -538,7 +568,7 @@ export default function VocapsulePage() {
                 textDecoration: "none", letterSpacing: "0.05em",
               }}
             >
-              Découvrir EKKO
+              Découvrir VOSEKKO
             </a>
 
             {/* Contrôles — masqués après 2s, réapparaissent au toucher */}
@@ -576,7 +606,7 @@ export default function VocapsulePage() {
                   </span>
                 </div>
                 <div
-                  style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
+                  style={{ position: "relative", height: 5, borderRadius: 3, background: "rgba(255,255,255,0.16)", cursor: "pointer" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     const a = audioRef.current;
@@ -586,13 +616,96 @@ export default function VocapsulePage() {
                     resetHideTimer();
                   }}
                 >
-                  <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${accent}80, ${accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                  <div style={{ height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${accent}80, ${accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                  {duration > 0 && bookmarks.map((bm) => {
+                    const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
+                    const isActive = activeBookmarkId === bm.id;
+                    const bmColor = bm.color || accent;
+                    return (
+                      <button
+                        key={bm.id}
+                        type="button"
+                        title={`${bm.title} (${formatTime(bm.timeSec)})`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          jumpToBookmark(bm.timeSec);
+                          resetHideTimer();
+                        }}
+                        style={{
+                          position: "absolute",
+                          left: `${pct}%`,
+                          top: "50%",
+                          transform: "translate(-50%, -50%)",
+                          width: 22,
+                          height: 24,
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          zIndex: 3,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: isActive ? 6 : 4,
+                            height: isActive ? 15 : 12,
+                            borderRadius: 3,
+                            background: isActive ? "#ffffff" : bmColor,
+                            boxShadow: `0 0 8px ${bmColor}`,
+                          }}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
+                {bookmarks.length > 0 && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ marginTop: 18, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", maxHeight: 140, overflowY: "auto" }}
+                  >
+                    {bookmarks.map((bm) => {
+                      const bmColor = bm.color || accent;
+                      const isActive = activeBookmarkId === bm.id;
+                      return (
+                        <button
+                          key={bm.id}
+                          type="button"
+                          onClick={() => {
+                            jumpToBookmark(bm.timeSec);
+                            resetHideTimer();
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "6px 11px",
+                            borderRadius: 999,
+                            background: isActive ? `${bmColor}30` : "rgba(0,0,0,0.55)",
+                            border: `1px solid ${bmColor}`,
+                            color: "#f0e8d8",
+                            fontFamily: "Georgia, serif",
+                            fontSize: 11.5,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: bmColor }} />
+                          <span>{bm.title}</span>
+                          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: bmColor }}>
+                            {formatTime(bm.timeSec)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
             <p style={{ position: "absolute", bottom: 20, fontSize: 9, letterSpacing: "0.4em", color: "rgba(240,232,216,0.4)", textTransform: "uppercase", fontFamily: "Georgia, serif" }}>
-              EKKO · Mémoire sonore
+              VOSEKKO · Mémoire sonore
             </p>
           </div>
         )}

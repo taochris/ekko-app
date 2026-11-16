@@ -34,7 +34,7 @@ const themeConfig: Record<string, {
     accentDim: "rgba(77,184,200,0.15)",
     gradient: "from-[#081525] to-[#0d2a1a]",
     blobVariant: "deuil",
-    ctaVocapsule: "Créer mon écho",
+    ctaVocapsule: "Créer ma vocapsule",
     ctaLivre: "Créer le livre de mémoire",
   },
   amitie: {
@@ -44,7 +44,7 @@ const themeConfig: Record<string, {
     accentDim: "rgba(240,168,85,0.15)",
     gradient: "from-[#200e00] to-[#3d1a00]",
     blobVariant: "amitie",
-    ctaVocapsule: "Créer mon écho",
+    ctaVocapsule: "Créer ma vocapsule",
     ctaLivre: "Créer le livre de l'amitié",
   },
   amour: {
@@ -54,7 +54,7 @@ const themeConfig: Record<string, {
     accentDim: "rgba(224,85,128,0.15)",
     gradient: "from-[#180710] to-[#2e0a1a]",
     blobVariant: "amour",
-    ctaVocapsule: "Créer mon écho",
+    ctaVocapsule: "Créer ma vocapsule",
     ctaLivre: "Créer le livre du cœur",
   },
 };
@@ -266,7 +266,24 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `Erreur validation (${res.status})`);
       }
-      window.location.replace(`/capsule/${advanceCapsuleId}`);
+      const finalManifest = manifest ?? currentManifest;
+      await saveDraftAudios(advanceCapsuleId, importedAudios);
+      await saveDraftState({
+        key: advanceCapsuleId,
+        capsuleId: advanceCapsuleId,
+        theme,
+        variant,
+        smartSearchEnabled: true,
+        orderedAudioIds: finalManifest?.selectedAudios.map((a) => a.audioId) ?? [],
+        bookmarks: finalManifest?.bookmarks ?? [],
+        engraveName: kcCfg?.engraveName ?? "",
+        engravingFont: kcCfg?.engravingFont,
+        format: kcCfg?.format,
+        nfcEnabled: kcCfg?.nfcEnabled,
+        updatedAt: Date.now(),
+      });
+      window.history.replaceState(null, "", `/capsule/${advanceCapsuleId}?mode=select`);
+      window.location.href = `/capsule/${advanceCapsuleId}`;
     } catch (err) {
       console.error("[handleFinalizeAdvanceInPlace]", err);
       setStep("select");
@@ -316,7 +333,7 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
           {user ? (
             <>
               <NavButton onClick={() => setShowEchos(true)} accent={config.accent}>
-                ✦ Mes échos
+                ✦ Mes vocapsules
               </NavButton>
               <NavButton onClick={() => router.push("/account")} accent={config.accent}>
                 <span className="flex items-center gap-2">
@@ -347,7 +364,7 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
         </motion.div>
       </nav>
 
-      {/* Modal Mes échos express */}
+      {/* Modal Mes vocapsules express */}
       {showEchos && user && (
         <EchosQuickModal uid={user.uid} accent={config.accent} onClose={() => setShowEchos(false)} />
       )}
@@ -671,7 +688,7 @@ function LoadingScreen({
 
 const capsuleTexts: Record<string, { title: string; sub: string }> = {
   deuil: { title: "Leur voix est là.", sub: "Il ne reste qu'un geste pour la garder pour toujours." },
-  amitie: { title: "Votre écho est prêt.", sub: "Ces rires méritent de traverser le temps." },
+  amitie: { title: "Votre vocapsule est prête.", sub: "Ces rires méritent de traverser le temps." },
   amour: { title: "Ces mots vous appartiennent.", sub: "Pour toujours, rien que pour vous deux." },
 };
 
@@ -820,7 +837,7 @@ function CapsuleScreen({
         style={{ maxWidth: 480, margin: "0 auto", paddingTop: 32 }}
       >
         <p className="ekko-serif text-center mb-6" style={{ fontSize: 14, color: "rgba(240,232,216,0.5)", fontStyle: "italic" }}>
-          Connectez-vous pour finaliser votre écho
+          Connectez-vous pour finaliser votre vocapsule
         </p>
         <AuthModal accent={config.accent} onSuccess={() => setShowAuth(false)} />
       </motion.div>
@@ -886,7 +903,7 @@ function CapsuleScreen({
         style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}
       >
         <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.3)", marginBottom: 4 }}>
-          Conservation de votre écho
+          Conservation de votre vocapsule
         </p>
         {([
           {
@@ -899,14 +916,14 @@ function CapsuleScreen({
           {
             value: 100,
             label: "Conservation 1 an",
-            desc: "Votre écho reste sauvegardé 1 an · Accessible sur tous vos appareils · Retrouvable depuis votre compte en cas de perte · Lien de partage permanent",
+            desc: "Votre vocapsule reste sauvegardée 1 an · Accessible sur tous vos appareils · Retrouvable depuis votre compte en cas de perte · Lien de partage permanent",
             price: "+1 €",
             warn: false,
           },
           {
             value: 200,
             label: "Conservation 2 ans",
-            desc: "Votre écho reste sauvegardé 2 ans · Multi-appareils · Retrouvable depuis votre compte · Lien de partage permanent · Idéal pour un souvenir durable",
+            desc: "Votre vocapsule reste sauvegardée 2 ans · Multi-appareils · Retrouvable depuis votre compte · Lien de partage permanent · Idéal pour un souvenir durable",
             price: "+2 €",
             warn: false,
           },
@@ -988,7 +1005,7 @@ function CapsuleScreen({
             )}
           </div>
           <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.55)", lineHeight: 1.65, margin: 0 }} onClick={() => setConsentChecked((v) => !v)}>
-            J&apos;accepte que la création de mon EKKO commence immédiatement après le paiement et je reconnais que, une fois le traitement commencé, je renonce à mon{" "}
+            J&apos;accepte que la création de ma vocapsule commence immédiatement après le paiement et je reconnais que, une fois le traitement commencé, je renonce à mon{" "}
             <a href="/cgv" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: config.accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               droit de rétractation
             </a>{" "}
@@ -1026,7 +1043,7 @@ function CapsuleScreen({
             transition: "all 0.25s",
           }}
         >
-          {status === "uploading" ? "Préparation de votre écho…" : status === "redirecting" ? "Redirection vers le paiement…" : `Déverrouiller mon écho — ${totalLabel}`}
+          {status === "uploading" ? "Préparation de votre vocapsule…" : status === "redirecting" ? "Redirection vers le paiement…" : `Déverrouiller ma vocapsule — ${totalLabel}`}
         </motion.button>
         <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0, fontStyle: "italic" }}>
           Paiement unique · Accès immédiat · Téléchargement MP3 + QR code
@@ -1736,14 +1753,14 @@ export function EchoRevealScreen({
   audioUrl: string;
   uid?: string;
   theme?: string;
-  bookmarks?: Array<{ id: string; title: string; timeSec: number }>;
+  bookmarks?: Array<{ id: string; title: string; timeSec: number; color?: string }>;
 }) {
   const [phase, setPhase] = useState<"unlock" | "reveal">("unlock");
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [bookmarks, setBookmarks] = useState<Array<{ id: string; title: string; timeSec: number }>>(
+  const [bookmarks, setBookmarks] = useState<Array<{ id: string; title: string; timeSec: number; color?: string }>>(
     initialBookmarks ?? []
   );
   const [fullscreen, setFullscreen] = useState(false);
@@ -1833,7 +1850,7 @@ export function EchoRevealScreen({
             className="ekko-serif"
             style={{ fontSize: 15, color: "rgba(240,232,216,0.6)", fontStyle: "italic", textAlign: "center", margin: 0 }}
           >
-            Votre écho se dévoile…
+            Votre vocapsule se dévoile…
           </motion.p>
         </div>
       ) : (
@@ -1855,7 +1872,7 @@ export function EchoRevealScreen({
               ✦
             </motion.div>
             <h2 className="ekko-serif" style={{ fontSize: 26, fontWeight: 300, color: "#f0e8d8", margin: "0 0 8px" }}>
-              Votre écho est prêt
+              Votre vocapsule est prête
             </h2>
             <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.4)", fontStyle: "italic", margin: 0 }}>
               Ces voix vous appartiennent pour toujours.
@@ -1904,7 +1921,7 @@ export function EchoRevealScreen({
                 </div>
                 <div style={{ flex: 1 }}>
                   <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.9)", margin: "0 0 2px" }}>
-                    {isPlaying ? "En cours…" : "Écouter mon écho"}
+                    {isPlaying ? "En cours…" : "Écouter ma vocapsule"}
                   </p>
                   <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.4)", margin: 0 }}>
                     {formatTime(duration * progress / 100)} · {formatTime(duration)}
@@ -1925,6 +1942,7 @@ export function EchoRevealScreen({
                 {duration > 0 && bookmarks.map((bm) => {
                   const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
                   const isActive = activeBookmarkId === bm.id;
+                  const bmColor = bm.color || config.accent;
                   return (
                     <button
                       key={bm.id}
@@ -1953,11 +1971,11 @@ export function EchoRevealScreen({
                     >
                       <span
                         style={{
-                          width: isActive ? 5 : 3,
-                          height: isActive ? 13 : 10,
-                          borderRadius: 2,
-                          background: isActive ? "#ffffff" : config.accent,
-                          boxShadow: `0 0 6px ${config.accent}`,
+                          width: isActive ? 6 : 4,
+                          height: isActive ? 14 : 11,
+                          borderRadius: 3,
+                          background: isActive ? "#ffffff" : bmColor,
+                          boxShadow: `0 0 8px ${bmColor}`,
                         }}
                       />
                     </button>
@@ -1979,7 +1997,7 @@ export function EchoRevealScreen({
             <div style={{
               padding: "14px 16px",
               borderRadius: 16,
-              background: "rgba(255,255,255,0.025)",
+              background: "rgba(18, 13, 12, 0.82)",
               border: `1px solid ${config.accent}30`,
             }}>
               <p className="ekko-serif" style={{ fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: config.accent, margin: "0 0 10px" }}>
@@ -1988,6 +2006,7 @@ export function EchoRevealScreen({
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {bookmarks.map((bm) => {
                   const isActive = activeBookmarkId === bm.id;
+                  const bmColor = bm.color || config.accent;
                   return (
                     <button
                       key={bm.id}
@@ -2003,16 +2022,28 @@ export function EchoRevealScreen({
                         borderRadius: 10,
                         cursor: "pointer",
                         textAlign: "left",
-                        background: isActive ? `${config.accent}22` : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${isActive ? config.accent + "65" : "rgba(255,255,255,0.08)"}`,
+                        background: isActive ? `${bmColor}22` : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${isActive ? bmColor : bmColor + "45"}`,
                         color: "#f0e8d8",
                         fontFamily: "Georgia, serif",
                       }}
                     >
-                      <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400 }}>
-                        {isActive ? "▶ " : ""}{bm.title}
+                      <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0, flex: 1 }}>
+                        <span
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            background: bmColor,
+                            boxShadow: `0 0 8px ${bmColor}`,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {isActive ? "▶ " : ""}{bm.title}
+                        </span>
                       </span>
-                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: config.accent }}>
+                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: bmColor }}>
                         {formatTime(bm.timeSec)}
                       </span>
                     </button>
@@ -2119,7 +2150,7 @@ export function EchoRevealScreen({
                     </span>
                   </div>
                   <div
-                    style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", cursor: "pointer" }}
+                    style={{ position: "relative", height: 5, borderRadius: 3, background: "rgba(255,255,255,0.16)", cursor: "pointer" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       const a = audioRef.current;
@@ -2128,14 +2159,93 @@ export function EchoRevealScreen({
                       a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
                     }}
                   >
-                    <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                    <div style={{ height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${config.accent}80, ${config.accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                    {duration > 0 && bookmarks.map((bm) => {
+                      const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
+                      const isActive = activeBookmarkId === bm.id;
+                      const bmColor = bm.color || config.accent;
+                      return (
+                        <button
+                          key={bm.id}
+                          type="button"
+                          title={`${bm.title} (${formatTime(bm.timeSec)})`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            jumpToBookmark(bm.timeSec);
+                          }}
+                          style={{
+                            position: "absolute",
+                            left: `${pct}%`,
+                            top: "50%",
+                            transform: "translate(-50%, -50%)",
+                            width: 22,
+                            height: 24,
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 3,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: isActive ? 6 : 4,
+                              height: isActive ? 15 : 12,
+                              borderRadius: 3,
+                              background: isActive ? "#ffffff" : bmColor,
+                              boxShadow: `0 0 8px ${bmColor}`,
+                            }}
+                          />
+                        </button>
+                      );
+                    })}
                   </div>
+                  {bookmarks.length > 0 && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ marginTop: 18, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", maxHeight: 140, overflowY: "auto" }}
+                    >
+                      {bookmarks.map((bm) => {
+                        const bmColor = bm.color || config.accent;
+                        const isActive = activeBookmarkId === bm.id;
+                        return (
+                          <button
+                            key={bm.id}
+                            type="button"
+                            onClick={() => jumpToBookmark(bm.timeSec)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "6px 11px",
+                              borderRadius: 999,
+                              background: isActive ? `${bmColor}30` : "rgba(0,0,0,0.55)",
+                              border: `1px solid ${bmColor}`,
+                              color: "#f0e8d8",
+                              fontFamily: "Georgia, serif",
+                              fontSize: 11.5,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: bmColor }} />
+                            <span>{bm.title}</span>
+                            <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: bmColor }}>
+                              {formatTime(bm.timeSec)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Logo discret en bas */}
               <p className="ekko-serif" style={{ position: "absolute", bottom: 24, fontSize: 9, letterSpacing: "0.4em", color: "rgba(240,232,216,0.15)", textTransform: "uppercase" }}>
-                EKKO · Mémoire sonore
+                VOSEKKO · Mémoire sonore
               </p>
             </motion.div>
           )}
@@ -2182,11 +2292,11 @@ export function EchoRevealScreen({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
             </svg>
-            Télécharger mon écho
+            Télécharger ma vocapsule
           </a>
 
           <p className="ekko-serif" style={{ fontSize: 10, color: "rgba(240,232,216,0.15)", textAlign: "center", letterSpacing: "0.2em", margin: 0 }}>
-            EKKO · MÉMOIRES SONORES
+            VOSEKKO · MÉMOIRES SONORES
           </p>
         </motion.div>
       )}
@@ -2229,7 +2339,7 @@ function EchosQuickModal({ uid, accent, onClose }: { uid: string; accent: string
     fetch(`/api/account/echos?uid=${uid}`)
       .then(r => r.json())
       .then(d => { setEchos(d.echos ?? []); setLoading(false); })
-      .catch(() => { setError("Impossible de charger vos échos."); setLoading(false); });
+      .catch(() => { setError("Impossible de charger vos vocapsules."); setLoading(false); });
   }, [uid]);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -2282,7 +2392,7 @@ function EchosQuickModal({ uid, accent, onClose }: { uid: string; accent: string
               Accès rapide
             </p>
             <h2 className="ekko-serif" style={{ fontSize: 20, fontWeight: 300, color: "#f0e8d8", margin: 0 }}>
-              Mes échos
+              Mes vocapsules
             </h2>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(240,232,216,0.3)", fontSize: 20, lineHeight: 1, padding: 4 }}>
@@ -2301,7 +2411,7 @@ function EchosQuickModal({ uid, accent, onClose }: { uid: string; accent: string
         )}
         {!loading && !error && echos.length === 0 && (
           <p className="ekko-serif" style={{ textAlign: "center", color: "rgba(240,232,216,0.3)", fontSize: 13, padding: "32px 0", fontStyle: "italic" }}>
-            Aucun écho actif pour le moment.
+            Aucune vocapsule active pour le moment.
           </p>
         )}
         {!loading && echos.map((echo) => {
@@ -2369,7 +2479,7 @@ function EchosQuickModal({ uid, accent, onClose }: { uid: string; accent: string
         {/* Footer */}
         <div style={{ marginTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", fontStyle: "italic", margin: 0 }}>
-            {echos.length} écho{echos.length > 1 ? "s" : ""} actif{echos.length > 1 ? "s" : ""}
+            {echos.length} vocapsule{echos.length > 1 ? "s" : ""} active{echos.length > 1 ? "s" : ""}
           </p>
           <button
             onClick={onClose}

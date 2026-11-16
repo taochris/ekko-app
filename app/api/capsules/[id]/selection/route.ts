@@ -34,12 +34,16 @@ function sanitizeManifest(raw: unknown): { manifest: CapsuleManifest; totalDurat
   const bookmarks: BookmarkDraftItem[] = rawBookmarks
     .map((item, idx) => {
       const b = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
-      return {
+      const bm: BookmarkDraftItem = {
         id: String(b.id ?? `bm_${idx + 1}`).slice(0, 64),
         title: String(b.title ?? "").trim().slice(0, 80),
         audioId: String(b.audioId ?? "").slice(0, 128),
         offsetInAudioSec: Math.max(0, Number(b.offsetInAudioSec ?? 0)),
       };
+      if (typeof b.color === "string" && b.color.trim()) {
+        bm.color = b.color.trim().slice(0, 32);
+      }
+      return bm;
     })
     .filter((b) => b.title.length > 0 && validAudioIds.has(b.audioId));
 
@@ -58,11 +62,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const capsule = await getCapsule(capsuleId);
     if (!capsule) return NextResponse.json({ error: "Capsule introuvable" }, { status: 404 });
 
-    if (capsule.status !== "paid_awaiting_selection" && capsule.status !== "pending") {
+    const body = await req.json();
+    if (body.reopen === true && capsule.status !== "pending") {
+      await updateCapsule(capsuleId, { status: "paid_awaiting_selection" });
+      return NextResponse.json({ reopened: true, status: "paid_awaiting_selection" });
+    }
+
+    if (capsule.status !== "paid_awaiting_selection" && capsule.status !== "pending" && capsule.status !== "ready" && capsule.status !== "paid") {
       return NextResponse.json({ error: "La sélection ne peut plus être modifiée" }, { status: 409 });
     }
 
-    const body = await req.json();
     const { manifest, totalDurationSec } = sanitizeManifest(body.manifest ?? body);
     if (totalDurationSec > MAX_VOCAPSULE_DURATION_SEC) {
       return NextResponse.json(
@@ -100,18 +109,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const capsule = await getCapsule(capsuleId);
     if (!capsule) return NextResponse.json({ error: "Capsule introuvable" }, { status: 404 });
 
-    if (capsule.status === "processing" || capsule.status === "ready") {
+    const body = await req.json();
+    if (capsule.status === "processing") {
       return NextResponse.json({ status: capsule.status, alreadyTriggered: true });
     }
 
-    if (capsule.status !== "paid_awaiting_selection" && capsule.status !== "paid" && capsule.status !== "failed") {
+    if (
+      capsule.status !== "paid_awaiting_selection" &&
+      capsule.status !== "paid" &&
+      capsule.status !== "ready" &&
+      capsule.status !== "failed"
+    ) {
       return NextResponse.json(
         { error: "Paiement non confirmé pour cette commande." },
         { status: 402 }
       );
     }
 
-    const body = await req.json();
     const uploadId = typeof body.uploadId === "string" && /^[a-zA-Z0-9_-]{1,64}$/.test(body.uploadId)
       ? body.uploadId
       : capsule.uploadId;

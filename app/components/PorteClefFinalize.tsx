@@ -686,35 +686,61 @@ export default function PorteClefFinalize({
             </div>
           </fieldset>
 
-          {/* Prix + livraison */}
+          {/* Récapitulatif détaillé du prix + livraison */}
           <div style={{
-            padding: "16px 18px", borderRadius: 14,
-            background: "rgba(201,169,110,0.05)", border: "1px solid rgba(201,169,110,0.18)",
-            display: "flex", flexDirection: "column", gap: 8,
+            padding: "18px 20px", borderRadius: 16,
+            background: "linear-gradient(145deg, rgba(13,10,15,0.82), rgba(201,169,110,0.10))",
+            border: `1.5px solid ${accent}55`,
+            boxShadow: `0 10px 28px rgba(0,0,0,0.35), inset 0 1px 0 ${accent}25`,
+            display: "flex", flexDirection: "column", gap: 10,
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.55)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                Porte-clé {currentFormat.name} · bois
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: `${accent}cc` }}>
+              Récapitulatif
+            </span>
+
+            {/* Ligne 1 : Porte-clé */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>
+                Porte-clé {currentFormat.name} ({nfcEnabled ? "QR code + NFC" : "QR code gravé"})
               </span>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 300, color: accent }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8", whiteSpace: "nowrap" }}>
+                {(baseCents / 100).toFixed(2).replace(".", ",")} €
+              </span>
+            </div>
+
+            {/* Ligne 2 : Recherche intelligente et chapitres */}
+            {(advanceSmartMode || alreadyPaidCapsuleId) && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>
+                  Recherche intelligente et chapitres sur Vocapsule
+                </span>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8", whiteSpace: "nowrap" }}>
+                  3,00 €
+                </span>
+              </div>
+            )}
+
+            {/* Séparateur */}
+            <div style={{ height: 1, background: `linear-gradient(to right, ${accent}45, rgba(255,255,255,0.08))`, margin: "2px 0" }} />
+
+            {/* Ligne Total */}
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 600, color: "#f0e8d8", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                Total TTC
+              </span>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 600, color: accent, whiteSpace: "nowrap" }}>
                 {price} €
               </span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+
+            {/* Inclus */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, paddingTop: 4, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               {[
                 "Gravure laser",
                 "Anneau inox",
-                "QR code unique",
-                ...(nfcEnabled ? ["NFC au dos"] : []),
+                "Conservation 20 ans incluse",
+                "Expédition gratuite",
               ].map((t) => (
-                <span key={t} style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>✦ {t}</span>
-              ))}
-              {(advanceSmartMode || alreadyPaidCapsuleId) && (
-                <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>
-                  ✦ Souvenirs intelligents · jusqu&apos;à 100 h analysées <span style={{ color: accent, fontWeight: 600 }}>(+3 €)</span>
-                </span>
-              )}
-              {["Conservation incluse", "Expédition gratuite"].map((t) => (
                 <span key={t} style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>✦ {t}</span>
               ))}
             </div>

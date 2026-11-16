@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+import SmartOptionShowcase from "./SmartOptionShowcase";
+
+const SmartScene3D = dynamic(() => import("./SmartScene3D"), { ssr: false });
 
 interface SmartOptionModalProps {
   accent: string;
@@ -86,101 +90,114 @@ export default function SmartOptionModal({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      style={{ maxWidth: 600, margin: "24px auto", padding: "0 12px" }}
+      style={{ maxWidth: 470, margin: "44px auto 64px", padding: "0 16px" }}
     >
       <div
         style={{
-          borderRadius: 24,
-          padding: "32px 26px",
-          background: "linear-gradient(145deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
-          border: `1px solid ${accent}40`,
-          boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 40px ${accent}12`,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <p
-          style={{
-            fontFamily: "Georgia, serif",
-            fontSize: 10,
-            letterSpacing: "0.35em",
-            textTransform: "uppercase",
-            color: accent,
-            marginBottom: 10,
-            textAlign: "center",
-          }}
-        >
-          ✦ Option facultative · {audioCount} message{audioCount > 1 ? "s" : ""} importé{audioCount > 1 ? "s" : ""}
-        </p>
-
-        <h2
-          style={{
-            fontFamily: "Georgia, serif",
-            fontWeight: 300,
-            fontSize: 26,
-            color: "#f0e8d8",
-            textAlign: "center",
-            margin: "0 0 14px",
-            lineHeight: 1.35,
-          }}
-        >
-          Retrouvez vos souvenirs en quelques mots
-        </h2>
-
-        <p
-          style={{
-            fontFamily: "Georgia, serif",
-            fontSize: 14,
-            color: "rgba(240,232,216,0.7)",
-            textAlign: "center",
-            lineHeight: 1.75,
-            margin: "0 0 24px",
-          }}
-        >
-          Vous avez importé de nombreux messages vocaux ? Retrouvez les plus précieux sans les écouter un par un (analyse jusqu&apos;à <strong style={{ color: "#f0e8d8", fontWeight: 500 }}>100 heures d&apos;audios</strong> importés), puis créez des marque-pages personnalisés pour votre Vocapsule d&apos;une heure.
-        </p>
-
-        {/* Résumé des 2 avantages */}
+        {/* 1. Bandeau du nombre d'audios importés (descendu et bien espacé) */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 12,
-            marginBottom: 26,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            padding: "10px 22px",
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.035)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            marginBottom: 32,
           }}
         >
+          <span
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: "50%",
+              background: "#45d483",
+              boxShadow: "0 0 10px #45d483",
+            }}
+          />
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>
+            Vous avez importé <strong style={{ color: accent, fontSize: 15.5 }}>{audioCount}</strong> audio{audioCount > 1 ? "s" : ""}
+          </span>
+        </div>
+
+        {/* 2. Badge de l'option + Titre bien aéré */}
+        <div style={{ textAlign: "center", marginBottom: 42 }}>
           <div
             style={{
-              padding: "14px 16px",
-              borderRadius: 14,
-              background: `${accent}0c`,
-              border: `1px solid ${accent}25`,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 20px",
+              borderRadius: 999,
+              background: `${accent}14`,
+              border: `1px solid ${accent}55`,
+              marginBottom: 30,
             }}
           >
-            <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", margin: "0 0 4px", fontWeight: 500 }}>
-              🔍 Recherche par le sens (jusqu&apos;à 100 h)
-            </p>
-            <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.55)", margin: 0, lineHeight: 1.5 }}>
-              Tapez « Anniversaire maman », « Déclaration d&apos;amour » ou un sujet précis pour retrouver vos vocaux parmi jusqu&apos;à 100 heures d&apos;enregistrements.
-            </p>
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.24em", textTransform: "uppercase", color: accent, fontWeight: 600 }}>
+              ✦ Option · Souvenirs intelligents (+3 €)
+            </span>
           </div>
-          <div
+
+          <h2
             style={{
-              padding: "14px 16px",
-              borderRadius: 14,
-              background: `${accent}0c`,
-              border: `1px solid ${accent}25`,
+              fontFamily: "Georgia, serif",
+              fontWeight: 400,
+              fontSize: 31,
+              color: "#f0e8d8",
+              margin: "0 0 20px",
+              lineHeight: 1.32,
             }}
           >
-            <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", margin: "0 0 4px", fontWeight: 500 }}>
-              🔖 Marque-pages interactifs
-            </p>
-            <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.55)", margin: 0, lineHeight: 1.5 }}>
-              Créez des repères nommés sur la piste finale pour accéder en un toucher à chaque souvenir depuis le téléphone.
-            </p>
-          </div>
+            Ne fouillez plus pendant des heures dans vos vocaux
+          </h2>
+          <p
+            style={{
+              fontFamily: "sans-serif",
+              fontSize: 14.5,
+              color: "rgba(240,232,216,0.6)",
+              margin: "0 auto",
+              maxWidth: 370,
+              lineHeight: 1.65,
+            }}
+          >
+            Découvrez en direct ce que <strong style={{ color: "#f0e8d8", fontWeight: 600 }}>l&apos;option change</strong> pour votre Vocapsule :
+          </p>
+        </div>
+
+        <div style={{ width: "100%", marginBottom: 36 }}>
+          <SmartScene3D />
+        </div>
+
+        <SmartOptionShowcase accent={accent} audioCount={audioCount} />
+
+        {/* Mention temps d'analyse (sans mention quasi instantanée) */}
+        <div
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "16px 20px",
+            borderRadius: 14,
+            background: "#120d0e",
+            border: "1px solid rgba(255,255,255,0.09)",
+            marginBottom: 32,
+            textAlign: "center",
+          }}
+        >
+          <p style={{ fontFamily: "sans-serif", fontSize: 13, color: "rgba(240,232,216,0.7)", margin: 0, lineHeight: 1.6 }}>
+            ⏱ <strong style={{ color: "#f0e8d8", fontWeight: 600 }}>Analyse rapide</strong> (~15 s pour 1 h de vocaux, jusqu&apos;à ~2 min pour 10 h d&apos;audios).
+          </p>
         </div>
 
         {step === "choice" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
             <motion.button
               type="button"
               whileHover={{ scale: 1.015 }}
@@ -229,7 +246,7 @@ export default function SmartOptionModal({
             </button>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
             <p style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "rgba(240,232,216,0.6)", margin: 0 }}>
               Pour débloquer immédiatement l&apos;analyse IA de votre bibliothèque, configurez votre commande (vous ne paierez rien de plus lors de la validation finale de votre sélection) :
             </p>
@@ -392,29 +409,53 @@ export default function SmartOptionModal({
               </div>
             )}
 
-            {/* Récapitulatif prix incluant +3 € */}
+            {/* Récapitulatif détaillé prix incluant +3 € */}
             <div
               style={{
-                padding: "12px 16px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                padding: "16px 18px",
+                borderRadius: 14,
+                background: "linear-gradient(145deg, rgba(13,10,15,0.82), rgba(201,169,110,0.10))",
+                border: `1.5px solid ${accent}55`,
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                flexDirection: "column",
+                gap: 8,
               }}
             >
-              <div>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", margin: 0 }}>
-                  Commande complète + Souvenirs intelligents (+3,00 €)
-                </p>
-                <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.45)", margin: "2px 0 0" }}>
-                  Paiement unique · Aucun second paiement à la validation
-                </p>
-              </div>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 20, color: accent, fontWeight: 500 }}>
-                {totalFormatted}
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: `${accent}cc` }}>
+                Récapitulatif
               </span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8" }}>
+                  {isPorteClef
+                    ? `Porte-clé bois (${nfcEnabled ? "QR code + NFC" : "QR code gravé"})`
+                    : `Vocapsule numérique (${storageOption === 0 ? "7 jours" : storageOption === 100 ? "1 an" : "2 ans"})`}
+                </span>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", whiteSpace: "nowrap" }}>
+                  {(basePriceCents / 100).toFixed(2).replace(".", ",")} €
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8" }}>
+                  Recherche intelligente et chapitres sur Vocapsule
+                </span>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", whiteSpace: "nowrap" }}>
+                  3,00 €
+                </span>
+              </div>
+              <div style={{ height: 1, background: `linear-gradient(to right, ${accent}45, rgba(255,255,255,0.08))`, margin: "2px 0" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
+                <div>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 600, color: "#f0e8d8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Total TTC
+                  </span>
+                  <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.45)", margin: "2px 0 0" }}>
+                    Paiement unique · Aucun second paiement à la validation
+                  </p>
+                </div>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 22, color: accent, fontWeight: 600, whiteSpace: "nowrap" }}>
+                  {totalFormatted}
+                </span>
+              </div>
             </div>
 
             {/* Consentement non précoché */}

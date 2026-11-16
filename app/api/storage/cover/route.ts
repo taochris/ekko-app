@@ -59,11 +59,11 @@ export async function POST(req: NextRequest) {
     initAdmin();
     const bucket = getStorage().bucket();
 
-    // Vérifier que l'écho existe bien sous cet uid avant d'autoriser l'upload de la couverture
+    // Vérifier que la vocapsule existe bien sous cet uid avant d'autoriser l'upload de la couverture
     const [existingEchoFiles] = await bucket.getFiles({ prefix: `echos/${uid}/${echoId}/` });
     const hasAudio = existingEchoFiles.some((f) => /\/audio\.[a-z0-9]+$/.test(f.name));
     if (!hasAudio) {
-      return NextResponse.json({ error: "Écho introuvable." }, { status: 404 });
+      return NextResponse.json({ error: "Vocapsule introuvable." }, { status: 404 });
     }
 
     const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
