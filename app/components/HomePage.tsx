@@ -363,7 +363,6 @@ export default function HomePage() {
           transform: translateY(0) !important;
         }
         @media (max-width: 768px) {
-          .hp-reviews-grid { grid-template-columns: 1fr !important; padding: 0 20px !important; }
           .hp-themes-grid { grid-template-columns: 1fr !important; padding: 0 20px !important; }
           .hp-detail-inner { flex-direction: column !important; padding: 60px 20px !important; }
           .hp-detail-visual { display: none !important; }
@@ -971,102 +970,6 @@ export default function HomePage() {
             </a>
           </motion.div>
         )}
-      </section>
-
-      {/* ═══════════════ AVIS CLIENTS ═══════════════ */}
-      <section style={{
-        position: "relative", zIndex: 10,
-        borderTop: "1px solid rgba(201,169,110,0.08)",
-        padding: "100px 56px 80px", textAlign: "center",
-      }}>
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          style={{ marginBottom: 56 }}
-        >
-          <p style={{
-            fontFamily: font, fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase",
-            color: "rgba(201,169,110,0.5)", marginBottom: 16,
-          }}>Témoignages</p>
-          <h2 style={{
-            fontFamily: font, fontWeight: 300, fontSize: "clamp(1.4rem, 3vw, 2rem)",
-            color: cream, margin: 0,
-          }}>Ils ont créé leur souvenir.</h2>
-        </motion.div>
-
-        <div style={{
-          maxWidth: 1100, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20,
-        }} className="hp-reviews-grid">
-          {[
-            {
-              name: "Sophie M.",
-              role: "Offert à sa mère",
-              text: "Ma mère a fondu en larmes quand elle a scanné le QR code et entendu les voix de toute la famille. Un cadeau qu'elle garde précieusement.",
-              stars: 5,
-            },
-            {
-              name: "Thomas R.",
-              role: "Anniversaire de mariage",
-              text: "J'ai rassemblé les messages vocaux de nos proches pour l'anniversaire de nos 10 ans. Le résultat est magnifique, le bois est d'une qualité exceptionnelle.",
-              stars: 5,
-            },
-            {
-              name: "Camille D.",
-              role: "En souvenir d'un proche",
-              text: "Après le décès de mon père, j'ai créé une vocapsule avec ses derniers messages. Ce porte-clé me permet de garder sa voix pour toujours.",
-              stars: 5,
-            },
-            {
-              name: "Lucas B.",
-              role: "Cadeau d'équipe",
-              text: "On a offert une vocapsule à notre manager pour son départ. Tous ses collègues ont enregistré un message. Elle en parle encore des mois après.",
-              stars: 5,
-            },
-          ].map((review, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.12 }}
-              style={{
-                borderRadius: 20, padding: "28px 24px",
-                background: "rgba(10,8,12,0.8)",
-                border: "1px solid rgba(201,169,110,0.1)",
-                display: "flex", flexDirection: "column", gap: 16,
-                textAlign: "left",
-              }}
-            >
-              {/* Étoiles */}
-              <div style={{ display: "flex", gap: 3 }}>
-                {Array.from({ length: review.stars }).map((_, s) => (
-                  <svg key={s} viewBox="0 0 16 16" fill="#c9a96e" style={{ width: 14, height: 14 }}>
-                    <path d="M8 1l1.8 3.6L14 5.3l-3 2.9.7 4.1L8 10.4l-3.7 1.9.7-4.1-3-2.9 4.2-.7z"/>
-                  </svg>
-                ))}
-              </div>
-              {/* Texte */}
-              <p style={{
-                fontFamily: font, fontSize: 13, lineHeight: 1.8,
-                fontStyle: "italic", color: "rgba(240,232,216,0.65)", margin: 0, flex: 1,
-              }}>
-                &ldquo;{review.text}&rdquo;
-              </p>
-              {/* Auteur */}
-              <div style={{ borderTop: "1px solid rgba(201,169,110,0.08)", paddingTop: 14 }}>
-                <p style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: cream, margin: "0 0 2px" }}>
-                  {review.name}
-                </p>
-                <p style={{ fontFamily: font, fontSize: 11, color: "rgba(201,169,110,0.55)", margin: 0, letterSpacing: "0.05em" }}>
-                  {review.role}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
       </section>
 
       {/* ═══════════════ CADEAU ═══════════════ */}
