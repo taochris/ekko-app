@@ -1453,8 +1453,8 @@ export default function AudioSelector({
         </div>
       )}
 
-      {/* ═══ ZONE 3 — Marque-pages (uniquement si option Souvenirs intelligents activée) ═══ */}
-      {smartSearchEnabled && (
+      {/* ═══ ZONE 3 — Marque-pages (si option Souvenirs intelligents activée, sinon proposition d'activation sous le montage) ═══ */}
+      {smartSearchEnabled ? (
         <BookmarkEditor
           selectedAudios={selectedAudiosForBookmarks}
           bookmarks={bookmarks}
@@ -1470,6 +1470,102 @@ export default function AudioSelector({
           }}
           accent={config.accent}
         />
+      ) : (
+        onRequestEnableSmartOption && (
+          <div
+            style={{
+              marginBottom: 24,
+              padding: "20px 22px",
+              borderRadius: 18,
+              background: "rgba(18, 13, 12, 0.84)",
+              border: `1px solid ${config.accent}45`,
+              boxShadow: "0 12px 32px rgba(0,0,0,0.42)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
+              <div style={{ flex: "1 1 260px" }}>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.24em", textTransform: "uppercase", color: config.accent, margin: "0 0 6px", fontWeight: 600 }}>
+                  ✦ Option · Repères sur la ligne de lecture (+3 €)
+                </p>
+                <p style={{ fontFamily: "Georgia, serif", fontSize: 17, color: "#f0e8d8", margin: "0 0 6px" }}>
+                  Ajoutez des marque-pages colorés à votre vocapsule
+                </p>
+                <p style={{ fontFamily: "sans-serif", fontSize: 13, color: "rgba(240,232,216,0.62)", margin: 0, lineHeight: 1.6 }}>
+                  Nommez chaque souvenir de votre montage et placez des repères de couleur sur la piste de lecture pour y accéder en un toucher (débloque aussi la recherche IA).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onRequestEnableSmartOption}
+                style={{
+                  padding: "12px 18px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  background: `linear-gradient(135deg, ${config.accent}40, ${config.accent}80)`,
+                  border: `1px solid ${config.accent}`,
+                  color: "#fff",
+                  fontFamily: "Georgia, serif",
+                  fontSize: 13.5,
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  boxShadow: `0 6px 20px ${config.accent}25`,
+                }}
+              >
+                Ajouter les repères (+3 €)
+              </button>
+            </div>
+
+            {/* Aperçu visuel de la bande chronologique colorée */}
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.025)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              <div style={{ display: "flex", height: 11, borderRadius: 999, background: "rgba(255,255,255,0.04)", padding: 2, gap: 4 }}>
+                <div style={{ flex: 3, borderRadius: 999, background: "#d4a857" }} />
+                <div style={{ flex: 3.5, borderRadius: 999, background: "#57c88a" }} />
+                <div style={{ flex: 2.5, borderRadius: 999, background: "#5ea6e8" }} />
+                <div style={{ flex: 3, borderRadius: 999, background: "#e4766c" }} />
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {[
+                  { label: "Anniversaire maman", time: "00:12", color: "#d4a857" },
+                  { label: "Je t'aime", time: "01:45", color: "#57c88a" },
+                  { label: "Vacances", time: "03:20", color: "#5ea6e8" },
+                ].map((tag) => (
+                  <span
+                    key={tag.label}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background: `${tag.color}16`,
+                      border: `1px solid ${tag.color}65`,
+                      fontFamily: "sans-serif",
+                      fontSize: 11,
+                      color: "#f0e8d8",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: tag.color }} />
+                    <span>{tag.label}</span>
+                    <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10.5, color: tag.color, fontWeight: 600 }}>{tag.time}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
       )}
 
       {/* Action buttons */}
