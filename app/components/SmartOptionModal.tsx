@@ -522,7 +522,7 @@ export default function SmartOptionModal({
                   cursor: canPay ? "pointer" : "not-allowed",
                 }}
               >
-                {submitting ? "Redirection vers le paiement…" : `Payer ${totalFormatted} et activer la recherche`}
+                {submitting ? "Validation de votre commande…" : `Commander ma vocapsule (+ option IA) — ${totalFormatted}`}
               </motion.button>
             </div>
           </div>

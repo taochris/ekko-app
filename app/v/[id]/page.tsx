@@ -35,8 +35,27 @@ export default function VocapsulePage() {
   const [bookmarks, setBookmarks] = useState<PlayerBookmark[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState<number>(1);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const skipBy = (deltaSec: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    const total = duration || a.duration || 0;
+    const next = Math.max(0, Math.min(total > 0 ? total : Infinity, a.currentTime + deltaSec));
+    a.currentTime = next;
+    if (total > 0) setProgress((next / total) * 100);
+  };
+
+  const cyclePlaybackRate = () => {
+    const rates = [1, 1.25, 1.5, 2];
+    const nextRate = rates[(rates.indexOf(playbackRate) + 1) % rates.length] ?? 1;
+    setPlaybackRate(nextRate);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = nextRate;
+    }
+  };
 
   const resetHideTimer = () => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
@@ -325,22 +344,68 @@ export default function VocapsulePage() {
               </div>
             </div>
 
-            {/* Barre de progression — plus haute pour mobile, avec repères visuels des marque-pages */}
+            {/* Barre de progression — curseur glissable tactile/souris + repères des marque-pages */}
             <div
-              style={{ position: "relative", height: 5, borderRadius: 3, background: "rgba(255,255,255,0.07)", cursor: "pointer", marginBottom: 28, touchAction: "none" }}
+              style={{ position: "relative", height: 26, display: "flex", alignItems: "center", cursor: "pointer", marginBottom: 14, touchAction: "none" }}
               onClick={(e) => {
                 const a = audioRef.current;
                 if (!a || !duration) return;
                 const rect = e.currentTarget.getBoundingClientRect();
-                const ratio = (e.clientX - rect.left) / rect.width;
+                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                 a.currentTime = ratio * duration;
+                setProgress(ratio * 100);
               }}
             >
-              <div style={{
-                height: "100%", borderRadius: 3,
-                background: `linear-gradient(90deg, ${accent}70, ${accent})`,
-                width: `${progress}%`, transition: "width 0.1s linear",
-              }} />
+              <div style={{ position: "relative", width: "100%", height: 6, borderRadius: 999, background: "rgba(255,255,255,0.12)" }}>
+                <div style={{
+                  height: "100%", borderRadius: 999,
+                  background: `linear-gradient(90deg, ${accent}70, ${accent})`,
+                  width: `${progress}%`,
+                }} />
+                {/* Curseur rond visible pour avancer / reculer librement */}
+                <span
+                  style={{
+                    position: "absolute",
+                    left: `${progress}%`,
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: "#f0e8d8",
+                    border: `2px solid ${accent}`,
+                    boxShadow: `0 0 10px ${accent}`,
+                    pointerEvents: "none",
+                    zIndex: 2,
+                  }}
+                />
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={duration || 100}
+                step={0.1}
+                value={duration > 0 ? (duration * progress) / 100 : 0}
+                onChange={(e) => {
+                  const a = audioRef.current;
+                  const val = Number(e.target.value);
+                  if (a && duration > 0) {
+                    a.currentTime = val;
+                    setProgress((val / duration) * 100);
+                  }
+                }}
+                aria-label="Position de lecture"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  opacity: 0,
+                  cursor: "pointer",
+                  margin: 0,
+                  zIndex: 2,
+                }}
+              />
               {duration > 0 && bookmarks.map((bm) => {
                 const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
                 const isActive = activeBookmarkId === bm.id;
@@ -384,6 +449,60 @@ export default function VocapsulePage() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Contrôles d'avance rapide (-15s / +15s) et de vitesse de lecture (1x / 1.25x / 1.5x / 2x) */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 24 }}>
+              <button
+                type="button"
+                onClick={() => skipBy(-15)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  color: "#f0e8d8",
+                  fontFamily: "sans-serif",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                ↺ -15 s
+              </button>
+              <button
+                type="button"
+                onClick={cyclePlaybackRate}
+                title="Changer la vitesse de lecture"
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  background: playbackRate !== 1 ? `${accent}28` : "rgba(255,255,255,0.06)",
+                  border: `1px solid ${playbackRate !== 1 ? accent : "rgba(255,255,255,0.14)"}`,
+                  color: playbackRate !== 1 ? accent : "#f0e8d8",
+                  fontFamily: "sans-serif",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Vitesse {playbackRate}×
+              </button>
+              <button
+                type="button"
+                onClick={() => skipBy(15)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  color: "#f0e8d8",
+                  fontFamily: "sans-serif",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                +15 s ↻
+              </button>
             </div>
 
             {/* Section Mes marque-pages (affichée uniquement lorsqu'il y a des marque-pages) */}
@@ -606,17 +725,66 @@ export default function VocapsulePage() {
                   </span>
                 </div>
                 <div
-                  style={{ position: "relative", height: 5, borderRadius: 3, background: "rgba(255,255,255,0.16)", cursor: "pointer" }}
+                  style={{ position: "relative", height: 26, display: "flex", alignItems: "center", cursor: "pointer" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     const a = audioRef.current;
                     if (!a || !duration) return;
                     const rect = e.currentTarget.getBoundingClientRect();
-                    a.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+                    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    a.currentTime = ratio * duration;
+                    setProgress(ratio * 100);
                     resetHideTimer();
                   }}
                 >
-                  <div style={{ height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${accent}80, ${accent})`, width: `${progress}%`, transition: "width 0.1s linear" }} />
+                  <div style={{ position: "relative", width: "100%", height: 6, borderRadius: 999, background: "rgba(255,255,255,0.2)" }}>
+                    <div style={{ height: "100%", borderRadius: 999, background: `linear-gradient(90deg, ${accent}80, ${accent})`, width: `${progress}%` }} />
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: `${progress}%`,
+                        top: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        background: "#f0e8d8",
+                        border: `2px solid ${accent}`,
+                        boxShadow: `0 0 10px ${accent}`,
+                        pointerEvents: "none",
+                        zIndex: 2,
+                      }}
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 100}
+                    step={0.1}
+                    value={duration > 0 ? (duration * progress) / 100 : 0}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      const a = audioRef.current;
+                      const val = Number(e.target.value);
+                      if (a && duration > 0) {
+                        a.currentTime = val;
+                        setProgress((val / duration) * 100);
+                      }
+                      resetHideTimer();
+                    }}
+                    aria-label="Position de lecture"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      opacity: 0,
+                      cursor: "pointer",
+                      margin: 0,
+                      zIndex: 2,
+                    }}
+                  />
                   {duration > 0 && bookmarks.map((bm) => {
                     const pct = Math.min(99, Math.max(1, (bm.timeSec / duration) * 100));
                     const isActive = activeBookmarkId === bm.id;
@@ -660,6 +828,60 @@ export default function VocapsulePage() {
                       </button>
                     );
                   })}
+                </div>
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 12 }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { skipBy(-15); resetHideTimer(); }}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 999,
+                      background: "rgba(0,0,0,0.55)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      color: "#f0e8d8",
+                      fontFamily: "sans-serif",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    ↺ -15 s
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { cyclePlaybackRate(); resetHideTimer(); }}
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: 999,
+                      background: playbackRate !== 1 ? `${accent}35` : "rgba(0,0,0,0.55)",
+                      border: `1px solid ${playbackRate !== 1 ? accent : "rgba(255,255,255,0.22)"}`,
+                      color: playbackRate !== 1 ? accent : "#f0e8d8",
+                      fontFamily: "sans-serif",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Vitesse {playbackRate}×
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { skipBy(15); resetHideTimer(); }}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 999,
+                      background: "rgba(0,0,0,0.55)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      color: "#f0e8d8",
+                      fontFamily: "sans-serif",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    +15 s ↻
+                  </button>
                 </div>
                 {bookmarks.length > 0 && (
                   <div

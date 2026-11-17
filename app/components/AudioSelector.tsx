@@ -1136,49 +1136,7 @@ export default function AudioSelector({
             </div>
           )}
         </div>
-      ) : (
-        onRequestEnableSmartOption && (
-          <div
-            style={{
-              marginBottom: 22,
-              padding: "12px 16px",
-              borderRadius: 14,
-              background: "rgba(255,255,255,0.025)",
-              border: `1px solid ${config.accent}25`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 10,
-            }}
-          >
-            <div>
-              <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "#f0e8d8", margin: 0 }}>
-                ✦ Retrouvez un vocal par son contenu (jusqu&apos;à 100 h d&apos;audios analysés) et créez des marque-pages
-              </p>
-              <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.45)", margin: "2px 0 0" }}>
-                Activez Souvenirs intelligents sans perdre votre sélection actuelle.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onRequestEnableSmartOption}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 10,
-                background: `${config.accent}22`,
-                border: `1px solid ${config.accent}55`,
-                color: config.accent,
-                fontFamily: "Georgia, serif",
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              Activer Souvenirs intelligents — +3 €
-            </button>
-          </div>
-        )
-      )}
+      ) : null}
 
       {/* ═══ ZONE 1 — Bibliothèque ═══ */}
       <div style={{ marginBottom: 32 }}>
@@ -1471,7 +1429,7 @@ export default function AudioSelector({
           accent={config.accent}
         />
       ) : (
-        onRequestEnableSmartOption && (
+        onRequestEnableSmartOption && orderedSelected.length > 0 && (
           <div
             style={{
               marginBottom: 24,

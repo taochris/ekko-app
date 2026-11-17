@@ -806,11 +806,11 @@ export default function PorteClefFinalize({
               {status === "uploading"
                 ? "Préparation de votre commande…"
                 : status === "redirecting"
-                  ? "Activation de la recherche intelligente…"
+                  ? "Validation de votre commande et activation de l'option IA…"
                   : alreadyPaidCapsuleId
                     ? "Valider mon porte-clé et lancer la création (déjà réglé)"
                     : advanceSmartMode
-                      ? `Régler ${price} € et activer la recherche intelligente`
+                      ? `Commander mon porte-clé (+ option IA) — ${price} €`
                       : `Commander mon porte-clé — ${price} €`}
             </motion.button>
             <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0, fontStyle: "italic", textAlign: "center" }}>

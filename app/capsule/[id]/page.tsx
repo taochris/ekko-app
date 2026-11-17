@@ -198,25 +198,6 @@ export default function CapsulePage({ params }: { params: Promise<{ id: string }
         <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 28 }}>
           <EkkoLogo />
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-            {capsule && !isAwaitingSelection && !isPorteClefScan && (
-              <button
-                type="button"
-                onClick={handleBackToPreviousStep}
-                className="ekko-serif"
-                style={{
-                  padding: "7px 14px",
-                  borderRadius: 20,
-                  background: "rgba(255,255,255,0.08)",
-                  border: `1px solid ${accent}55`,
-                  color: "#f0e8d8",
-                  fontSize: 11,
-                  letterSpacing: "0.1em",
-                  cursor: "pointer",
-                }}
-              >
-                ← Étape précédente (Modifier ma sélection)
-              </button>
-            )}
             <button
               type="button"
               onClick={() => router.push("/")}
@@ -819,10 +800,26 @@ function KeychainSuccessScreen({
             </div>
           )}
 
-          {onBackToSelection && (
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
             <button
               type="button"
-              onClick={onBackToSelection}
+              onClick={() => { window.location.href = "/compte"; }}
+              style={{
+                padding: "9px 16px",
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.06)",
+                border: `1px solid ${accent}55`,
+                color: "#f0e8d8",
+                fontFamily: "sans-serif",
+                fontSize: 12.5,
+                cursor: "pointer",
+              }}
+            >
+              ✦ Voir mes commandes &amp; mes vocapsules
+            </button>
+            <button
+              type="button"
+              onClick={() => { window.location.href = "/"; }}
               style={{
                 padding: "9px 16px",
                 borderRadius: 10,
@@ -834,9 +831,9 @@ function KeychainSuccessScreen({
                 cursor: "pointer",
               }}
             >
-              ← Revenir à l&apos;étape précédente (modifier mes audios ou mes étiquettes)
+              ← Retour à l&apos;accueil
             </button>
-          )}
+          </div>
         </motion.div>
 
         <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.25)", fontStyle: "italic", marginTop: 8 }}>
