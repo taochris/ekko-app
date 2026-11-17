@@ -47,6 +47,7 @@ interface Echo {
   createdApprox: string | null;
   productType?: string;
   nfcEnabled?: boolean;
+  smartSearchEnabled?: boolean;
   paidAt?: string | null;
 }
 
@@ -109,13 +110,25 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
 
   const invoices: Invoice[] = echos
     .filter(e => e.paidAt ?? e.createdApprox)
-    .map((e, i) => ({
-      id: "INV-" + String(i + 1).padStart(3, "0"),
-      date: (e.paidAt ?? e.createdApprox) as string,
-      amount: e.productType === "porteClef" ? (e.nfcEnabled ? "27,90 €" : "24,90 €") : (STORAGE_PRICES[e.storageOption] ?? "—"),
-      description: e.productType === "porteClef" ? `Porte-clé EKKO — ${e.nfcEnabled ? "QR + NFC" : "QR seul"}` : "Echo Sonore — " + (STORAGE_LABELS_INV[e.storageOption] ?? ""),
-      status: "payee" as const,
-    }));
+    .map((e, i) => {
+      const smartCents = e.smartSearchEnabled ? 300 : 0;
+      const baseCents =
+        e.productType === "porteClef"
+          ? (e.nfcEnabled ? 2790 : 2490)
+          : (e.storageOption === 100 ? 1099 : e.storageOption === 200 ? 1199 : 999);
+      const totalStr = ((baseCents + smartCents) / 100).toFixed(2).replace(".", ",") + " €";
+      const smartSuffix = e.smartSearchEnabled ? " + Souvenirs intelligents" : "";
+      return {
+        id: "INV-" + String(i + 1).padStart(3, "0"),
+        date: (e.paidAt ?? e.createdApprox) as string,
+        amount: totalStr,
+        description:
+          e.productType === "porteClef"
+            ? `Porte-clé VOSEKKO — ${e.nfcEnabled ? "QR + NFC" : "QR seul"}${smartSuffix}`
+            : `Vocapsule sonore — ${STORAGE_LABELS_INV[e.storageOption] ?? ""}${smartSuffix}`,
+        status: "payee" as const,
+      };
+    });
 
   useEffect(() => {
     const uid = user.uid;
@@ -218,7 +231,7 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
         }
       `}</style>
       <nav className="account-nav" style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <img src="/ekko-logo.png" alt="EKKO" onClick={() => router.push("/")} className="account-logo" style={{ width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
+        <img src="/vosekko-logo.png" alt="VOSEKKO" onClick={() => router.push("/")} className="account-logo" style={{ width: "auto", objectFit: "contain", mixBlendMode: "screen", cursor: "pointer" }} />
         <div className="account-nav-btns" style={{ display: "flex", alignItems: "center" }}>
           <button
             onClick={() => router.push("/")}

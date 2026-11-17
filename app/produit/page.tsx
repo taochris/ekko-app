@@ -117,7 +117,7 @@ export default function ProduitPage() {
         padding: "24px 40px",
       }}>
         <a href="/" style={{ textDecoration: "none" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 60, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 60, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </a>
         <a href="/" style={{
           fontFamily: "Georgia, serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
@@ -143,7 +143,7 @@ export default function ProduitPage() {
             fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.5em",
             textTransform: "uppercase", color: "rgba(201,169,110,0.6)", marginBottom: 16,
           }}>
-            Porte-clés EKKO
+            Porte-clés VOSEKKO
           </p>
           <h1 style={{
             fontFamily: "Georgia, serif", fontWeight: 300,
@@ -419,7 +419,7 @@ export default function ProduitPage() {
                     })
                   )}
                   <text x="60" y="105" textAnchor="middle" fill={currentMaterial.accent} fontFamily="Georgia, serif" fontSize="8" letterSpacing="2" opacity="0.6">
-                    EKKO
+                    VOSEKKO
                   </text>
                 </svg>
                 <p style={{
@@ -552,9 +552,9 @@ export default function ProduitPage() {
         borderTop: "1px solid rgba(201,169,110,0.08)",
         padding: "24px 40px", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 32, mixBlendMode: "screen" }} />
+        <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 32, mixBlendMode: "screen" }} />
         <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.25)" }}>
-          © 2025 EKKO. Tous droits réservés.
+          © 2026 VOSEKKO. Tous droits réservés.
         </p>
       </footer>
 

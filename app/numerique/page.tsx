@@ -75,7 +75,7 @@ export default function NumeriquePage() {
         padding: "24px 40px",
       }}>
         <a href="/">
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 60, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 60, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </a>
         <a href="/" style={{
           fontFamily: font, fontSize: 12, fontWeight: 600, letterSpacing: "0.16em",
@@ -295,7 +295,7 @@ export default function NumeriquePage() {
 
       {/* Footer */}
       <footer style={{ position: "relative", zIndex: 10, width: "100%", borderTop: "1px solid rgba(201,169,110,0.08)", padding: "32px 56px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, boxSizing: "border-box" }}>
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 40, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+        <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 40, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 20, justifyContent: "flex-end" }}>
           <a href="/cgv" style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.35)", textDecoration: "none", letterSpacing: "0.1em" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = gold; }}
@@ -303,7 +303,7 @@ export default function NumeriquePage() {
           <a href="/rgpd" style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.35)", textDecoration: "none", letterSpacing: "0.1em" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = gold; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(240,232,216,0.35)"; }}>Confidentialité</a>
-          <p style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0 }}>© 2025 EKKO. Tous droits réservés.</p>
+          <p style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0 }}>© 2026 VOSEKKO. Tous droits réservés.</p>
           <a href="mailto:vosekko@outlook.com" style={{ fontFamily: font, fontSize: 11, color: "rgba(240,232,216,0.35)", textDecoration: "none", letterSpacing: "0.1em" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = gold; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(240,232,216,0.35)"; }}>Contact</a>

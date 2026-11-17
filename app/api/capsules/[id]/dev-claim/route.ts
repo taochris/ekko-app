@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCapsule, markCapsulePaid } from "../../../../lib/capsules";
+import { getCapsule, markCapsulePaid, markCapsulePaidAwaitingSelection } from "../../../../lib/capsules";
 import { sendKeychainOrderEmails } from "../../../../lib/order-emails";
 
 export const runtime = "nodejs";
@@ -27,8 +27,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
-  if (capsule.status === "ready" || capsule.status === "processing" || capsule.status === "paid") {
+  if (
+    capsule.status === "ready" ||
+    capsule.status === "processing" ||
+    capsule.status === "paid" ||
+    capsule.status === "paid_awaiting_selection"
+  ) {
     return NextResponse.json({ status: capsule.status });
+  }
+
+  if (capsule.advancePayment) {
+    await markCapsulePaidAwaitingSelection(capsuleId, "dev-bypass");
+    return NextResponse.json({ status: "paid_awaiting_selection", triggered: false });
   }
 
   try {
@@ -44,19 +54,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }).catch((e) => console.error("[dev-claim] trigger process failed:", e));
 
   // Emails pour porteClef (même logique que le webhook Stripe)
-  if (capsule.productType === "porteClef" && capsule.engraveName) {
+  if (capsule.productType === "porteClef") {
     console.log(`[dev-claim] engravingFont Firestore="${capsule.engravingFont}" format="${capsule.format}"`);
     const qrUrl = `${origin}/capsule/${capsuleId}`;
     await sendKeychainOrderEmails({
       capsuleId,
-      engraveName: capsule.engraveName,
+      engraveName: capsule.engraveName ?? "",
       format: capsule.format ?? "etiquette-rect",
       qrUrl,
       shippingName: capsule.shippingName ?? "[dev-test]",
       shippingAddress: capsule.shippingAddress ?? "",
       customerPhone: capsule.customerPhone ?? "",
       customerEmail: capsule.customerEmail ?? "",
-      amount: capsule.nfcEnabled ? 2790 : 2490,
+      amount: (capsule.nfcEnabled ? 2790 : 2490) + (capsule.smartSearchEnabled ? 300 : 0),
       engravingFont: capsule.engravingFont ?? "Georgia, serif",
       nfcEnabled: capsule.nfcEnabled ?? false,
     }).catch((e) => console.error("[dev-claim] sendKeychainOrderEmails:", e));

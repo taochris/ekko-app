@@ -88,7 +88,7 @@ export default function ArticleInstagramIphone() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -128,7 +128,7 @@ export default function ArticleInstagramIphone() {
               Une fois le fichier téléchargé, vos messages et médias sont bien présents — mais ils se trouvent dans une archive avec de nombreux dossiers.
             </P>
             <Callout emoji="👉" color={insta}>
-              C&apos;est justement là qu&apos;<a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a> devient utile : l&apos;application vous aide à retrouver et extraire facilement les audios importants, sans fouiller manuellement dans tous les fichiers.{" "}
+              C&apos;est justement là qu&apos;<a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>VOSEKKO</a> devient utile : l&apos;application vous aide à retrouver et extraire facilement les audios importants, sans fouiller manuellement dans tous les fichiers.{" "}
               <strong style={{ color: "#f0e8d8" }}>Vous pouvez même l&apos;utiliser gratuitement pour voir quels audios sont récupérables avant d&apos;aller plus loin.</strong>
             </Callout>
           </div>
@@ -145,7 +145,7 @@ export default function ArticleInstagramIphone() {
             "retrouver des audios noyés dans des années de conversation",
             "garder les souvenirs d'une amitié",
             "réentendre la voix d'une personne disparue",
-            "transformer ces audios en capsule souvenir avec EKKO",
+            "transformer ces audios en capsule souvenir avec VOSEKKO",
           ]} />
           <P>Car parfois, un simple vocal contient bien plus qu&apos;un message.</P>
 
@@ -220,13 +220,13 @@ export default function ArticleInstagramIphone() {
 
           <Separator />
 
-          {/* EKKO simplifie */}
-          <H2>C&apos;est là qu&apos;EKKO simplifie tout</H2>
-          <P>EKKO est conçu pour éviter de passer une heure à fouiller dans une archive Instagram.</P>
+          {/* VOSEKKO simplifie */}
+          <H2>C&apos;est là qu&apos;VOSEKKO simplifie tout</H2>
+          <P>VOSEKKO est conçu pour éviter de passer une heure à fouiller dans une archive Instagram.</P>
 
           <EkkoBlock>
             <p className="ekko-serif" style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 16 }}>
-              Avec EKKO
+              Avec VOSEKKO
             </p>
             <BulletList items={[
               "importez votre fichier Instagram en quelques secondes",
@@ -249,7 +249,7 @@ export default function ArticleInstagramIphone() {
 
           {/* Transformer */}
           <H2>Et après ? Transformez vos audios Instagram en souvenir</H2>
-          <P>Une fois les vocaux retrouvés, EKKO peut vous aider à créer une capsule audio fluide :</P>
+          <P>Une fois les vocaux retrouvés, VOSEKKO peut vous aider à créer une capsule audio fluide :</P>
           <BulletList items={[
             "plusieurs vocaux réunis dans un seul souvenir",
             "écoute simple sur mobile",
@@ -292,7 +292,7 @@ export default function ArticleInstagramIphone() {
           </P>
           <P>
             Instagram fournit une archive complète, avec beaucoup de dossiers et de fichiers.
-            EKKO sert justement à rendre cette étape plus simple : retrouver vos audios, les écouter, les sélectionner, puis les transformer en souvenir.
+            VOSEKKO sert justement à rendre cette étape plus simple : retrouver vos audios, les écouter, les sélectionner, puis les transformer en souvenir.
           </P>
 
           <div style={{ marginTop: 40, display: "flex", justifyContent: "center" }}>
@@ -302,7 +302,7 @@ export default function ArticleInstagramIphone() {
               onClick={() => router.push("/")}
               style={{ padding: "14px 36px", borderRadius: 50, background: `linear-gradient(135deg, ${accent}33, ${accent}55)`, border: `1px solid ${accent}50`, color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 15, cursor: "pointer", letterSpacing: "0.05em" }}
             >
-              Créer ma vocapsule EKKO →
+              Créer ma vocapsule VOSEKKO →
             </motion.button>
           </div>
 

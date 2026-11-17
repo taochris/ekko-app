@@ -35,8 +35,8 @@ const APP_GUIDES: AppGuide[] = [
         "Faites défiler vers le bas → \"Exporter la discussion\"",
         "Choisissez \"Avec médias\" pour inclure les messages vocaux",
         "WhatsApp affiche une feuille de partage :",
-        "→ Sur iPhone directement : appuyez sur \"Enregistrer dans Fichiers\" sur votre appareil, puis ouvrez EKKO depuis Safari et importez le ZIP via l'appli Fichiers",
-        "→ Pour passer sur PC : choisissez iCloud Drive, Google Drive ou Dropbox comme destination, synchronisez, puis récupérez le ZIP sur votre ordinateur et glissez-le dans EKKO",
+        "→ Sur iPhone directement : appuyez sur \"Enregistrer dans Fichiers\" sur votre appareil, puis ouvrez VOSEKKO depuis Safari et importez le ZIP via l'appli Fichiers",
+        "→ Pour passer sur PC : choisissez iCloud Drive, Google Drive ou Dropbox comme destination, synchronisez, puis récupérez le ZIP sur votre ordinateur et glissez-le dans VOSEKKO",
       ],
       android: [
         "Ouvrez la conversation WhatsApp",
@@ -44,7 +44,7 @@ const APP_GUIDES: AppGuide[] = [
         "Choisissez \"Avec les médias\" pour inclure les messages vocaux",
         "⚠️ Limitation Android : WhatsApp peut tronquer l'export si la conversation est très longue ou si les médias sont trop volumineux. Dans ce cas, l'export sera partiel — les audios les plus anciens risquent d'être absents.",
         "💡 Solution : si votre export est incomplet, refaites l'export depuis un iPhone — Apple n'impose pas cette limitation",
-        "Envoyez le fichier ZIP par email, Google Drive ou autre, puis importez-le dans EKKO",
+        "Envoyez le fichier ZIP par email, Google Drive ou autre, puis importez-le dans VOSEKKO",
       ],
     },
   },
@@ -68,7 +68,7 @@ const APP_GUIDES: AppGuide[] = [
         "\"Personnaliser les informations\" → décochez ABSOLUMENT TOUT → cochez uniquement \"Messages\"",
         "Format : JSON (obligatoire pour extraire les audios) — Qualité multimédia : Supérieure",
         "Lancez l'exportation — vous recevrez une notification quand le ZIP est prêt",
-        "Téléchargez le ZIP et importez-le dans EKKO — les audios des conversations classiques y sont inclus",
+        "Téléchargez le ZIP et importez-le dans VOSEKKO — les audios des conversations classiques y sont inclus",
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
         "🔒 SOLUTION 2 — Conversation chiffrée de bout en bout (E2E)",
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
@@ -77,7 +77,7 @@ const APP_GUIDES: AppGuide[] = [
         "Cliquez sur votre icône de profil → \"Confidentialité et sécurité\"",
         "\"Discussions chiffrées de bout en bout\" → \"Stockage des messages\"",
         "\"Télécharger les données de stockage sécurisé\" (code PIN de sauvegarde requis)",
-        "Importez l'archive reçue dans EKKO",
+        "Importez l'archive reçue dans VOSEKKO",
       ],
     },
   },
@@ -100,7 +100,7 @@ const APP_GUIDES: AppGuide[] = [
         "Choisissez la période souhaitée",
         "Format : JSON — Qualité multimédia : Supérieure",
         "Lancez l'exportation — vous recevrez une notification quand c'est prêt",
-        "Téléchargez le ZIP et importez-le dans EKKO",
+        "Téléchargez le ZIP et importez-le dans VOSEKKO",
       ],
     },
   },
@@ -120,7 +120,7 @@ const APP_GUIDES: AppGuide[] = [
         "Format : JSON — augmentez la limite de taille si besoin (ex : 500 MB pour les longues conversations)",
         "Cliquez sur \"Exporter\" — ⚠️ Telegram envoie une confirmation sur votre téléphone mobile, acceptez-la",
         "Une fois l'export terminé, cliquez sur \"Afficher mes données\" : vous obtenez un dossier contenant result.json et un sous-dossier voice_messages/ avec les fichiers .ogg",
-        "Déposez directement les fichiers .ogg du dossier voice_messages/ dans EKKO (pas besoin du fichier JSON)",
+        "Déposez directement les fichiers .ogg du dossier voice_messages/ dans VOSEKKO (pas besoin du fichier JSON)",
       ],
     },
   },
@@ -302,7 +302,7 @@ export default function FaqPage() {
 
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
-        <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+        <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         <button
           onClick={() => router.back()}
           className="text-sm px-4 py-2 rounded-full ekko-serif transition-all duration-200"
@@ -324,11 +324,11 @@ export default function FaqPage() {
             FAQ
           </h1>
           <p className="ekko-serif text-center" style={{ fontSize: 14, color: "rgba(240,232,216,0.35)", fontStyle: "italic", marginBottom: 48 }}>
-            Tout ce qu'il faut savoir pour utiliser EKKO.
+            Tout ce qu'il faut savoir pour utiliser VOSEKKO.
           </p>
 
-          {/* ── Section 1 : Comprendre EKKO ── */}
-          <SectionAccordion title="🎵 Comprendre EKKO">
+          {/* ── Section 1 : Comprendre VOSEKKO ── */}
+          <SectionAccordion title="🎵 Comprendre VOSEKKO">
 
           <Accordion title="Qu'est-ce qu'une vocapsule ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
@@ -396,7 +396,7 @@ export default function FaqPage() {
 
           <Accordion title="Mon paiement est-il sécurisé ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Oui. Le paiement est traité par <span style={{ color: accent }}>Stripe</span>, référence mondiale des paiements en ligne. EKKO ne stocke jamais vos données bancaires.
+              Oui. Le paiement est traité par <span style={{ color: accent }}>Stripe</span>, référence mondiale des paiements en ligne. VOSEKKO ne stocke jamais vos données bancaires.
             </p>
           </Accordion>
 
@@ -413,12 +413,12 @@ export default function FaqPage() {
 
           <Accordion title="Comment retrouver ma vocapsule rapidement ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Si vous êtes connecté, cliquez sur <span style={{ color: accent }}>✦ Mes échos</span> dans la navigation — une fenêtre s'ouvre immédiatement avec vos QR codes, les liens d'écoute et les dates d'expiration.
+              Si vous êtes connecté, cliquez sur <span style={{ color: accent }}>✦ Mes vocapsules</span> dans la navigation — une fenêtre s'ouvre immédiatement avec vos QR codes, les liens d'écoute et les dates d'expiration.
               Vous pouvez aussi tout retrouver dans <span style={{ color: accent }}>Mon compte</span>.
             </p>
           </Accordion>
 
-          <Accordion title="Peut-on partager le QR code avec quelqu'un sans compte EKKO ?">
+          <Accordion title="Peut-on partager le QR code avec quelqu'un sans compte VOSEKKO ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
               Oui. Le QR code redirige vers une page d'écoute accessible <span style={{ color: accent }}>sans inscription</span>. N'importe qui peut le scanner et écouter la vocapsule, tant qu'elle n'a pas expiré.
             </p>
@@ -452,9 +452,9 @@ export default function FaqPage() {
           {/* ── Section 5 : Le support physique ── */}
           <SectionAccordion title="📦 Le support physique (porte-clé)" marginTop={8}>
 
-          <Accordion title="Qu'est-ce que le porte-clé EKKO ?">
+          <Accordion title="Qu'est-ce que le porte-clé VOSEKKO ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Le porte-clé EKKO est un objet en bois gravé au laser avec un <span style={{ color: accent }}>QR code unique</span> lié à votre vocapsule (24,90 €). Vous pouvez choisir en option une <span style={{ color: accent }}>puce NFC autocollante au dos</span> (27,90 €) pour l&apos;ouvrir en approchant un téléphone compatible.
+              Le porte-clé VOSEKKO est un objet en bois gravé au laser avec un <span style={{ color: accent }}>QR code unique</span> lié à votre vocapsule (24,90 €). Vous pouvez choisir en option une <span style={{ color: accent }}>puce NFC autocollante au dos</span> (27,90 €) pour l&apos;ouvrir en approchant un téléphone compatible.
             </p>
           </Accordion>
 
@@ -526,7 +526,7 @@ export default function FaqPage() {
 
           <Accordion title="Puis-je importer autre chose que des audios ?">
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 14 }}>
-              Actuellement non — EKKO est conçu autour du son et de la voix.
+              Actuellement non — VOSEKKO est conçu autour du son et de la voix.
             </p>
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, marginTop: 10 }}>
               Mais nous travaillons activement sur une nouvelle fonctionnalité :<br />
@@ -554,7 +554,7 @@ export default function FaqPage() {
           {/* ── Astuce ── */}
           <div style={{ marginTop: 32, padding: "18px 22px", borderRadius: 16, background: `${accent}0a`, border: `1px solid ${accent}20` }}>
             <p className="ekko-serif" style={{ fontSize: 14, color: "rgba(240,232,216,0.65)", lineHeight: 1.7, margin: 0 }}>
-              💡 <span style={{ color: accent }}>Astuce EKKO</span><br />
+              💡 <span style={{ color: accent }}>Astuce VOSEKKO</span><br />
               Plus vous importez de médias, plus vous aurez de choix pour créer une vocapsule riche et émotionnelle.
             </p>
           </div>

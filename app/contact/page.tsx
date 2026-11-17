@@ -3,8 +3,8 @@ import BlobBackground from "../components/BlobBackground";
 import EkkoLogo from "../components/EkkoLogo";
 
 export const metadata = {
-  title: "Nous contacter — EKKO",
-  description: "Contacter l'équipe EKKO pour une question sur une vocapsule ou une commande.",
+  title: "Nous contacter — VOSEKKO",
+  description: "Contacter l'équipe VOSEKKO pour une question sur une vocapsule ou une commande.",
 };
 
 const email = "vosekko@outlook.com";
@@ -20,7 +20,7 @@ export default function ContactPage() {
         </Link>
       </nav>
       <section className="relative z-10 mx-auto max-w-xl px-6 py-16 text-center md:py-24">
-        <p className="ekko-serif mb-4 text-xs uppercase tracking-widest" style={{ color: "#c9a96e" }}>EKKO · Contact</p>
+        <p className="ekko-serif mb-4 text-xs uppercase tracking-widest" style={{ color: "#c9a96e" }}>VOSEKKO · Contact</p>
         <h1 className="ekko-serif mb-6 text-3xl font-normal md:text-4xl" style={{ color: "#f0e8d8" }}>Nous contacter</h1>
         <p className="ekko-serif mb-8 text-sm leading-7" style={{ color: "rgba(240,232,216,0.7)" }}>
           Une question sur votre vocapsule, un porte-clé ou une commande ? Écrivez-nous à cette adresse :

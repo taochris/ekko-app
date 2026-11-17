@@ -54,7 +54,7 @@ export default function FlirterSelonGenerationsPage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -162,12 +162,12 @@ export default function FlirterSelonGenerationsPage() {
 
           <div style={{ padding: "28px 30px", borderRadius: 18, background: `${accent}0d`, border: `1px solid ${accent}35`, margin: "36px 0" }}>
             <p className="ekko-serif" style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 14 }}>
-              ✦ EKKO
+              ✦ VOSEKKO
             </p>
             <p className="ekko-serif" style={{ fontSize: 16, color: "rgba(240,232,216,0.88)", lineHeight: 1.75, marginBottom: 14 }}>
               Aujourd'hui, une application permet justement de conserver ces instants autrement. Avec{" "}
               <a href="https://vosekko.com" target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 3 }}>
-                Ekko
+                VOSEKKO
               </a>
               , il est possible de transformer des messages vocaux en véritables capsules audio à garder, réécouter ou offrir.
             </p>

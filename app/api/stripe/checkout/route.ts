@@ -6,10 +6,30 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, uploadId, storage, storageLabel, uid, accentColor, email, devBypass, product, engraveName, engravingFont, format, material, nfcEnabled } = await req.json();
+    const {
+      theme,
+      uploadId,
+      storage,
+      storageLabel,
+      uid,
+      accentColor,
+      email,
+      devBypass,
+      product,
+      engraveName,
+      engravingFont,
+      format,
+      material,
+      nfcEnabled,
+      smartSearchEnabled,
+      advancePayment,
+      manifest,
+    } = await req.json();
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
     const isPorteClef = product === "porteClef";
     const withNfc = isPorteClef && nfcEnabled === true;
+    const withSmartSearch = smartSearchEnabled === true;
+    const isAdvancePayment = advancePayment === true && withSmartSearch;
     const validStorage = storage === 100 ? 100 : storage === 200 ? 200 : 0;
     const safeUploadId = typeof uploadId === "string" && /^[a-zA-Z0-9_-]{1,64}$/.test(uploadId) ? uploadId : "";
     const safeEngraveName = typeof engraveName === "string" ? engraveName.trim().slice(0, 20) : "";
@@ -23,13 +43,21 @@ export async function POST(req: NextRequest) {
       storageOption: isPorteClef ? 200 : validStorage,
       uploadId: safeUploadId,
       productType: isPorteClef ? "porteClef" : "numerique",
+      smartSearchEnabled: withSmartSearch,
+      advancePayment: isAdvancePayment,
+      ...(manifest ? { manifest } : {}),
       ...(isPorteClef ? { engraveName: safeEngraveName, format, material: material || "bois", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: withNfc } : {}),
       customerEmail: email || "",
     });
 
-    // ── Bypass dev : pas de Stripe si c'est le compte dev ──
+    // ── Bypass dev : pas de Stripe si c'est le compte dev (ou mode development local) ──
     const devUid = process.env.NEXT_PUBLIC_DEV_UID;
-    if (devBypass && devUid && uid === devUid) {
+    const isAllowedDevBypass =
+      devBypass &&
+      (process.env.NODE_ENV === "development" ||
+        process.env.NEXT_PUBLIC_DEV_BYPASS === "true" ||
+        (!!devUid && uid === devUid));
+    if (isAllowedDevBypass) {
       await fetch(`${origin}/api/capsules/${capsuleId}/dev-claim`, { method: "POST" });
       return NextResponse.json({ capsuleId });
     }
@@ -45,7 +73,7 @@ export async function POST(req: NextRequest) {
             currency: "eur",
             unit_amount: withNfc ? 2790 : 2490,
             product_data: {
-              name: "Porte-clé EKKO en bois gravé",
+              name: "Porte-clé VOSEKKO en bois gravé",
               description:
                 "Porte-clé bois gravé au laser · QR code unique" +
                 (withNfc ? " · Puce NFC autocollante au dos" : "") +
@@ -60,7 +88,7 @@ export async function POST(req: NextRequest) {
             currency: "eur",
             unit_amount: 999 + validStorage,
             product_data: {
-              name: "Écho EKKO — Accès complet" + (storageLabel ? ` + ${storageLabel}` : ""),
+              name: "Vocapsule VOSEKKO — Accès complet" + (storageLabel ? ` + ${storageLabel}` : ""),
               description:
                 "Assemblage de vos voix · Téléchargement audio · QR code" +
                 (storageLabel ? ` · Conservation ${storageLabel}` : ""),
@@ -69,15 +97,32 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         };
 
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [lineItem];
+    if (withSmartSearch) {
+      lineItems.push({
+        price_data: {
+          currency: "eur",
+          unit_amount: 300, // +3,00 € TTC
+          product_data: {
+            name: "Option Souvenirs intelligents",
+            description: "Recherche intelligente par le sens (EmbeddingGemma 2) · Marque-pages personnalisés dans le lecteur",
+          },
+        },
+        quantity: 1,
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      line_items: [lineItem],
+      line_items: lineItems,
       metadata: {
         capsuleId,
         customerEmail: email || "",
         productType: isPorteClef ? "porteClef" : "numerique",
-        ...(isPorteClef ? { engraveName: engraveName || "", format: format || "", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: String(withNfc) } : {}),
+        smartSearchEnabled: String(withSmartSearch),
+        advancePayment: String(isAdvancePayment),
+        ...(isPorteClef ? { engraveName: safeEngraveName || "", format: format || "", engravingFont: engravingFont || "Georgia, serif", nfcEnabled: String(withNfc) } : {}),
       },
       ...(isPorteClef ? {
         shipping_address_collection: { allowed_countries: ["FR", "BE", "CH", "LU", "MC"] },
@@ -85,7 +130,9 @@ export async function POST(req: NextRequest) {
       } : {}),
       ...(email ? { customer_email: email } : {}),
       ...(email ? { payment_intent_data: { receipt_email: email } } : {}),
-      success_url: `${origin}/capsule/${capsuleId}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: isAdvancePayment
+        ? `${origin}/capsule/${capsuleId}?session_id={CHECKOUT_SESSION_ID}&mode=select`
+        : `${origin}/capsule/${capsuleId}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: isPorteClef
         ? `${origin}/theme-porteClef/${theme ?? "deuil"}?payment=cancel`
         : `${origin}/theme/${theme ?? "deuil"}?payment=cancel`,

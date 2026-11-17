@@ -88,7 +88,7 @@ export default function ArticleWhatsAppAndroid() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -125,7 +125,7 @@ export default function ArticleWhatsAppAndroid() {
             </P>
             <P>
               Et une fois récupérés, ces audios peuvent devenir bien plus que de simples fichiers grâce à{" "}
-              <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a> : une capsule souvenir à réécouter quand vous le souhaitez.
+              <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>VOSEKKO</a> : une capsule souvenir à réécouter quand vous le souhaitez.
             </P>
           </div>
 
@@ -140,7 +140,7 @@ export default function ArticleWhatsAppAndroid() {
             "transférer ses souvenirs sur ordinateur",
             "archiver une période importante de sa vie",
             "retrouver d'anciens audios perdus dans des années de discussion",
-            "transformer plusieurs vocaux en souvenir audio avec EKKO",
+            "transformer plusieurs vocaux en souvenir audio avec VOSEKKO",
           ]} />
           <P>Car certains messages valent plus qu&apos;un stockage interne.</P>
 
@@ -253,14 +253,14 @@ export default function ArticleWhatsAppAndroid() {
 
           <Separator />
 
-          {/* Section EKKO */}
+          {/* Section VOSEKKO */}
           <H2>Et après ? Donnez une vraie vie à vos vocaux</H2>
           <P>Exporter 50 fichiers audio séparés dans un dossier… la plupart des gens ne les réécoutent jamais.</P>
-          <P>EKKO change ça.</P>
+          <P>VOSEKKO change ça.</P>
 
           <EkkoBlock>
             <p className="ekko-serif" style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 16 }}>
-              EKKO transforme vos exports WhatsApp en capsule émotionnelle
+              VOSEKKO transforme vos exports WhatsApp en capsule émotionnelle
             </p>
             <BulletList items={[
               "plusieurs vocaux deviennent un seul souvenir audio fluide",
@@ -335,7 +335,7 @@ export default function ArticleWhatsAppAndroid() {
             "des souvenirs qu'on croyait oubliés",
             "des messages qui méritent mieux qu'un dossier zip",
           ]} />
-          <P>Et c&apos;est exactement pour cela que <span style={{ color: accent }}>EKKO</span> existe.</P>
+          <P>Et c&apos;est exactement pour cela que <span style={{ color: accent }}>VOSEKKO</span> existe.</P>
 
           <div style={{ marginTop: 40, display: "flex", justifyContent: "center" }}>
             <motion.button
@@ -344,7 +344,7 @@ export default function ArticleWhatsAppAndroid() {
               onClick={() => router.push("/")}
               style={{ padding: "14px 36px", borderRadius: 50, background: `linear-gradient(135deg, ${accent}33, ${accent}55)`, border: `1px solid ${accent}50`, color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 15, cursor: "pointer", letterSpacing: "0.05em" }}
             >
-              Créer ma vocapsule EKKO →
+              Créer ma vocapsule VOSEKKO →
             </motion.button>
           </div>
 

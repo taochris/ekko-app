@@ -88,7 +88,7 @@ export default function ArticleWhatsAppIphone() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -125,7 +125,7 @@ export default function ArticleWhatsAppIphone() {
             </P>
             <P>
               Et une fois récupérés, ces audios peuvent même devenir quelque chose de plus beau : un souvenir vivant à réécouter grâce à{" "}
-              <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a>.
+              <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>VOSEKKO</a>.
             </P>
           </div>
 
@@ -141,7 +141,7 @@ export default function ArticleWhatsAppIphone() {
             "archiver une relation ou une période de vie marquante",
             "récupérer des messages audio perdus dans des années de discussion",
             "préparer un cadeau émotionnel",
-            "transformer plusieurs vocaux en une capsule audio souvenir avec EKKO",
+            "transformer plusieurs vocaux en une capsule audio souvenir avec VOSEKKO",
           ]} />
           <P>Car certains messages valent bien plus qu&apos;un simple fichier.</P>
 
@@ -216,14 +216,14 @@ export default function ArticleWhatsAppIphone() {
 
           <Separator />
 
-          {/* Section EKKO */}
+          {/* Section VOSEKKO */}
           <H2>Et après ? Donnez une vraie seconde vie à vos audios</H2>
           <P>Exporter un vocal, c&apos;est bien.</P>
           <P>Mais écouter 83 fichiers séparés dans un dossier oublié… soyons honnêtes, presque personne ne le fait.</P>
 
           <EkkoBlock>
             <p className="ekko-serif" style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 16 }}>
-              EKKO transforme vos exports WhatsApp en souvenir émotionnel
+              VOSEKKO transforme vos exports WhatsApp en souvenir émotionnel
             </p>
             <BulletList items={[
               "plusieurs vocaux deviennent une seule capsule audio fluide",
@@ -277,7 +277,7 @@ export default function ArticleWhatsAppIphone() {
             },
             {
               q: "Les audios restent-ils privés ?",
-              a: "Oui. Et avec EKKO, l'objectif est justement de les valoriser sans les exposer publiquement.",
+              a: "Oui. Et avec VOSEKKO, l'objectif est justement de les valoriser sans les exposer publiquement.",
             },
             {
               q: "L'export fonctionne toujours en 2026 ?",
@@ -305,7 +305,7 @@ export default function ArticleWhatsAppIphone() {
             "des souvenirs qu'on croyait oubliés",
             "des moments qui méritent mieux qu'un dossier zip",
           ]} />
-          <P>Et c&apos;est exactement pour cela que <span style={{ color: accent }}>EKKO</span> existe.</P>
+          <P>Et c&apos;est exactement pour cela que <span style={{ color: accent }}>VOSEKKO</span> existe.</P>
 
           <div style={{ marginTop: 40, display: "flex", justifyContent: "center" }}>
             <motion.button
@@ -314,7 +314,7 @@ export default function ArticleWhatsAppIphone() {
               onClick={() => router.push("/")}
               style={{ padding: "14px 36px", borderRadius: 50, background: `linear-gradient(135deg, ${accent}33, ${accent}55)`, border: `1px solid ${accent}50`, color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 15, cursor: "pointer", letterSpacing: "0.05em" }}
             >
-              Créer ma vocapsule EKKO →
+              Créer ma vocapsule VOSEKKO →
             </motion.button>
           </div>
 

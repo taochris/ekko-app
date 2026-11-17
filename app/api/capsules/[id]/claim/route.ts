@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getCapsule, markCapsulePaid } from "../../../../lib/capsules";
+import { getCapsule, markCapsulePaid, markCapsulePaidAwaitingSelection } from "../../../../lib/capsules";
 
 export const runtime = "nodejs";
 
@@ -24,7 +24,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!capsule) return NextResponse.json({ error: "Capsule introuvable" }, { status: 404 });
 
   // Déjà payée → rien à faire
-  if (capsule.status === "ready" || capsule.status === "processing" || capsule.status === "paid") {
+  if (
+    capsule.status === "ready" ||
+    capsule.status === "processing" ||
+    capsule.status === "paid" ||
+    capsule.status === "paid_awaiting_selection"
+  ) {
     return NextResponse.json({ status: capsule.status });
   }
 
@@ -43,6 +48,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   if (session.metadata?.capsuleId !== capsuleId) {
     return NextResponse.json({ error: "Session ne correspond pas à cette capsule" }, { status: 403 });
+  }
+
+  // Paiement anticipé avec option Souvenirs intelligents : ne pas lancer la fusion maintenant
+  const isAdvancePayment =
+    session.metadata?.advancePayment === "true" || capsule.advancePayment === true;
+  if (isAdvancePayment) {
+    await markCapsulePaidAwaitingSelection(capsuleId, sessionId);
+    return NextResponse.json({ status: "paid_awaiting_selection", triggered: false });
   }
 
   // Tout bon → marquer paid et déclencher le process (fire-and-forget)

@@ -64,7 +64,7 @@ export default function CGVPage() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.back()}
@@ -107,7 +107,7 @@ export default function CGVPage() {
             Conditions Générales de Vente
           </h1>
           <p className="ekko-serif" style={{ fontSize: 13, color: "rgba(240,232,216,0.35)" }}>
-            Version du 25 septembre 2026 — EKKO · vosekko.com
+            Version du 25 septembre 2026 — VOSEKKO · vosekko.com
           </p>
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginTop: 28 }} />
         </div>
@@ -115,7 +115,7 @@ export default function CGVPage() {
         {/* Article 1 */}
         <Section title="Article 1 — Identification de l'entreprise">
           <P>
-            Le service EKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, Société par Actions Simplifiée (SAS) en cours d&apos;immatriculation au Registre du Commerce et des Sociétés (RCS), accessible à l&apos;adresse{" "}
+            Le service VOSEKKO est édité et exploité par la société <strong style={{ color: "#f0e8d8" }}>VosEkko</strong>, Société par Actions Simplifiée (SAS) en cours d&apos;immatriculation au Registre du Commerce et des Sociétés (RCS), accessible à l&apos;adresse{" "}
             <a href="https://vosekko.com" style={{ color: accent, textDecoration: "underline", textUnderlineOffset: 2 }}>
               vosekko.com
             </a>.
@@ -143,7 +143,7 @@ export default function CGVPage() {
 
         {/* Article 3 */}
         <Section title="Article 3 — Produits et services proposés">
-          <P>EKKO propose :</P>
+          <P>VOSEKKO propose :</P>
           <Ul>
             <Li>
               <strong style={{ color: "#f0e8d8" }}>Vocapsule numérique</strong> : assemblage et fusion de messages vocaux fournis par le client, fichier audio téléchargeable et QR code d&apos;accès. La conservation en ligne dure 7 jours par défaut, ou 1 ou 2 ans selon l&apos;option payante choisie.
@@ -170,6 +170,7 @@ export default function CGVPage() {
             <Li>Option numérique conservation 2 ans : <strong style={{ color: "#f0e8d8" }}>+2,00 €</strong> TTC, soit 11,99 € TTC au total.</Li>
             <Li>Porte-clé en bois personnalisé, avec QR code gravé et accès audio 20 ans : <strong style={{ color: "#f0e8d8" }}>24,90 €</strong> TTC.</Li>
             <Li>Porte-clé personnalisé avec QR code et puce NFC autocollante au dos : <strong style={{ color: "#f0e8d8" }}>27,90 €</strong> TTC au total (supplément NFC de 3,00 €).</Li>
+            <Li>Option facultative « Souvenirs intelligents » (recherche vocale par le sens lors de la création et marque-pages interactifs dans le lecteur final) : <strong style={{ color: "#f0e8d8" }}>+3,00 €</strong> TTC (achat unique par Vocapsule).</Li>
           </Ul>
           <P>
             Les trois formats de porte-clé affichés sur le site sont proposés au même prix. L&apos;expédition est gratuite vers les pays proposés à l&apos;étape de paiement : France, Belgique, Suisse, Luxembourg et Monaco. Les droits ou taxes d&apos;importation éventuellement dus hors de l&apos;Union européenne ne sont pas compris dans ces prix.

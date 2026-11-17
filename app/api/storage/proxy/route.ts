@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const match = files.find(f => f.name.includes(`/${echoId}/`) && /\/audio\.[a-z0-9]+$/.test(f.name));
 
     if (!match) {
-      return NextResponse.json({ error: "Echo introuvable" }, { status: 404 });
+      return NextResponse.json({ error: "Vocapsule introuvable" }, { status: 404 });
     }
 
     // Vérifier l'expiration comme sur /api/storage/echo
@@ -42,14 +42,14 @@ export async function GET(req: NextRequest) {
       const expires = new Date(String(meta.expiresAt));
       if (expires < new Date()) {
         await match.delete().catch(() => {});
-        return NextResponse.json({ error: "Écho expiré" }, { status: 410 });
+        return NextResponse.json({ error: "Vocapsule expirée" }, { status: 410 });
       }
     }
 
     const [buffer] = await match.download();
     const ext = match.name.split(".").pop() ?? "opus";
     const contentType = (match.metadata.contentType as string) ?? "audio/ogg; codecs=opus";
-    const filename = `echo-ekko-${echoId.slice(0, 8)}.${ext}`;
+    const filename = `vosekko-${echoId.slice(0, 8)}.${ext}`;
 
     const uint8 = new Uint8Array(buffer);
 

@@ -78,7 +78,7 @@ export default function ArticleInstagramAndroid() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-7 md:px-14">
         <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/ekko-logo.png" alt="EKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
+          <img src="/vosekko-logo.png" alt="VOSEKKO" style={{ height: 180, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
         </button>
         <button
           onClick={() => router.push("/blog")}
@@ -121,7 +121,7 @@ export default function ArticleInstagramAndroid() {
             {/* Phrase mise en valeur */}
             <div style={{ margin: "28px 0", padding: "20px 24px", borderRadius: 16, background: `${insta}0d`, border: `1px solid ${insta}30` }}>
               <p className="ekko-serif" style={{ fontSize: 16, lineHeight: 1.7, margin: 0 }}>
-                C&apos;est justement là que <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>EKKO</a> devient utile : retrouver et extraire facilement vos audios importants, sans fouiller manuellement partout.{" "}
+                C&apos;est justement là que <a href="https://vosekko.com" style={{ color: accent, fontWeight: 400, textDecoration: "underline", textUnderlineOffset: 3 }}>VOSEKKO</a> devient utile : retrouver et extraire facilement vos audios importants, sans fouiller manuellement partout.{" "}
                 <span style={{ color: accent, fontWeight: 400 }}>Vous pouvez même l&apos;utiliser gratuitement pour voir quels audios sont récupérables.</span>
               </p>
             </div>
@@ -139,7 +139,7 @@ export default function ArticleInstagramAndroid() {
             "retrouver d'anciens messages audio oubliés",
             "garder les souvenirs d'une amitié",
             "réécouter la voix d'une personne disparue",
-            "transformer plusieurs vocaux en capsule souvenir avec EKKO",
+            "transformer plusieurs vocaux en capsule souvenir avec VOSEKKO",
           ]} />
           <P>Car parfois, quelques secondes de voix valent énormément.</P>
 
@@ -234,13 +234,13 @@ export default function ArticleInstagramAndroid() {
 
           <Separator />
 
-          {/* EKKO */}
-          <H2>C&apos;est là que EKKO simplifie tout</H2>
-          <P>EKKO a été pensé pour éviter de fouiller dans des dizaines de dossiers.</P>
+          {/* VOSEKKO */}
+          <H2>C&apos;est là que VOSEKKO simplifie tout</H2>
+          <P>VOSEKKO a été pensé pour éviter de fouiller dans des dizaines de dossiers.</P>
 
           <EkkoBlock>
             <p className="ekko-serif" style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: accent, marginBottom: 16 }}>
-              Avec EKKO
+              Avec VOSEKKO
             </p>
             <BulletList items={[
               "importez votre archive Instagram en quelques secondes",
@@ -326,7 +326,7 @@ export default function ArticleInstagramAndroid() {
             Le vrai problème, c&apos;est retrouver les bons audios dans une archive complexe.
           </P>
           <P>
-            Et c&apos;est exactement pour cela que <span style={{ color: accent }}>EKKO</span> existe : simplifier la récupération de vos souvenirs audio et leur redonner de la valeur.
+            Et c&apos;est exactement pour cela que <span style={{ color: accent }}>VOSEKKO</span> existe : simplifier la récupération de vos souvenirs audio et leur redonner de la valeur.
           </P>
 
           <div style={{ marginTop: 40, display: "flex", justifyContent: "center" }}>
@@ -336,7 +336,7 @@ export default function ArticleInstagramAndroid() {
               onClick={() => router.push("/")}
               style={{ padding: "14px 36px", borderRadius: 50, background: `linear-gradient(135deg, ${accent}33, ${accent}55)`, border: `1px solid ${accent}50`, color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: 15, cursor: "pointer", letterSpacing: "0.05em" }}
             >
-              Créer ma vocapsule EKKO →
+              Créer ma vocapsule VOSEKKO →
             </motion.button>
           </div>
 

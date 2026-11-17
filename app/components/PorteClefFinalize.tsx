@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AuthModal from "./AuthModal";
 import { useAuth } from "../context/AuthContext";
 import { uploadAudiosToStorage } from "../lib/audioStorage";
+import type { CapsuleManifest } from "../lib/capsules";
 
 // ─── Formats de porte-clé (alignés sur /produit) ────────────────────────────
 const FORMATS = [
@@ -58,6 +59,25 @@ interface PorteClefFinalizeProps {
   theme: string;
   coverPhoto?: File | null;
   initialFormat?: string;
+  manifest?: CapsuleManifest;
+  advanceSmartMode?: boolean;
+  onAdvanceSmartConfirm?: (cfg: {
+    storageOption: 0 | 100 | 200;
+    engraveName: string;
+    format: string;
+    engravingFont: string;
+    nfcEnabled: boolean;
+  }) => Promise<void>;
+  alreadyPaidCapsuleId?: string | null;
+  initialEngraveName?: string;
+  initialEngravingFont?: string;
+  initialNfcEnabled?: boolean;
+  onAlreadyPaidFinalize?: (cfg: {
+    engraveName: string;
+    format: string;
+    engravingFont: string;
+    nfcEnabled: boolean;
+  }) => Promise<void>;
 }
 
 /** QR code SVG réaliste avec les 3 détecteurs de coins */
@@ -121,8 +141,8 @@ function QRPattern({ px, woodBg }: { px: number; woodBg: string }) {
 }
 
 /** Aperçu porte-clé photo-réaliste : vraie image produit + prénom gravé superposé */
-function KeychainPreview({ format, name, accent, font }: { format: typeof FORMATS[number]; name: string; accent: string; font: string }) {
-  const hasName = name.trim().length > 0;
+function KeychainPreview({ format, name, accent, font, wantEngraving = true }: { format: typeof FORMATS[number]; name: string; accent: string; font: string; wantEngraving?: boolean }) {
+  const hasName = wantEngraving && name.trim().length > 0;
   const trimmed = name.trim();
 
   // height = hauteur totale image (anneau inclus)
@@ -194,7 +214,7 @@ function KeychainPreview({ format, name, accent, font }: { format: typeof FORMAT
             >
               {trimmed}
             </motion.span>
-          ) : (
+          ) : wantEngraving ? (
             <span style={{
               display: "block",
               fontFamily: font,
@@ -208,7 +228,7 @@ function KeychainPreview({ format, name, accent, font }: { format: typeof FORMAT
             }}>
               prénom
             </span>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -231,7 +251,19 @@ function KeychainPreview({ format, name, accent, font }: { format: typeof FORMAT
 }
 
 export default function PorteClefFinalize({
-  config, audios, theme, coverPhoto, initialFormat,
+  config,
+  audios,
+  theme,
+  coverPhoto,
+  initialFormat,
+  manifest,
+  advanceSmartMode = false,
+  onAdvanceSmartConfirm,
+  alreadyPaidCapsuleId = null,
+  initialEngraveName = "",
+  initialEngravingFont,
+  initialNfcEnabled = false,
+  onAlreadyPaidFinalize,
 }: PorteClefFinalizeProps) {
   const { user } = useAuth();
   const accent = config.accent;
@@ -239,35 +271,65 @@ export default function PorteClefFinalize({
   const [format, setFormat] = useState<FormatId>(
     (FORMATS.find((f) => f.id === initialFormat)?.id ?? "etiquette-rect") as FormatId
   );
-  const [engraveName, setEngraveName] = useState("");
-  const [nfcEnabled, setNfcEnabled] = useState(false);
-  const [consentChecked, setConsentChecked] = useState(false);
+  const [wantEngraving, setWantEngraving] = useState<boolean>(true);
+  const [engraveName, setEngraveName] = useState(initialEngraveName);
+  const [nfcEnabled, setNfcEnabled] = useState(initialNfcEnabled);
+  const [consentChecked, setConsentChecked] = useState(Boolean(alreadyPaidCapsuleId));
   const [status, setStatus] = useState<"idle" | "uploading" | "redirecting">("idle");
   const [showAuth, setShowAuth] = useState(false);
+  const [pendingPayAfterAuth, setPendingPayAfterAuth] = useState(false);
   const [previewZoomed, setPreviewZoomed] = useState(false);
-  const [engravingFont, setEngravingFont] = useState<string>(ENGRAVING_FONTS[0].family);
+  const [engravingFont, setEngravingFont] = useState<string>(
+    initialEngravingFont || ENGRAVING_FONTS[0].family
+  );
 
   const currentFormat = FORMATS.find((f) => f.id === format) ?? FORMATS[0];
-  const price = ((nfcEnabled ? NFC_PRICE_CENTS : QR_PRICE_CENTS) / 100).toFixed(2).replace(".", ",");
+  const baseCents = nfcEnabled ? NFC_PRICE_CENTS : QR_PRICE_CENTS;
+  const totalCents = baseCents + (advanceSmartMode || alreadyPaidCapsuleId ? 300 : 0);
+  const price = (totalCents / 100).toFixed(2).replace(".", ",");
 
-  useEffect(() => {
-    if (user && showAuth) setShowAuth(false);
-  }, [user, showAuth]);
+  const effectiveEngraveName = wantEngraving ? engraveName.trim() : "";
+  const isEngraveValid = !wantEngraving || effectiveEngraveName.length > 0;
 
-  useEffect(() => {
-    const id = "ekko-engraving-fonts";
-    if (!document.getElementById(id)) {
-      const link = document.createElement("link");
-      link.id = id;
-      link.rel = "stylesheet";
-      link.href = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Dancing+Script:wght@600;700&family=Bebas+Neue&family=Pacifico&display=swap";
-      document.head.appendChild(link);
+  const executePay = async (activeUser: NonNullable<typeof user>) => {
+    if (!consentChecked || !isEngraveValid) return;
+
+    // Cas 1 : Paiement anticipé de l'option Souvenirs intelligents (+3 €)
+    if (advanceSmartMode && onAdvanceSmartConfirm) {
+      setStatus("redirecting");
+      try {
+        await onAdvanceSmartConfirm({
+          storageOption: 200,
+          engraveName: effectiveEngraveName,
+          format,
+          engravingFont,
+          nfcEnabled,
+        });
+      } catch (err) {
+        console.error("PorteClefFinalize advanceSmartConfirm error:", err);
+        setStatus("idle");
+      }
+      return;
     }
-  }, []);
 
-  const handlePay = async () => {
-    if (!user) { setShowAuth(true); return; }
-    if (!consentChecked || !engraveName.trim()) return;
+    // Cas 2 : Déjà payé par anticipation → validation définitive de la sélection et de la gravure sans 2ème paiement
+    if (alreadyPaidCapsuleId && onAlreadyPaidFinalize) {
+      setStatus("uploading");
+      try {
+        await onAlreadyPaidFinalize({
+          engraveName: effectiveEngraveName,
+          format,
+          engravingFont,
+          nfcEnabled,
+        });
+      } catch (err) {
+        console.error("PorteClefFinalize alreadyPaidFinalize error:", err);
+        setStatus("idle");
+      }
+      return;
+    }
+
+    // Cas 3 : Parcours classique
     setStatus("uploading");
     try {
       const uploadId = await uploadAudiosToStorage(audios);
@@ -277,7 +339,7 @@ export default function PorteClefFinalize({
         theme,
         uploadId,
         product: "porteClef",
-        engraveName: engraveName.trim(),
+        engraveName: effectiveEngraveName,
         engravingFont,
         format,
         material: "bois",
@@ -285,14 +347,15 @@ export default function PorteClefFinalize({
         // Conservation permanente incluse : le QR gravé doit rester valide
         storage: 200,
         storageLabel: "incluse",
-        uid: user?.uid ?? "",
+        uid: activeUser.uid ?? "",
         accentColor: accent,
-        email: user?.email ?? "",
+        email: activeUser.email ?? "",
+        manifest,
       };
 
       const isDevUser =
         process.env.NODE_ENV === "development" ||
-        (!!process.env.NEXT_PUBLIC_DEV_UID && user?.uid === process.env.NEXT_PUBLIC_DEV_UID);
+        (!!process.env.NEXT_PUBLIC_DEV_UID && activeUser.uid === process.env.NEXT_PUBLIC_DEV_UID);
       if (isDevUser) {
         const devRes = await fetch("/api/stripe/checkout", {
           method: "POST",
@@ -325,6 +388,37 @@ export default function PorteClefFinalize({
     }
   };
 
+  useEffect(() => {
+    if (user && showAuth) {
+      setShowAuth(false);
+      if (pendingPayAfterAuth) {
+        setPendingPayAfterAuth(false);
+        executePay(user);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, showAuth, pendingPayAfterAuth]);
+
+  useEffect(() => {
+    const id = "ekko-engraving-fonts";
+    if (!document.getElementById(id)) {
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Dancing+Script:wght@600;700&family=Bebas+Neue&family=Pacifico&display=swap";
+      document.head.appendChild(link);
+    }
+  }, []);
+
+  const handlePay = async () => {
+    if (!user) {
+      setPendingPayAfterAuth(true);
+      setShowAuth(true);
+      return;
+    }
+    await executePay(user);
+  };
+
   if (showAuth) {
     return (
       <motion.div
@@ -340,7 +434,14 @@ export default function PorteClefFinalize({
     );
   }
 
-  const canPay = consentChecked && engraveName.trim().length > 0 && status === "idle";
+  const canPay = consentChecked && isEngraveValid && status === "idle";
+  const missingReasons: string[] = [];
+  if (wantEngraving && !effectiveEngraveName) {
+    missingReasons.push("saisir le prénom à graver sous le QR code (ou choisir « QR code seul, sans prénom »)");
+  }
+  if (!consentChecked) {
+    missingReasons.push("cocher la case d'acceptation des CGV");
+  }
 
   return (
     <motion.div
@@ -368,7 +469,7 @@ export default function PorteClefFinalize({
             title="Cliquer pour agrandir"
             style={{ cursor: "zoom-in", position: "relative", display: "inline-flex" }}
           >
-            <KeychainPreview format={currentFormat} name={engraveName} accent={accent} font={engravingFont} />
+            <KeychainPreview format={currentFormat} name={engraveName} accent={accent} font={engravingFont} wantEngraving={wantEngraving} />
             <span style={{
               position: "absolute", bottom: 28, right: 0,
               fontSize: 14, opacity: 0.45, pointerEvents: "none", lineHeight: 1,
@@ -417,32 +518,85 @@ export default function PorteClefFinalize({
             </div>
           </div>
 
-          {/* Prénom à graver */}
+          {/* Question : Souhaitez-vous graver un prénom ou un mot sous le QR code ? */}
           <div>
-            <p style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.4)", marginBottom: 10 }}>
-              Prénom à graver
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.4)", marginBottom: 8 }}>
+              Gravure sous le QR code (au choix)
             </p>
-            <input
-              type="text"
-              value={engraveName}
-              maxLength={format === "etiquette-arrondie" ? 10 : 18}
-              onChange={(e) => setEngraveName(e.target.value)}
-              placeholder="Ex. : Maman, Léa, Papi…"
-              style={{
-                width: "100%", boxSizing: "border-box",
-                padding: "13px 16px", borderRadius: 12,
-                background: "rgba(255,255,255,0.04)",
-                border: `1px solid ${engraveName.trim() ? accent + "45" : "rgba(255,255,255,0.1)"}`,
-                color: "#f0e8d8", fontFamily: engravingFont, fontSize: 15,
-                outline: "none",
-              }}
-            />
-            <p style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.3)", margin: "6px 0 0", textAlign: "right" }}>
-              {engraveName.length}/18
+            <p style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.7)", margin: "0 0 10px" }}>
+              Souhaitez-vous graver un prénom ou un petit mot sous le QR code ? <span style={{ color: "rgba(240,232,216,0.45)", fontStyle: "italic" }}>(facultatif)</span>
             </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: wantEngraving ? 14 : 0 }}>
+              <button
+                type="button"
+                onClick={() => setWantEngraving(true)}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontFamily: "Georgia, serif",
+                  fontSize: 12,
+                  background: wantEngraving ? `${accent}18` : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${wantEngraving ? accent + "60" : "rgba(255,255,255,0.08)"}`,
+                  color: wantEngraving ? "#f0e8d8" : "rgba(240,232,216,0.55)",
+                }}
+              >
+                ✦ Oui, graver un prénom
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWantEngraving(false);
+                  setEngraveName("");
+                }}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontFamily: "Georgia, serif",
+                  fontSize: 12,
+                  background: !wantEngraving ? `${accent}18` : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${!wantEngraving ? accent + "60" : "rgba(255,255,255,0.08)"}`,
+                  color: !wantEngraving ? "#f0e8d8" : "rgba(240,232,216,0.55)",
+                }}
+              >
+                Non, QR code seul
+              </button>
+            </div>
+
+            {wantEngraving && (
+              <>
+                <input
+                  type="text"
+                  value={engraveName}
+                  maxLength={format === "etiquette-arrondie" ? 10 : 18}
+                  onChange={(e) => setEngraveName(e.target.value)}
+                  placeholder="Entrez ici le prénom ou mot à graver (ex : Maman, Léa…)"
+                  style={{
+                    width: "100%", boxSizing: "border-box",
+                    padding: "13px 16px", borderRadius: 12,
+                    background: "rgba(255,255,255,0.04)",
+                    border: `1px solid ${engraveName.trim() ? accent + "55" : "rgba(224,112,64,0.45)"}`,
+                    color: "#f0e8d8", fontFamily: engravingFont, fontSize: 15,
+                    outline: "none",
+                  }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+                  {!engraveName.trim() ? (
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "#e09050", fontStyle: "italic" }}>
+                      ↑ Saisissez un prénom ci-dessus ou cliquez sur « Non, QR code seul »
+                    </span>
+                  ) : <span />}
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.3)" }}>
+                    {engraveName.length}/{format === "etiquette-arrondie" ? 10 : 18}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Police de gravure */}
+          {/* Police de gravure (affichée uniquement si l'utilisateur souhaite graver un prénom) */}
+          {wantEngraving && (
           <div>
             <p style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.4)", marginBottom: 10 }}>
               Police de gravure
@@ -493,6 +647,7 @@ export default function PorteClefFinalize({
               })}
             </div>
           </div>
+          )}
 
           <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
             <legend style={{ fontFamily: "Georgia, serif", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,232,216,0.4)", marginBottom: 10 }}>
@@ -531,22 +686,61 @@ export default function PorteClefFinalize({
             </div>
           </fieldset>
 
-          {/* Prix + livraison */}
+          {/* Récapitulatif détaillé du prix + livraison */}
           <div style={{
-            padding: "16px 18px", borderRadius: 14,
-            background: "rgba(201,169,110,0.05)", border: "1px solid rgba(201,169,110,0.18)",
-            display: "flex", flexDirection: "column", gap: 8,
+            padding: "18px 20px", borderRadius: 16,
+            background: "linear-gradient(145deg, rgba(13,10,15,0.82), rgba(201,169,110,0.10))",
+            border: `1.5px solid ${accent}55`,
+            boxShadow: `0 10px 28px rgba(0,0,0,0.35), inset 0 1px 0 ${accent}25`,
+            display: "flex", flexDirection: "column", gap: 10,
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 13, color: "rgba(240,232,216,0.55)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                Porte-clé {currentFormat.name} · bois
+            <span style={{ fontFamily: "Georgia, serif", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: `${accent}cc` }}>
+              Récapitulatif
+            </span>
+
+            {/* Ligne 1 : Porte-clé */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>
+                Porte-clé {currentFormat.name} ({nfcEnabled ? "QR code + NFC" : "QR code gravé"})
               </span>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 300, color: accent }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8", whiteSpace: "nowrap" }}>
+                {(baseCents / 100).toFixed(2).replace(".", ",")} €
+              </span>
+            </div>
+
+            {/* Ligne 2 : Recherche intelligente et chapitres */}
+            {(advanceSmartMode || alreadyPaidCapsuleId) && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8" }}>
+                  Recherche intelligente et chapitres sur Vocapsule
+                </span>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#f0e8d8", whiteSpace: "nowrap" }}>
+                  3,00 €
+                </span>
+              </div>
+            )}
+
+            {/* Séparateur */}
+            <div style={{ height: 1, background: `linear-gradient(to right, ${accent}45, rgba(255,255,255,0.08))`, margin: "2px 0" }} />
+
+            {/* Ligne Total */}
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 600, color: "#f0e8d8", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                Total TTC
+              </span>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 600, color: accent, whiteSpace: "nowrap" }}>
                 {price} €
               </span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {["Gravure laser", "Anneau inox", "QR code unique", ...(nfcEnabled ? ["NFC au dos"] : []), "Conservation incluse", "Expédition gratuite"].map((t) => (
+
+            {/* Inclus */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, paddingTop: 4, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              {[
+                "Gravure laser",
+                "Anneau inox",
+                "Conservation 20 ans incluse",
+                "Expédition gratuite",
+              ].map((t) => (
                 <span key={t} style={{ fontFamily: "Georgia, serif", fontSize: 11, color: "rgba(240,232,216,0.5)" }}>✦ {t}</span>
               ))}
             </div>
@@ -575,6 +769,24 @@ export default function PorteClefFinalize({
 
           {/* Bouton paiement */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {!canPay && status === "idle" && missingReasons.length > 0 && (
+              <p
+                className="ekko-serif"
+                style={{
+                  fontSize: 12,
+                  color: "#e09050",
+                  background: "rgba(224,144,80,0.08)",
+                  border: "1px solid rgba(224,144,80,0.28)",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  margin: 0,
+                  textAlign: "center",
+                  lineHeight: 1.5,
+                }}
+              >
+                Pour débloquer le bouton : veuillez {missingReasons.join(" et ")}.
+              </p>
+            )}
             <motion.button
               whileHover={canPay ? { scale: 1.02 } : {}}
               whileTap={canPay ? { scale: 0.98 } : {}}
@@ -594,8 +806,12 @@ export default function PorteClefFinalize({
               {status === "uploading"
                 ? "Préparation de votre commande…"
                 : status === "redirecting"
-                  ? "Redirection vers le paiement…"
-                  : `Commander mon porte-clé — ${price} €`}
+                  ? "Activation de la recherche intelligente…"
+                  : alreadyPaidCapsuleId
+                    ? "Valider mon porte-clé et lancer la création (déjà réglé)"
+                    : advanceSmartMode
+                      ? `Régler ${price} € et activer la recherche intelligente`
+                      : `Commander mon porte-clé — ${price} €`}
             </motion.button>
             <p className="ekko-serif" style={{ fontSize: 11, color: "rgba(240,232,216,0.25)", margin: 0, fontStyle: "italic", textAlign: "center" }}>
               Adresse de livraison demandée à l&apos;étape suivante · Paiement sécurisé
@@ -631,7 +847,7 @@ export default function PorteClefFinalize({
               style={{ display: "inline-block" }}
             >
               <div style={{ transform: "scale(1.85)", transformOrigin: "center center", display: "inline-block" }}>
-                <KeychainPreview format={currentFormat} name={engraveName} accent={accent} font={engravingFont} />
+                <KeychainPreview format={currentFormat} name={engraveName} accent={accent} font={engravingFont} wantEngraving={wantEngraving} />
               </div>
             </motion.div>
             <p style={{

@@ -20,7 +20,7 @@ const cormorant = Cormorant({
 });
 
 export const metadata: Metadata = {
-  title: "EKKO — Fusionnez vos souvenirs",
+  title: "VOSEKKO — Fusionnez vos souvenirs",
   description: "Transformez vos messages audio en souvenirs éternels. Vocapsules et livres de mémoire.",
 };
 

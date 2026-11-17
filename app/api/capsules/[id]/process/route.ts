@@ -10,7 +10,10 @@ import {
   markCapsuleProcessing,
   markCapsuleReady,
   markCapsuleFailed,
+  updateCapsule,
+  CapsuleBookmark,
 } from "../../../../lib/capsules";
+import { sendKeychainOrderEmails } from "../../../../lib/order-emails";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg") as { path: string; version: string; url: string };
@@ -63,31 +66,41 @@ function spawnFfmpeg(bin: string, args: string[]): Promise<void> {
   });
 }
 
-async function mergeWithFfmpeg(inputPaths: string[], outputPath: string, tmpDir: string): Promise<void> {
-  const bin = resolveFfmpegPath();
-  const isOgg = outputPath.endsWith(".ogg") || outputPath.endsWith(".opus");
+const MAX_VOCAPSULE_DURATION_SEC = 3600;
+const PCM_SAMPLE_RATE = 48000;
+const PCM_BYTES_PER_SEC = PCM_SAMPLE_RATE * 2; // 16-bit mono = 96 000 octets/s
 
-  // Étape 1 : pré-convertir chaque fichier en WAV PCM 48kHz mono
-  // → tolère les headers opus/ogg corrompus (Telegram, WhatsApp, etc.)
+async function decodeToWavAndMeasure(inputPaths: string[], tmpDir: string): Promise<{ wavPaths: string[]; durationsSec: number[] }> {
+  const bin = resolveFfmpegPath();
   const wavPaths: string[] = [];
+  const durationsSec: number[] = [];
+
   for (let i = 0; i < inputPaths.length; i++) {
     const wavPath = path.join(tmpDir, `pre_${i}.wav`);
     await spawnFfmpeg(bin, [
       "-y", "-err_detect", "ignore_err",
       "-i", inputPaths[i],
       "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
-      "-ar", "48000", "-ac", "1",
+      "-ar", String(PCM_SAMPLE_RATE), "-ac", "1",
       wavPath,
     ]);
+    const st = await fs.stat(wavPath);
+    const pcmBytes = Math.max(0, st.size - 44);
+    const durSec = pcmBytes / PCM_BYTES_PER_SEC;
     wavPaths.push(wavPath);
+    durationsSec.push(durSec);
   }
+  return { wavPaths, durationsSec };
+}
 
-  // Étape 2 : concaténer les WAV (format PCM, toujours compatible concat)
+async function mergeWavFilesWithFfmpeg(wavPaths: string[], outputPath: string, tmpDir: string): Promise<void> {
+  const bin = resolveFfmpegPath();
+  const isOgg = outputPath.endsWith(".ogg") || outputPath.endsWith(".opus");
+
   const listPath = path.join(tmpDir, "list.txt");
   const listContent = wavPaths.map((p) => `file '${p.replace(/\\/g, "/")}'`).join("\n");
   await fs.writeFile(listPath, listContent, "utf8");
 
-  // Étape 3 : encoder vers le format de sortie attendu
   const codecArgs = isOgg
     ? ["-c:a", "libopus", "-b:a", "64k"]
     : ["-c:a", "aac", "-b:a", "128k"];
@@ -182,12 +195,26 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       // 6. Dernier recours : tri lexicographique via la clé 0 (les noms départageront)
       return 0;
     }
-    tempFiles.sort((a, b) => {
-      const ka = extractSortKey(a);
-      const kb = extractSortKey(b);
-      if (ka !== kb) return ka - kb;
-      return a.name.localeCompare(b.name);
-    });
+    const hasExplicitManifestOrder = Boolean(
+      capsule.manifest && Array.isArray(capsule.manifest.selectedAudios) && capsule.manifest.selectedAudios.length > 0
+    );
+
+    if (hasExplicitManifestOrder) {
+      // Les fichiers ont été uploadés sous 0000_nom, 0001_nom dans l'ordre exact choisi par l'utilisateur
+      tempFiles.sort((a, b) => {
+        const na = a.name.split("/").pop() ?? "";
+        const nb = b.name.split("/").pop() ?? "";
+        return na.localeCompare(nb);
+      });
+    } else {
+      tempFiles.sort((a, b) => {
+        const ka = extractSortKey(a);
+        const kb = extractSortKey(b);
+        if (ka !== kb) return ka - kb;
+        return a.name.localeCompare(b.name);
+      });
+    }
+
     const ext = tempFiles[0].name.split(".").pop() ?? "opus";
     const mimeByExt: Record<string, string> = {
       opus: "audio/ogg; codecs=opus",
@@ -202,22 +229,68 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await Promise.all(
       tempFiles.map(async (f, i) => {
         const [buf] = await f.download();
-        const p = path.join(tmpDir, `input_${i}.${ext}`);
+        const fExt = f.name.split(".").pop() ?? ext;
+        const p = path.join(tmpDir, `input_${i}.${fExt}`);
         await fs.writeFile(p, buf);
         orderedPaths[i] = p;
       })
     );
 
-    // 3. Fusionner (ou simple copie si un seul fichier)
+    // 3. Décoder en WAV PCM 48kHz, mesurer la durée exacte de chaque segment et vérifier le plafond de 3600s
+    const { wavPaths, durationsSec } = await decodeToWavAndMeasure(orderedPaths, tmpDir);
+    const totalRealDurationSec = durationsSec.reduce((acc, d) => acc + d, 0);
+    console.log("[capsule/process] durée totale mesurée:", totalRealDurationSec.toFixed(2), "s");
+
+    if (totalRealDurationSec > MAX_VOCAPSULE_DURATION_SEC + 2) {
+      throw new Error(
+        `La sélection dépasse la limite maximale d'une heure (${Math.round(totalRealDurationSec)}s > 3600s).`
+      );
+    }
+
+    // Calculer la position de départ exacte de chaque audio dans la piste fusionnée
+    const segmentStartsSec: number[] = [];
+    let runningStart = 0;
+    for (const d of durationsSec) {
+      segmentStartsSec.push(runningStart);
+      runningStart += d;
+    }
+
+    // Calculer les positions définitives des marque-pages s'il y en a dans le manifeste
+    const computedBookmarks: CapsuleBookmark[] = [];
+    if (capsule.manifest?.bookmarks && capsule.manifest.bookmarks.length > 0) {
+      const manifestAudios = capsule.manifest.selectedAudios ?? [];
+      for (const bm of capsule.manifest.bookmarks) {
+        const audioPos = manifestAudios.findIndex((a) => a.audioId === bm.audioId);
+        if (audioPos >= 0 && audioPos < segmentStartsSec.length) {
+          const segStart = segmentStartsSec[audioPos];
+          const segDur = durationsSec[audioPos];
+          const clampedOffset = Math.min(Math.max(0, Number(bm.offsetInAudioSec) || 0), Math.max(0, segDur - 0.1));
+          const finalTimeSec = Number((segStart + clampedOffset).toFixed(2));
+          computedBookmarks.push({
+            id: bm.id,
+            title: bm.title.slice(0, 80),
+            timeSec: finalTimeSec,
+            audioId: bm.audioId,
+            offsetInAudioSec: Number(clampedOffset.toFixed(2)),
+            displayOrder: 0,
+            ...(bm.color ? { color: bm.color } : {}),
+          });
+        }
+      }
+      computedBookmarks.sort((a, b) => a.timeSec - b.timeSec);
+      computedBookmarks.forEach((b, idx) => { b.displayOrder = idx + 1; });
+    }
+
+    // Fusionner vers le fichier de sortie
     const outputPath = path.join(tmpDir, `output.${ext}`);
     if (orderedPaths.length === 1) {
       await fs.copyFile(orderedPaths[0], outputPath);
     } else {
-      await mergeWithFfmpeg(orderedPaths, outputPath, tmpDir);
+      await mergeWavFilesWithFfmpeg(wavPaths, outputPath, tmpDir);
     }
 
     const mergedBuf = await fs.readFile(outputPath);
-    console.log("[capsule/process] fusion OK, taille:", mergedBuf.byteLength, "ext:", ext);
+    console.log("[capsule/process] fusion OK, taille:", mergedBuf.byteLength, "ext:", ext, "bookmarks:", computedBookmarks.length);
 
     // 4. Upload final
     const echoId = crypto.randomUUID();
@@ -233,6 +306,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
           accentColor: capsule.accentColor,
           storageOption: String(capsule.storageOption),
           productType: capsule.productType ?? "numerique",
+          smartSearchEnabled: String(capsule.smartSearchEnabled === true),
           createdAt: createdAt.toISOString(),
           expiresAt: expires.toISOString(),
           uploadId: capsule.uploadId,
@@ -244,6 +318,15 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await destFile.makePublic();
     const audioUrl = `https://storage.googleapis.com/${bucket.name}/${destPath}`;
 
+    // Sauvegarder les marque-pages dans le dossier de la vocapsule sur Firebase Storage
+    if (computedBookmarks.length > 0) {
+      const bmPath = `echos/${capsule.uid}/${echoId}/bookmarks.json`;
+      const bmFile = bucket.file(bmPath);
+      await bmFile.save(JSON.stringify({ bookmarks: computedBookmarks }), {
+        metadata: { contentType: "application/json" },
+      });
+    }
+
     // 5. Supprimer les temp
     await Promise.all(tempFiles.map((f) => f.delete().catch(() => {})));
 
@@ -252,10 +335,39 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       echoId,
       audioUrl,
       expiresAt: expires.toISOString(),
+      ...(computedBookmarks.length > 0 ? { bookmarks: computedBookmarks } : {}),
     });
+
+    // 7. Si porte-clé payé par anticipation (advancePayment), déclencher maintenant l'email de fabrication LightBurn
+    if (
+      capsule.productType === "porteClef" &&
+      capsule.advancePayment &&
+      capsule.shippingStatus !== "to_engrave" &&
+      capsule.shippingStatus !== "shipped"
+    ) {
+      await updateCapsule(capsuleId, { shippingStatus: "to_engrave" }).catch(() => {});
+      const origin = _req.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+      const qrUrl = `${origin}/capsule/${capsuleId}`;
+      const baseAmount = capsule.nfcEnabled ? 2790 : 2490;
+      const totalAmount = baseAmount + (capsule.smartSearchEnabled ? 300 : 0);
+      await sendKeychainOrderEmails({
+        capsuleId,
+        engraveName: capsule.engraveName ?? "",
+        format: capsule.format ?? "etiquette-rect",
+        qrUrl,
+        shippingName: capsule.shippingName ?? "",
+        shippingAddress: capsule.shippingAddress ?? "",
+        customerPhone: capsule.customerPhone ?? "",
+        customerEmail: capsule.customerEmail ?? "",
+        amount: totalAmount,
+        engravingFont: capsule.engravingFont ?? "Georgia, serif",
+        nfcEnabled: capsule.nfcEnabled ?? false,
+      }).catch((e) => console.error("[capsule/process] sendKeychainOrderEmails error:", e));
+    }
+
     console.log("[capsule/process] ready", capsuleId);
 
-    return NextResponse.json({ status: "ready", echoId, audioUrl });
+    return NextResponse.json({ status: "ready", echoId, audioUrl, bookmarks: computedBookmarks });
   } catch (err) {
     const msg = (err as Error)?.message ?? String(err);
     console.error("[capsule/process] ERREUR:", msg, (err as Error)?.stack);

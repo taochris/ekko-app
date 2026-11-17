@@ -346,7 +346,7 @@ export default function MobileImport({ config, onAudiosImported, onClose, onCove
       URL.revokeObjectURL(currentBlobUrl.current);
       currentBlobUrl.current = null;
     }
-    // Convertir tous les AudioEntry en File pour l'interface EKKO
+    // Convertir tous les AudioEntry en File pour l'interface VOSEKKO
     const files = entries.map(makeFile);
     onAudiosImported(files);
   };

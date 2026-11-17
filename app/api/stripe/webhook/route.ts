@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
-import { markCapsulePaid, updateCapsule } from "../../../lib/capsules";
+import { getCapsule, markCapsulePaid, markCapsulePaidAwaitingSelection, updateCapsule } from "../../../lib/capsules";
 import { buildKeychainEmail, buildAdminOrderEmail, generateLightBurnSVG, sendPushover, shortQrUrl } from "../../../lib/order-emails";
 
 export const runtime = "nodejs";
@@ -12,7 +12,7 @@ function buildConfirmationEmail({ capsuleUrl, capsuleId }: { capsuleUrl: string;
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Votre vocapsule EKKO</title>
+  <title>Votre vocapsule VOSEKKO</title>
 </head>
 <body style="margin:0;padding:0;background:#0d0a0f;font-family:Georgia,'Times New Roman',serif;color:#f0e8d8;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0a0f;padding:40px 0;">
@@ -23,7 +23,7 @@ function buildConfirmationEmail({ capsuleUrl, capsuleId }: { capsuleUrl: string;
           <!-- Header doré -->
           <tr>
             <td style="background:linear-gradient(135deg,rgba(201,169,110,0.12),rgba(201,169,110,0.05));padding:36px 40px 28px;border-bottom:1px solid rgba(201,169,110,0.12);text-align:center;">
-              <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#c9a96e;">EKKO</p>
+              <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#c9a96e;">VOSEKKO</p>
               <h1 style="margin:0;font-size:22px;font-weight:300;color:#f0e8d8;line-height:1.4;">Votre vocapsule est en cours de création</h1>
             </td>
           </tr>
@@ -38,7 +38,7 @@ function buildConfirmationEmail({ capsuleUrl, capsuleId }: { capsuleUrl: string;
 
               <p style="margin:0 0 20px;font-size:15px;color:rgba(240,232,216,0.85);line-height:1.75;">
                 Nous avons bien reçu votre paiement et la création de votre vocapsule a démarré immédiatement.
-                Dans quelques instants, vos voix seront réunies en un seul écho.
+                Dans quelques instants, vos voix seront réunies en une seule vocapsule.
               </p>
 
               <!-- Bloc capsule -->
@@ -73,7 +73,7 @@ function buildConfirmationEmail({ capsuleUrl, capsuleId }: { capsuleUrl: string;
           <tr>
             <td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
               <p style="margin:0;font-size:11px;color:rgba(240,232,216,0.25);">
-                © EKKO · <a href="https://vosekko.com" style="color:rgba(240,232,216,0.35);text-decoration:none;">vosekko.com</a> ·
+                © VOSEKKO · <a href="https://vosekko.com" style="color:rgba(240,232,216,0.35);text-decoration:none;">vosekko.com</a> ·
                 <a href="https://vosekko.com/cgv" style="color:rgba(240,232,216,0.35);text-decoration:none;">CGV</a>
               </p>
             </td>
@@ -147,6 +147,42 @@ export async function POST(req: NextRequest) {
     const customerPhone = session.customer_details?.phone ?? "";
 
     try {
+      const existingCapsule = await getCapsule(capsuleId);
+      if (existingCapsule && existingCapsule.status !== "pending") {
+        // Idempotence : déjà traitée par claim ou un webhook précédent
+        return NextResponse.json({ received: true, idempotent: true });
+      }
+
+      const isAdvancePayment =
+        session.metadata?.advancePayment === "true" || existingCapsule?.advancePayment === true;
+
+      if (isAdvancePayment) {
+        await markCapsulePaidAwaitingSelection(capsuleId, session.id);
+        if (isPorteClef && (shippingAddress || customerPhone)) {
+          await updateCapsule(capsuleId, {
+            shippingName,
+            shippingAddress,
+            customerPhone,
+            shippingStatus: "pending", // La gravure ne démarrera qu'après validation finale de la sélection
+          });
+        }
+        console.log("[stripe/webhook] capsule marquée paid_awaiting_selection:", capsuleId);
+
+        if (process.env.RESEND_API_KEY && customerEmail) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const resumeUrl = `${origin}/capsule/${capsuleId}?mode=select`;
+          resend.emails.send({
+            from: "VOSEKKO <ekko@vosekko.com>",
+            to: customerEmail,
+            subject: "Paiement confirmé · Sélectionnez vos souvenirs intelligents VOSEKKO ✦",
+            html: buildConfirmationEmail({ capsuleUrl: resumeUrl, capsuleId }),
+          }).catch((e: unknown) => console.error("[webhook] email advancePayment:", e));
+        }
+
+        // Ne PAS lancer /process ni envoyer le SVG LightBurn tant que l'utilisateur n'a pas validé sa sélection
+        return NextResponse.json({ received: true, awaitingSelection: true });
+      }
+
       await markCapsulePaid(capsuleId, session.id);
 
       // Sauvegarder adresse + téléphone en Firestore (pour porteClef)
@@ -168,24 +204,25 @@ export async function POST(req: NextRequest) {
         const format        = session.metadata?.format ?? "etiquette-rect";
         const engravingFont = session.metadata?.engravingFont ?? "Georgia, serif";
         const nfcEnabled   = session.metadata?.nfcEnabled === "true";
+        const smartSearchEnabled = session.metadata?.smartSearchEnabled === "true";
         const qrUrl       = shortQrUrl(capsuleId);
-        const amount      = session.amount_total ?? (nfcEnabled ? 2790 : 2490);
+        const amount      = session.amount_total ?? ((nfcEnabled ? 2790 : 2490) + (smartSearchEnabled ? 300 : 0));
 
         if (isPorteClef) {
           // ── Email client porte-clé ──
           if (customerEmail) {
             resend.emails.send({
-              from: "EKKO <ekko@vosekko.com>",
+              from: "VOSEKKO <ekko@vosekko.com>",
               to: customerEmail,
-              subject: "Votre porte-clé EKKO est en cours de fabrication ✦",
-              html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled }),
+              subject: "Votre porte-clé VOSEKKO est en cours de fabrication ✦",
+              html: buildKeychainEmail({ capsuleId, engraveName, format, shippingName, nfcEnabled, smartSearchEnabled }),
             }).catch((e: unknown) => console.error("[webhook] email client porteClef:", e));
           }
 
           // ── SVG LightBurn + email admin ──
           generateLightBurnSVG(capsuleId, engraveName, format, qrUrl, engravingFont).then((svg) => {
             resend.emails.send({
-              from: "EKKO <ekko@vosekko.com>",
+              from: "VOSEKKO <ekko@vosekko.com>",
               to: adminEmail,
               subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
               html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
@@ -197,7 +234,7 @@ export async function POST(req: NextRequest) {
 
             // ── Notification Pushover ──
             sendPushover(
-              "🔑 Nouvelle commande EKKO",
+              "🔑 Nouvelle commande VOSEKKO",
               `Prénom : ${engraveName}\nFormat : ${format}\nNFC au dos : ${nfcEnabled ? "oui" : "non"}\nClient : ${shippingName}\n${shippingAddress}`
             ).catch((e) => console.error("[webhook] pushover:", e));
           }).catch((e) => console.error("[webhook] generateLightBurnSVG:", e));
@@ -207,9 +244,9 @@ export async function POST(req: NextRequest) {
           if (customerEmail) {
             const capsuleUrl = `${origin}/capsule/${capsuleId}`;
             resend.emails.send({
-              from: "EKKO <ekko@vosekko.com>",
+              from: "VOSEKKO <ekko@vosekko.com>",
               to: customerEmail,
-              subject: "Votre vocapsule EKKO est en cours de création ✦",
+              subject: "Votre vocapsule VOSEKKO est en cours de création ✦",
               html: buildConfirmationEmail({ capsuleUrl, capsuleId }),
             }).catch((e: unknown) => console.error("[webhook] email client numérique:", e));
           }

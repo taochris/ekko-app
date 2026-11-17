@@ -1309,7 +1309,7 @@ export default function InspirationsPage() {
       {/* Footer */}
       <footer style={{ position: "relative", zIndex: 10, borderTop: "1px solid rgba(201,169,110,0.08)", padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <img src="/g.png" alt="VOSEKKO" style={{ height: 32, width: "auto", objectFit: "contain", mixBlendMode: "screen" }} />
-        <p className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.32)" }}>© 2025 VOSEKKO. Tous droits réservés.</p>
+        <p className="ekko-serif" style={{ fontSize: 12, color: "rgba(240,232,216,0.32)" }}>© 2026 VOSEKKO. Tous droits réservés.</p>
       </footer>
 
       <style>{`

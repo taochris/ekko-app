@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
+import { getFirestore } from "firebase-admin/firestore";
 
 export const runtime = "nodejs";
 
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
     const file = allFiles.find((f) => f.name.includes(`/${echoId}/`));
 
     if (!file) {
-      return NextResponse.json({ error: "Écho introuvable ou expiré" }, { status: 404 });
+      return NextResponse.json({ error: "Vocapsule introuvable ou expirée" }, { status: 404 });
     }
     const meta = file.metadata?.metadata ?? {};
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
       const expires = new Date(meta.expiresAt as string);
       if (expires < new Date()) {
         await file.delete().catch(() => {});
-        return NextResponse.json({ error: "Écho expiré" }, { status: 410 });
+        return NextResponse.json({ error: "Vocapsule expirée" }, { status: 410 });
       }
     }
 
@@ -54,12 +55,38 @@ export async function GET(req: NextRequest) {
       ? `https://storage.googleapis.com/${bucket.name}/${coverFile.name}`
       : null;
 
+    // Chercher les marque-pages associés (bookmarks.json dans le dossier ou dans la capsule Firestore)
+    let bookmarks: unknown[] = [];
+    const bmFile = allFiles.find((f) => f.name === `${folder}/bookmarks.json`);
+    if (bmFile) {
+      try {
+        const [bmBuf] = await bmFile.download();
+        const parsed = JSON.parse(bmBuf.toString("utf8"));
+        if (Array.isArray(parsed?.bookmarks)) {
+          bookmarks = parsed.bookmarks;
+        }
+      } catch {
+        // ignore
+      }
+    } else if (meta.capsuleId) {
+      try {
+        const db = getFirestore();
+        const snap = await db.collection("capsules").doc(String(meta.capsuleId)).get();
+        if (snap.exists && Array.isArray(snap.data()?.bookmarks)) {
+          bookmarks = snap.data()!.bookmarks;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     return NextResponse.json({
       audioUrl: publicUrl,
       accentColor: meta.accentColor ?? "#c9a96e",
       theme: meta.theme ?? "deuil",
       expiresAt: meta.expiresAt ?? null,
       coverUrl,
+      bookmarks,
     });
   } catch (err) {
     console.error("[storage/echo]", err);

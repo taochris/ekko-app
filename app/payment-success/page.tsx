@@ -17,7 +17,7 @@ function PaymentSuccessInner() {
       document.body.innerHTML = `
         <div style="font-family:Georgia,serif;text-align:center;padding:80px 24px;background:#0a0a14;min-height:100vh;color:#f0e8d8;">
           <p style="font-size:22px;margin-bottom:12px;">Paiement confirmé ✓</p>
-          <p style="font-size:14px;opacity:0.5;">Vous pouvez fermer cet onglet et retourner sur EKKO.</p>
+          <p style="font-size:14px;opacity:0.5;">Vous pouvez fermer cet onglet et retourner sur VOSEKKO.</p>
         </div>
       `;
     }, 300);
