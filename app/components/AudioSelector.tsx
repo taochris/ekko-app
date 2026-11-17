@@ -190,6 +190,11 @@ export default function AudioSelector({
   });
   const selectedSet = useMemo(() => new Set(orderedSelected), [orderedSelected]);
   const [bookmarks, setBookmarks] = useState<BookmarkDraftItem[]>(initialBookmarks ?? []);
+  const [customAudioNames, setCustomAudioNames] = useState<Record<string, string>>(() =>
+    Object.fromEntries((initialBookmarks ?? []).map((b) => [b.audioId, b.title]))
+  );
+  const [namingAudioId, setNamingAudioId] = useState<string | null>(null);
+  const [namingDraft, setNamingDraft] = useState("");
   const [filterSource, setFilterSource] = useState("all");
   const [durations, setDurations] = useState<Record<number, number>>({});
   const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
@@ -204,6 +209,8 @@ export default function AudioSelector({
   const [demoProgressActive, setDemoProgressActive] = useState(false);
   const indexedAudioIdsRef = useRef<Set<string>>(new Set());
   const indexingStartRef = useRef<number>(0);
+  const indexingAbortRef = useRef<AbortController | null>(null);
+  const indexingStoppedByUserRef = useRef<boolean>(false);
   const pendingSearchQueryRef = useRef<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
@@ -247,6 +254,39 @@ export default function AudioSelector({
     let cancelled = false;
 
     const runIndexing = async () => {
+      if (indexingStoppedByUserRef.current && indexingTrigger === 0) {
+        return;
+      }
+      indexingStoppedByUserRef.current = false;
+
+      // 1. Récupérer les audioIds déjà indexés côté serveur (ou en sessionStorage)
+      //    pour ne JAMAIS ré-analyser / ré-envoyer les 294 audios quand on revient sur la page !
+      try {
+        const cachedRaw = sessionStorage.getItem(`vosekko_indexed_${capsuleId}`);
+        if (cachedRaw) {
+          const parsed: string[] = JSON.parse(cachedRaw);
+          parsed.forEach((id) => indexedAudioIdsRef.current.add(id));
+        }
+      } catch {}
+
+      try {
+        const checkRes = await fetch(`/api/smart-search/index?capsuleId=${encodeURIComponent(capsuleId)}`);
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          if (Array.isArray(checkData.indexedAudioIds)) {
+            checkData.indexedAudioIds.forEach((id: string) => indexedAudioIdsRef.current.add(id));
+            try {
+              sessionStorage.setItem(
+                `vosekko_indexed_${capsuleId}`,
+                JSON.stringify(Array.from(indexedAudioIdsRef.current))
+              );
+            } catch {}
+          }
+        }
+      } catch {}
+
+      if (cancelled) return;
+
       const pendingIndices: number[] = [];
       audioIds.forEach((id, idx) => {
         if (!indexedAudioIdsRef.current.has(id)) pendingIndices.push(idx);
@@ -259,18 +299,24 @@ export default function AudioSelector({
         return;
       }
 
+      const alreadyDone = audios.length - pendingIndices.length;
+      if (alreadyDone > 0) {
+        setIndexedCount(alreadyDone);
+        setVisualIndexedCount(alreadyDone);
+      }
+
       setIndexingStatus("indexing");
       setSearchError(null);
       indexingStartRef.current = Date.now();
       // Estimation initiale : ~12 s de réveil GPU + ~0.18 s par vocal
       setEtaSeconds(Math.max(4, Math.round(12 + pendingIndices.length * 0.18)));
 
-      // Découper en lots de max 20 fichiers ET max 3.5 Mo (limite requête Vercel = 4.5 Mo)
+      // Découper en lots de max 25 fichiers ET max 3.8 Mo (limite requête Vercel = 4.5 Mo)
       const batches: number[][] = [];
       let curBatch: number[] = [];
       let curBytes = 0;
-      const MAX_BATCH_FILES = 20;
-      const MAX_BATCH_BYTES = 3.5 * 1024 * 1024;
+      const MAX_BATCH_FILES = 25;
+      const MAX_BATCH_BYTES = 3.8 * 1024 * 1024;
       for (const idx of pendingIndices) {
         const fSize = audios[idx]?.size ?? 0;
         if (curBatch.length >= MAX_BATCH_FILES || (curBatch.length > 0 && curBytes + fSize > MAX_BATCH_BYTES)) {
@@ -283,23 +329,38 @@ export default function AudioSelector({
       }
       if (curBatch.length > 0) batches.push(curBatch);
 
-      for (const slice of batches) {
-        if (cancelled) return;
+      for (let bIdx = 0; bIdx < batches.length; bIdx++) {
+        const slice = batches[bIdx];
+        if (cancelled || indexingStoppedByUserRef.current) return;
         const batchIds = slice.map((i) => audioIds[i]);
         setCurrentBatchTarget(indexedAudioIdsRef.current.size + slice.length);
         const form = new FormData();
         form.append("capsuleId", capsuleId);
         form.append("audioIds", JSON.stringify(batchIds));
+        form.append("isLastBatch", bIdx === batches.length - 1 ? "true" : "false");
         slice.forEach((i) => form.append("files", audios[i], audios[i].name));
 
+        const abortCtrl = new AbortController();
+        indexingAbortRef.current = abortCtrl;
+
         try {
-          const res = await fetch("/api/smart-search/index", { method: "POST", body: form });
+          const res = await fetch("/api/smart-search/index", {
+            method: "POST",
+            body: form,
+            signal: abortCtrl.signal,
+          });
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `Erreur indexation (${res.status})`);
           }
           batchIds.forEach((id) => indexedAudioIdsRef.current.add(id));
-          if (!cancelled) {
+          try {
+            sessionStorage.setItem(
+              `vosekko_indexed_${capsuleId}`,
+              JSON.stringify(Array.from(indexedAudioIdsRef.current))
+            );
+          } catch {}
+          if (!cancelled && !indexingStoppedByUserRef.current) {
             const doneCount = indexedAudioIdsRef.current.size;
             setIndexedCount(doneCount);
             setVisualIndexedCount((prev) => Math.max(prev, doneCount));
@@ -309,6 +370,9 @@ export default function AudioSelector({
             setEtaSeconds(remaining > 0 ? Math.max(2, Math.round(remaining * secPerFile)) : 0);
           }
         } catch (err) {
+          if ((err as Error)?.name === "AbortError" || indexingStoppedByUserRef.current) {
+            return;
+          }
           if (!cancelled) {
             setIndexingStatus("error");
             setSearchError((err as Error).message);
@@ -317,7 +381,7 @@ export default function AudioSelector({
         }
       }
 
-      if (!cancelled) {
+      if (!cancelled && !indexingStoppedByUserRef.current) {
         setIndexingStatus("ready");
         setVisualIndexedCount(audios.length);
         setEtaSeconds(0);
@@ -325,7 +389,10 @@ export default function AudioSelector({
     };
 
     runIndexing();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      indexingAbortRef.current?.abort();
+    };
   }, [smartSearchEnabled, capsuleId, audios, audioIds, indexingTrigger]);
 
   // Progression visuelle fluide entre les lots pour que le % et le compteur X / N avancent régulièrement
@@ -522,17 +589,19 @@ export default function AudioSelector({
     let runningSec = 0;
     return orderedSelected.map((audioIdx) => {
       const dur = durations[audioIdx] ?? 0;
+      const id = audioIds[audioIdx];
       const item = {
-        audioId: audioIds[audioIdx],
+        audioId: id,
         file: audios[audioIdx],
         durationSec: dur,
         startSecInMix: runningSec,
         url: audioUrls[audioIdx],
+        customName: customAudioNames[id],
       };
       runningSec += dur;
       return item;
     });
-  }, [orderedSelected, durations, audioIds, audios, audioUrls]);
+  }, [orderedSelected, durations, audioIds, audios, audioUrls, customAudioNames]);
 
   const currentManifest: CapsuleManifest = useMemo(
     () => ({
@@ -732,9 +801,34 @@ export default function AudioSelector({
                   <span style={{ fontFamily: "Georgia, serif", fontSize: 12, color: "#f0e8d8" }}>
                     <strong>{current}</strong> sur <strong>{total}</strong> vocaux analysés ({pct} %)
                   </span>
-                  <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: config.accent }}>
-                    Temps estimé : {etaLabel}
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 11, color: config.accent }}>
+                      Temps estimé : {etaLabel}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        indexingStoppedByUserRef.current = true;
+                        indexingAbortRef.current?.abort();
+                        setDemoProgressActive(false);
+                        setIndexingStatus("ready");
+                        setEtaSeconds(0);
+                      }}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        cursor: "pointer",
+                        background: "rgba(228, 118, 108, 0.14)",
+                        border: "1px solid rgba(228, 118, 108, 0.45)",
+                        color: "#e4766c",
+                        fontFamily: "sans-serif",
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                    >
+                      ⏹ Stopper
+                    </button>
+                  </div>
                 </div>
 
                 {/* Mention rassurante : seule la 1re analyse prend du temps */}
@@ -747,7 +841,7 @@ export default function AudioSelector({
                     lineHeight: 1.5,
                   }}
                 >
-                  ✦ Cette première analyse prépare tous vos vocaux (~15 s pour 1 h d&apos;audios, jusqu&apos;à ~2 min pour 10 h) — vos recherches suivantes n&apos;auront plus besoin de ré-analyser vos fichiers.
+                  ✦ Cette première analyse prépare tous vos vocaux (~15 s pour 1 h d&apos;audios, jusqu&apos;à ~2 min pour 10 h) — la recherche de vos mots sera ensuite extrêmement rapide.
                 </p>
               </div>
             );
@@ -888,54 +982,152 @@ export default function AudioSelector({
                               {hit.relevanceLabel}
                             </span>
                             <span style={{ fontFamily: "sans-serif", fontSize: 13.5, color: "#f0e8d8", fontWeight: 500 }}>
-                              {cleanName}
+                              {customAudioNames[hit.audioId] ? (
+                                <>
+                                  <span style={{ color: config.accent, fontWeight: 600 }}>{customAudioNames[hit.audioId]}</span>
+                                  <span style={{ color: "rgba(240,232,216,0.45)", fontSize: 12, marginLeft: 8 }}>({cleanName})</span>
+                                </>
+                              ) : (
+                                cleanName
+                              )}
                             </span>
                           </div>
-                          <p style={{ fontFamily: "sans-serif", fontSize: 11.5, color: "rgba(240,232,216,0.45)", margin: "5px 0 0" }}>
-                            {dateKey ? friendlyDate(dateKey) : "Date inconnue"} · Durée : {formatDuration(dur)}
-                            {hit.bestSegmentStartSec > 0 ? ` · Passage détecté vers ${formatDuration(hit.bestSegmentStartSec)}` : ""}
-                          </p>
-                        </div>
-
-                        {url && (
-                          <div style={{ flexShrink: 0 }}>
-                            {isMobile ? (
-                              <MobileAudioPlayer url={url} accent={config.accent} />
-                            ) : (
-                              <audio
-                                src={hit.bestSegmentStartSec > 0 ? `${url}#t=${Math.floor(hit.bestSegmentStartSec)}` : url}
-                                controls
-                                style={{ width: 175, height: 30, borderRadius: 6, accentColor: config.accent }}
-                              />
-                            )}
+                            <p style={{ fontFamily: "sans-serif", fontSize: 11.5, color: "rgba(240,232,216,0.45)", margin: "5px 0 0" }}>
+                              {dateKey ? friendlyDate(dateKey) : "Date inconnue"} · Durée : {formatDuration(dur)}
+                            </p>
                           </div>
-                        )}
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (inOrder) {
-                              removeFromOrder(idx);
-                            } else {
-                              const next = [...orderedSelected, idx];
-                              setOrderedSelected(next);
-                              onSelect(next.map((i) => audios[i]));
-                            }
-                          }}
-                          style={{
-                            padding: "8px 15px",
-                            borderRadius: 9,
-                            cursor: "pointer",
-                            fontFamily: "sans-serif",
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            background: inOrder ? "rgba(87, 200, 138, 0.14)" : "rgba(207, 163, 88, 0.16)",
-                            border: `1px solid ${inOrder ? "rgba(87, 200, 138, 0.55)" : "#cfa358"}`,
-                            color: inOrder ? "#57c88a" : "#f0e8d8",
-                          }}
-                        >
-                          {inOrder ? "✓ Dans la sélection" : "+ Ajouter à la sélection"}
-                        </button>
+                          {url && (
+                            <div style={{ flexShrink: 0 }}>
+                              {isMobile ? (
+                                <MobileAudioPlayer url={url} accent={config.accent} />
+                              ) : (
+                                <audio
+                                  src={url}
+                                  controls
+                                  style={{ width: 175, height: 30, borderRadius: 6, accentColor: config.accent }}
+                                />
+                              )}
+                            </div>
+                          )}
+
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 6, minWidth: 155 }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (inOrder) {
+                                removeFromOrder(idx);
+                                if (namingAudioId === hit.audioId) setNamingAudioId(null);
+                              } else {
+                                const next = [...orderedSelected, idx];
+                                setOrderedSelected(next);
+                                onSelect(next.map((i) => audios[i]));
+                              }
+                            }}
+                            style={{
+                              padding: "8px 15px",
+                              borderRadius: 9,
+                              cursor: "pointer",
+                              fontFamily: "sans-serif",
+                              fontSize: 12.5,
+                              fontWeight: 500,
+                              background: inOrder ? "rgba(87, 200, 138, 0.14)" : "rgba(207, 163, 88, 0.16)",
+                              border: `1px solid ${inOrder ? "rgba(87, 200, 138, 0.55)" : "#cfa358"}`,
+                              color: inOrder ? "#57c88a" : "#f0e8d8",
+                            }}
+                          >
+                            {inOrder ? "✓ Dans la sélection" : "+ Ajouter à la sélection"}
+                          </button>
+
+                          {inOrder && (
+                            namingAudioId === hit.audioId ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={namingDraft}
+                                  maxLength={60}
+                                  placeholder="Nommer cet audio…"
+                                  onChange={(e) => setNamingDraft(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      const val = namingDraft.trim();
+                                      setCustomAudioNames((prev) => ({ ...prev, [hit.audioId]: val }));
+                                      setBookmarks((prev) =>
+                                        prev.some((b) => b.audioId === hit.audioId)
+                                          ? prev.map((b) => (b.audioId === hit.audioId && val ? { ...b, title: val } : b))
+                                          : prev
+                                      );
+                                      setNamingAudioId(null);
+                                    } else if (e.key === "Escape") {
+                                      setNamingAudioId(null);
+                                    }
+                                  }}
+                                  style={{
+                                    width: 125,
+                                    padding: "6px 9px",
+                                    borderRadius: 7,
+                                    background: "#0b0809",
+                                    border: `1px solid ${config.accent}80`,
+                                    color: "#f0e8d8",
+                                    fontFamily: "sans-serif",
+                                    fontSize: 12,
+                                    outline: "none",
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const val = namingDraft.trim();
+                                    setCustomAudioNames((prev) => ({ ...prev, [hit.audioId]: val }));
+                                    setBookmarks((prev) =>
+                                      prev.some((b) => b.audioId === hit.audioId)
+                                        ? prev.map((b) => (b.audioId === hit.audioId && val ? { ...b, title: val } : b))
+                                        : prev
+                                    );
+                                    setNamingAudioId(null);
+                                  }}
+                                  style={{
+                                    padding: "6px 9px",
+                                    borderRadius: 7,
+                                    cursor: "pointer",
+                                    background: config.accent,
+                                    border: "none",
+                                    color: "#1a130c",
+                                    fontFamily: "sans-serif",
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  OK
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNamingAudioId(hit.audioId);
+                                  setNamingDraft(customAudioNames[hit.audioId] ?? "");
+                                }}
+                                style={{
+                                  padding: "6px 12px",
+                                  borderRadius: 8,
+                                  cursor: "pointer",
+                                  fontFamily: "sans-serif",
+                                  fontSize: 11.5,
+                                  fontWeight: 500,
+                                  background: customAudioNames[hit.audioId] ? `${config.accent}18` : "rgba(255,255,255,0.04)",
+                                  border: `1px solid ${customAudioNames[hit.audioId] ? config.accent + "65" : "rgba(255,255,255,0.14)"}`,
+                                  color: customAudioNames[hit.audioId] ? config.accent : "rgba(240,232,216,0.78)",
+                                  textAlign: "center",
+                                }}
+                              >
+                                {customAudioNames[hit.audioId] ? `✎ ${customAudioNames[hit.audioId]}` : "✎ Nommer"}
+                              </button>
+                            )
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1201,7 +1393,16 @@ export default function AudioSelector({
                         <rect x="2" y="3" width="12" height="1.5" rx="0.5"/><rect x="2" y="7" width="12" height="1.5" rx="0.5"/><rect x="2" y="11" width="12" height="1.5" rx="0.5"/>
                       </svg>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "Georgia, serif", fontSize: 13.5, margin: 0, color: "#f0e8d8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanName}</p>
+                        <p style={{ fontFamily: "Georgia, serif", fontSize: 13.5, margin: 0, color: "#f0e8d8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {customAudioNames[audioIds[audioIdx]] ? (
+                            <>
+                              <span style={{ color: config.accent, fontWeight: 600 }}>{customAudioNames[audioIds[audioIdx]]}</span>
+                              <span style={{ color: "rgba(240,232,216,0.4)", fontSize: 11.5, marginLeft: 8 }}>({cleanName})</span>
+                            </>
+                          ) : (
+                            cleanName
+                          )}
+                        </p>
                         <div style={{ display: "flex", gap: 6, marginTop: 3, alignItems: "center" }}>
                           <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: srcColor }}>{source}</span>
                           {dur !== undefined && dur > 0 && <span style={{ fontFamily: "Georgia, serif", fontSize: 10.5, color: "rgba(240,232,216,0.42)" }}>{formatDuration(dur)}</span>}

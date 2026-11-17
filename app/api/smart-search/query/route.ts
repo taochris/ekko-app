@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { getCapsule } from "../../../lib/capsules";
 import {
   loadVectorIndex,
@@ -10,10 +11,20 @@ import {
 
 export const runtime = "nodejs";
 
-const AI_SERVICE_URL = process.env.VOSEKKO_AI_URL ?? "http://127.0.0.1:8765";
+const AI_SERVICE_URL =
+  process.env.VOSEKKO_AI_URL ??
+  "https://taochris66--vosekko-embeddinggemma2-vosekko-ai-asgi.us-east.modal.run";
 // Possibilité d'utiliser un endpoint texte CPU léger dédié sur Modal pour les requêtes, ou le même service
 const AI_QUERY_EMBED_URL = process.env.VOSEKKO_AI_QUERY_URL ?? `${AI_SERVICE_URL}/v1/embed-query`;
-const AI_SECRET = process.env.VOSEKKO_AI_SECRET ?? "vosekko-local-dev-secret";
+
+function getAiSecret(): string {
+  if (process.env.VOSEKKO_AI_SECRET) return process.env.VOSEKKO_AI_SECRET;
+  const pk = (process.env.FIREBASE_ADMIN_PRIVATE_KEY ?? "").replace(/\\n/g, "\n").replace(/^"|"$/g, "");
+  if (pk) {
+    return crypto.createHmac("sha256", pk).update("vosekko-ai-secret-v1").digest("hex");
+  }
+  return "vosekko-local-dev-secret";
+}
 
 /**
  * POST /api/smart-search/query
@@ -68,7 +79,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-vosekko-secret": AI_SECRET,
+          "x-vosekko-secret": getAiSecret(),
         },
         body: JSON.stringify({
           query: cleanQuery.slice(0, 200),
@@ -97,7 +108,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-vosekko-secret": AI_SECRET,
+        "x-vosekko-secret": getAiSecret(),
       },
       body: JSON.stringify({
         session_id: `${capsule.uid}_${cleanCapsuleId}`,
@@ -135,7 +146,7 @@ export async function DELETE(req: NextRequest) {
     await deleteVectorIndex(capsuleId);
     await fetch(`${AI_SERVICE_URL}/v1/sessions/${encodeURIComponent(`${capsule.uid}_${capsuleId}`)}`, {
       method: "DELETE",
-      headers: { "x-vosekko-secret": AI_SECRET },
+      headers: { "x-vosekko-secret": getAiSecret() },
     }).catch(() => {});
 
     return NextResponse.json({ deleted: true });

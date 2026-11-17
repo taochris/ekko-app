@@ -34,52 +34,98 @@ export interface StoredVectorIndex {
   audios: Record<string, StoredIndexedAudio>;
 }
 
+const globalForVectors = globalThis as unknown as {
+  __vosekkoVectorCache?: Map<string, StoredVectorIndex>;
+  __vosekkoPendingSaves?: Map<string, Promise<void>>;
+};
+
+const memoryCache =
+  globalForVectors.__vosekkoVectorCache ??
+  (globalForVectors.__vosekkoVectorCache = new Map<string, StoredVectorIndex>());
+
+const pendingSaves =
+  globalForVectors.__vosekkoPendingSaves ??
+  (globalForVectors.__vosekkoPendingSaves = new Map<string, Promise<void>>());
+
 function getIndexStoragePath(capsuleId: string): string {
   return `temp-vectors/${capsuleId}/index.json`;
 }
 
 /**
- * Charge l'index vectoriel temporaire depuis Firebase Storage.
- * Permet à un conteneur GPU Serverless (Modal / RunPod) de s'éteindre immédiatement
- * après l'indexation sans perdre les vecteurs !
+ * Charge l'index vectoriel temporaire depuis le cache mémoire (instantané entre deux lots)
+ * ou depuis Firebase Storage.
  */
 export async function loadVectorIndex(capsuleId: string, uid: string): Promise<StoredVectorIndex> {
+  const cached = memoryCache.get(capsuleId);
+  if (cached) {
+    return cached;
+  }
   try {
+    const pending = pendingSaves.get(capsuleId);
+    if (pending) {
+      await pending.catch(() => {});
+    }
     const bucket = getAdminBucket();
     const file = bucket.file(getIndexStoragePath(capsuleId));
     const [exists] = await file.exists();
     if (!exists) {
-      return {
+      const empty: StoredVectorIndex = {
         capsuleId,
         uid,
         updatedAt: new Date().toISOString(),
         totalDurationSec: 0,
         audios: {},
       };
+      memoryCache.set(capsuleId, empty);
+      return empty;
     }
     const [buf] = await file.download();
     const parsed = JSON.parse(buf.toString("utf8")) as StoredVectorIndex;
+    memoryCache.set(capsuleId, parsed);
     return parsed;
   } catch {
-    return {
+    const empty: StoredVectorIndex = {
       capsuleId,
       uid,
       updatedAt: new Date().toISOString(),
       totalDurationSec: 0,
       audios: {},
     };
+    memoryCache.set(capsuleId, empty);
+    return empty;
   }
 }
 
+async function persistIndexToStorage(capsuleId: string, uid: string, index: StoredVectorIndex): Promise<void> {
+  const bucket = getAdminBucket();
+  const file = bucket.file(getIndexStoragePath(capsuleId));
+  const payload = JSON.stringify(index);
+  await file.save(payload, {
+    resumable: false,
+    metadata: {
+      contentType: "application/json",
+      metadata: {
+        capsuleId,
+        uid,
+        updatedAt: index.updatedAt,
+      },
+    },
+  });
+}
+
 /**
- * Sauvegarde / fusionne un lot de vecteurs dans l'index temporaire sur Firebase Storage.
+ * Sauvegarde / fusionne un lot de vecteurs dans l'index en mémoire,
+ * et persiste sur Firebase Storage (en arrière-plan entre les lots pour ne pas bloquer Modal,
+ * et de façon synchrone sur le dernier lot).
  */
 export async function upsertVectorIndexBatch(
   capsuleId: string,
   uid: string,
-  items: StoredIndexedAudio[]
+  items: StoredIndexedAudio[],
+  existingIndex?: StoredVectorIndex,
+  waitForStorage = false
 ): Promise<{ totalFiles: number; totalDurationSec: number; quotaExceeded?: string }> {
-  const index = await loadVectorIndex(capsuleId, uid);
+  const index = existingIndex ?? (await loadVectorIndex(capsuleId, uid));
 
   for (const item of items) {
     index.audios[item.audioId] = item;
@@ -109,19 +155,17 @@ export async function upsertVectorIndexBatch(
 
   index.updatedAt = new Date().toISOString();
   index.totalDurationSec = totalDurationSec;
+  memoryCache.set(capsuleId, index);
 
-  const bucket = getAdminBucket();
-  const file = bucket.file(getIndexStoragePath(capsuleId));
-  await file.save(JSON.stringify(index), {
-    metadata: {
-      contentType: "application/json",
-      metadata: {
-        capsuleId,
-        uid,
-        updatedAt: index.updatedAt,
-      },
-    },
-  });
+  const prevSave = pendingSaves.get(capsuleId) ?? Promise.resolve();
+  const nextSave = prevSave
+    .catch(() => {})
+    .then(() => persistIndexToStorage(capsuleId, uid, index));
+  pendingSaves.set(capsuleId, nextSave);
+
+  if (waitForStorage) {
+    await nextSave;
+  }
 
   return { totalFiles, totalDurationSec };
 }
@@ -131,6 +175,8 @@ export async function upsertVectorIndexBatch(
  * une fois la Vocapsule validée (maîtrise des coûts et confidentialité RGPD).
  */
 export async function deleteVectorIndex(capsuleId: string): Promise<void> {
+  memoryCache.delete(capsuleId);
+  pendingSaves.delete(capsuleId);
   try {
     const bucket = getAdminBucket();
     await bucket.file(getIndexStoragePath(capsuleId)).delete({ ignoreNotFound: true });
@@ -150,7 +196,10 @@ export async function checkAndIncrementSearchQuota(capsuleId: string): Promise<{
   if (current >= SMART_SEARCH_QUOTAS.maxQueriesPerCapsule) {
     return { allowed: false, count: current };
   }
-  await ref.update({ smartSearchQueryCount: FieldValue.increment(1) }).catch(() => {});
+  await ref.update({
+    smartSearchQueryCount: FieldValue.increment(1),
+    smartSearchLastQueryAt: new Date().toISOString(),
+  });
   return { allowed: true, count: current + 1 };
 }
 

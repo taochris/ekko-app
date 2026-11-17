@@ -127,6 +127,10 @@ export default function ThemePage({ theme, hideImageUpload, variant = "numerique
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, showAdvanceAuth]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, [step]);
+
   const handleAudiosImported = async (files: File[]) => {
     setImportedAudios(files);
     await saveDraftAudios("current", files);

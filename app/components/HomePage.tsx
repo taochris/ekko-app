@@ -637,7 +637,7 @@ export default function HomePage() {
               {infoOpen && (
                 <div style={{ margin: "0 0 30px", padding: "18px 20px", borderRadius: 16, background: "rgba(0,0,0,0.58)", border: "1px solid rgba(201,169,110,0.18)", boxShadow: "0 16px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", textAlign: "left" }}>
                   <p style={{ fontFamily: font, margin: 0, fontSize: 15, lineHeight: 1.8, color: "rgba(240,232,216,0.92)" }}>
-                    Choisissez les voix qui comptent. Transformez vos messages vocaux préférés en{" "}
+                    Choisissez les voix qui comptent. Grâce à une IA qui comprend le contenu de vos messages, retrouvez en quelques mots les audios que vous cherchez, sans fouiller pendant des heures. Transformez vos messages vocaux préférés en{" "}
                     <a href="/comment-ca-marche" style={{ color: "rgb(87, 212, 147)", textDecoration: "none", fontWeight: 600, borderBottom: "1px solid rgba(87, 212, 147, 0.45)" }}>vocapsule</a>
                     {" "}: un souvenir sonore à télécharger ou à garder sur un porte-clé en bois gravé.
                   </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { BookmarkDraftItem } from "../lib/capsules";
 
@@ -10,6 +10,7 @@ export interface SelectedAudioForBookmark {
   durationSec: number;
   startSecInMix: number;
   url?: string;
+  customName?: string;
 }
 
 interface BookmarkEditorProps {
@@ -63,6 +64,19 @@ export default function BookmarkEditor({
 
   const currentAudio = selectedAudios.find((a) => a.audioId === effectiveAudioId);
   const totalMixDuration = selectedAudios.reduce((acc, a) => acc + Math.max(1, a.durationSec || 1), 0);
+
+  // Pré-remplir automatiquement le nom de l'étiquette si l'audio a été nommé lors de la sélection IA
+  useEffect(() => {
+    const audio = selectedAudios.find((a) => a.audioId === effectiveAudioId);
+    const existingBm = bookmarks.find((b) => b.audioId === effectiveAudioId);
+    if (existingBm?.title) {
+      setNewTitle(existingBm.title);
+    } else if (audio?.customName) {
+      setNewTitle(audio.customName);
+    } else {
+      setNewTitle("");
+    }
+  }, [effectiveAudioId, selectedAudios, bookmarks]);
 
   const getBookmarkColor = (bm: BookmarkDraftItem, idx: number) =>
     bm.color || TAG_PALETTE[idx % TAG_PALETTE.length].hex;
@@ -287,9 +301,10 @@ export default function BookmarkEditor({
                       {selectedAudios.map((a, idx) => {
                         const clean = a.file.name.replace(/\.(mp3|wav|ogg|oga|m4a|aac|opus|flac|weba|webm|3gp|amr|mp4|mpeg)$/i, "");
                         const existingBm = bookmarks.find((b) => b.audioId === a.audioId);
+                        const displayName = existingBm?.title || a.customName || clean;
                         return (
                           <option key={a.audioId} value={a.audioId} style={{ background: "#181316", color: "#f0e8d8" }}>
-                            Audio {idx + 1} · {clean}{existingBm ? ` (${existingBm.title})` : ""}
+                            Audio {idx + 1} · {displayName}
                           </option>
                         );
                       })}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { getCapsule } from "../../../lib/capsules";
 import {
   loadVectorIndex,
@@ -10,8 +11,43 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const AI_SERVICE_URL = process.env.VOSEKKO_AI_URL ?? "http://127.0.0.1:8765";
-const AI_SECRET = process.env.VOSEKKO_AI_SECRET ?? "vosekko-local-dev-secret";
+const AI_SERVICE_URL =
+  process.env.VOSEKKO_AI_URL ??
+  "https://taochris66--vosekko-embeddinggemma2-vosekko-ai-asgi.us-east.modal.run";
+
+function getAiSecret(): string {
+  if (process.env.VOSEKKO_AI_SECRET) return process.env.VOSEKKO_AI_SECRET;
+  const pk = (process.env.FIREBASE_ADMIN_PRIVATE_KEY ?? "").replace(/\\n/g, "\n").replace(/^"|"$/g, "");
+  if (pk) {
+    return crypto.createHmac("sha256", pk).update("vosekko-ai-secret-v1").digest("hex");
+  }
+  return "vosekko-local-dev-secret";
+}
+
+/**
+ * GET /api/smart-search/index?capsuleId=...
+ * Renvoie la liste des audioIds déjà indexés pour éviter de ré-envoyer les fichiers
+ * quand l'utilisateur revient sur la page.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const capsuleId = String(req.nextUrl.searchParams.get("capsuleId") ?? "").trim();
+    if (!capsuleId) {
+      return NextResponse.json({ indexedAudioIds: [] });
+    }
+    const capsule = await getCapsule(capsuleId);
+    if (!capsule) {
+      return NextResponse.json({ indexedAudioIds: [] });
+    }
+    const existingIndex = await loadVectorIndex(capsuleId, capsule.uid);
+    return NextResponse.json({
+      indexedAudioIds: Object.keys(existingIndex.audios),
+      totalDurationSec: existingIndex.totalDurationSec,
+    });
+  } catch {
+    return NextResponse.json({ indexedAudioIds: [] });
+  }
+}
 
 /**
  * POST /api/smart-search/index
@@ -28,6 +64,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const capsuleId = String(form.get("capsuleId") ?? "").trim();
     const audioIdsRaw = String(form.get("audioIds") ?? "[]");
+    const isLastBatch = String(form.get("isLastBatch") ?? "false") === "true";
     const files = form.getAll("files") as File[];
 
     if (!capsuleId) {
@@ -107,7 +144,7 @@ export async function POST(req: NextRequest) {
 
     const upstreamRes = await fetch(`${AI_SERVICE_URL}/v1/index`, {
       method: "POST",
-      headers: { "x-vosekko-secret": AI_SECRET },
+      headers: { "x-vosekko-secret": getAiSecret() },
       body: upstreamForm,
     });
 
@@ -133,7 +170,7 @@ export async function POST(req: NextRequest) {
       : [];
 
     if (batchItems.length > 0) {
-      const saved = await upsertVectorIndexBatch(capsuleId, capsule.uid, batchItems);
+      const saved = await upsertVectorIndexBatch(capsuleId, capsule.uid, batchItems, existingIndex, isLastBatch);
       if (saved.quotaExceeded) {
         return NextResponse.json({ error: saved.quotaExceeded }, { status: 429 });
       }

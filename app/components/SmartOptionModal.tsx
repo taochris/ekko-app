@@ -192,7 +192,7 @@ export default function SmartOptionModal({
           }}
         >
           <p style={{ fontFamily: "sans-serif", fontSize: 13, color: "rgba(240,232,216,0.7)", margin: 0, lineHeight: 1.6 }}>
-            ⏱ <strong style={{ color: "#f0e8d8", fontWeight: 600 }}>Analyse rapide</strong> (~15 s pour 1 h de vocaux, jusqu&apos;à ~2 min pour 10 h d&apos;audios).
+            ⏱ <strong style={{ color: "#f0e8d8", fontWeight: 600 }}>Analyse rapide</strong> (~15 s pour 1 h de vocaux, jusqu&apos;à ~2 min pour 10 h d&apos;audios) — la recherche de vos mots est ensuite <strong style={{ color: "#f0e8d8", fontWeight: 600 }}>extrêmement rapide</strong>.
           </p>
         </div>
 
