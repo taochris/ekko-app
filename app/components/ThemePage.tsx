@@ -1827,7 +1827,12 @@ export function EchoRevealScreen({
   const togglePlay = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (isPlaying) { a.pause(); } else { a.play(); setFullscreen(true); }
+    if (isPlaying) {
+      a.pause();
+    } else {
+      a.play();
+      if (coverUrl) setFullscreen(true);
+    }
     setIsPlaying(!isPlaying);
   };
 

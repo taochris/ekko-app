@@ -60,7 +60,6 @@ export default function VocapsulePage() {
   const resetHideTimer = () => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     setShowControls(true);
-    hideTimerRef.current = setTimeout(() => setShowControls(false), 2000);
   };
 
   useEffect(() => {
@@ -102,7 +101,7 @@ export default function VocapsulePage() {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     } else {
       a.play();
-      if (!fullscreen) {
+      if (coverUrl && !fullscreen) {
         try {
           window.history.pushState({ ekkoFullscreen: true }, "");
         } catch {
