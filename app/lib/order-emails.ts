@@ -273,6 +273,40 @@ export async function sendPushover(title: string, message: string): Promise<void
   }
 }
 
+// ─── Notification Push Telegram (automatique via env ou Firestore settings/admin_notifications) ─
+export async function sendTelegramOrderAlert(message: string): Promise<boolean> {
+  try {
+    let botToken = process.env.TELEGRAM_BOT_TOKEN ?? "";
+    let chatId = process.env.TELEGRAM_CHAT_ID ?? "";
+
+    if (!botToken || !chatId) {
+      const { getAdminFirestore } = await import("./firebaseAdmin");
+      const snap = await getAdminFirestore().collection("settings").doc("admin_notifications").get();
+      if (snap.exists) {
+        const d = snap.data() ?? {};
+        botToken = botToken || String(d.telegramBotToken ?? "");
+        chatId = chatId || String(d.telegramChatId ?? "");
+      }
+    }
+
+    if (!botToken || !chatId) return false;
+
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        disable_web_page_preview: true,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error("[telegram]", e);
+    return false;
+  }
+}
+
 // ─── Envoi groupé emails + Pushover pour une commande porteClef ──────────────
 export async function sendKeychainOrderEmails({
   capsuleId, engraveName, format, qrUrl,
@@ -313,15 +347,48 @@ export async function sendKeychainOrderEmails({
     const { data, error } = await resend.emails.send({
       from: "VOSEKKO <ekko@vosekko.com>",
       to: adminEmail,
-      subject: `🔑 Nouvelle commande porte-clé — ${engraveName.toUpperCase()}`,
+      subject: `🔴 [À FABRIQUER] Porte-clé VOSEKKO — ${(engraveName || "Sans prénom").toUpperCase()}`,
+      headers: {
+        "X-Priority": "1 (Highest)",
+        "X-MSMail-Priority": "High",
+        "Importance": "High",
+      },
       html: buildAdminOrderEmail({ capsuleId, engraveName, format, qrUrl: shortUrl, shippingName, shippingAddress, customerPhone, customerEmail, amount, engravingFont, nfcEnabled }),
       attachments: [{
-        filename: `lightburn-${engraveName.toLowerCase()}-${(FONT_LABELS[engravingFont ?? ""] ?? "classique").split(" ")[0].toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
+        filename: `lightburn-${(engraveName || "qr").toLowerCase()}-${(FONT_LABELS[engravingFont ?? ""] ?? "classique").split(" ")[0].toLowerCase()}-${capsuleId.slice(0, 8)}.svg`,
         content: Buffer.from(svg),
       }],
     });
     if (error) console.error("[order-emails] email admin ERREUR:", JSON.stringify(error));
     else console.log("[order-emails] email admin envoyé →", adminEmail, "id:", data?.id);
+
+    const fontName = FONT_LABELS[engravingFont ?? ""] ?? engravingFont ?? "Classique";
+    const formatNames: Record<string, string> = {
+      "etiquette-rect": "Rectangulaire · 50×30 mm",
+      "etiquette-arrondie": "Arrondie · 50,8×31,8 mm",
+      carre: "Carré · 40×40 mm",
+    };
+    const fmtName = formatNames[format] ?? format;
+    const tgText = [
+      "🔴🔑 NOUVEAU PORTE-CLÉ À FABRIQUER",
+      "",
+      `• Prénom gravé : ${engraveName ? engraveName : "Sans prénom (QR seul)"}`,
+      `• Police : ${fontName}`,
+      `• Format : ${fmtName}`,
+      `• Option : ${nfcEnabled ? "⚡ QR + PUCE NFC AU DOS" : "QR code seul"}`,
+      `• Montant : ${(amount / 100).toFixed(2).replace(".", ",")} €`,
+      "",
+      `📦 LIVRAISON :`,
+      `${shippingName || "Client"}`,
+      `${shippingAddress || "Adresse dans Stripe"}`,
+      `📞 Tél : ${customerPhone || "Non renseigné"}`,
+      `✉️ Email : ${customerEmail || "Non renseigné"}`,
+      "",
+      `🔗 Lien QR/NFC : ${shortUrl}`,
+      `👉 Gérer dans Mon compte : https://vosekko.com/compte`,
+    ].join("\n");
+
+    sendTelegramOrderAlert(tgText).catch((e) => console.error("[order-emails] telegram:", e));
 
     sendPushover(
       "🔑 Nouvelle commande VOSEKKO",

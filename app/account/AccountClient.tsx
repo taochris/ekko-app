@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth, EkkoUser } from "../context/AuthContext";
 import BlobBackground from "../components/BlobBackground";
+import AdminKeychainPanel from "../components/AdminKeychainPanel";
 import { updateProfile, updateEmail, getAuth, deleteUser } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -268,6 +269,11 @@ function AccountInner({ user, logout }: { user: EkkoUser; logout: () => void }) 
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>
+
+          {/* ESPACE ADMIN : COMPTEUR DE PORTE-CLÉS À FABRIQUER + PUSH TELEGRAM */}
+          {(user.uid === "P2zXABb32JWGnOT0TZicWLL35lk2" || user.email?.toLowerCase() === "taochris66@hotmail.fr") && (
+            <AdminKeychainPanel accent={accent} />
+          )}
 
           {/* INFOS PERSONNELLES */}
           <SectionLabel accent={accent}>Informations personnelles</SectionLabel>
