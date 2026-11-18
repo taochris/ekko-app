@@ -34,6 +34,15 @@ export async function GET(req: NextRequest) {
     .where("productType", "==", "porteClef")
     .get();
 
+  const toIso = (v: unknown): string => {
+    if (!v) return "";
+    if (typeof v === "string") return v;
+    if (typeof v === "object" && v !== null && "toDate" in v && typeof (v as { toDate: () => Date }).toDate === "function") {
+      return (v as { toDate: () => Date }).toDate().toISOString();
+    }
+    return "";
+  };
+
   const orders = snap.docs
     .map((d) => {
       const x = d.data();
@@ -50,10 +59,10 @@ export async function GET(req: NextRequest) {
         shippingAddress: String(x.shippingAddress ?? ""),
         customerPhone: String(x.customerPhone ?? ""),
         customerEmail: String(x.customerEmail ?? ""),
-        createdAt: String(x.createdAt ?? ""),
-        paidAt: String(x.paidAt ?? x.createdAt ?? ""),
+        createdAt: toIso(x.createdAt),
+        paidAt: toIso(x.paidAt) || toIso(x.createdAt),
         shipped: Boolean(x.shipped),
-        shippedAt: x.shippedAt ? String(x.shippedAt) : null,
+        shippedAt: x.shippedAt ? toIso(x.shippedAt) : null,
         shortUrl: shortQrUrl(d.id),
       };
     })
