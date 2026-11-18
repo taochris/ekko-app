@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
       const x = d.data();
       return {
         capsuleId: d.id,
+        uid: String(x.uid ?? ""),
         status: String(x.status ?? ""),
         engraveName: String(x.engraveName ?? ""),
         engravingFont: String(x.engravingFont ?? "Georgia, serif"),
@@ -56,7 +57,12 @@ export async function GET(req: NextRequest) {
         shortUrl: shortQrUrl(d.id),
       };
     })
-    .filter((o) => o.status === "paid" || o.status === "ready" || o.status === "processing" || o.status === "paid_awaiting_selection")
+    .filter(
+      (o) =>
+        (o.status === "paid" || o.status === "ready" || o.status === "processing" || o.status === "paid_awaiting_selection") &&
+        o.uid !== "P2zXABb32JWGnOT0TZicWLL35lk2" &&
+        o.customerEmail.trim().toLowerCase() !== "taochris66@hotmail.fr"
+    )
     .sort((a, b) => (b.paidAt || b.createdAt).localeCompare(a.paidAt || a.createdAt));
 
   const pendingCount = orders.filter((o) => !o.shipped).length;
